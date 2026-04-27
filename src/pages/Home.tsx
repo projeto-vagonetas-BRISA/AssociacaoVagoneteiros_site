@@ -10,7 +10,7 @@ import conteudo from "../assets/conteudo.json";
 export const Home: React.FC = () => {
   return (
     <div className="flex flex-col items-start w-full">
-      
+
       {/*  style={{ backgroundImage: `url(${imgUrl})` }} */}
       <section className="relative flex items-center justify-center min-h-screen md:min-h-[700px] w-full bg-slate-900 bg-cover bg-center">
         <div className="absolute inset-0 bg-black/50" />
@@ -82,9 +82,9 @@ export const Home: React.FC = () => {
               <TimelineCard year="TODAY" title={conteudo.linha_do_tempo.eventos[3].titulo} description={conteudo.linha_do_tempo.eventos[3].descricao} variant="dark" />
             </div>
 
-<div className="w-fit">
-  <Button text="SAIBA MAIS" variant="secondary" icon="arrow" />
-</div>          </div>
+            <div className="w-fit">
+              <Button text="SAIBA MAIS" variant="secondary" icon="arrow" />
+            </div>          </div>
         </div>
       </section>
 
@@ -182,7 +182,7 @@ export const Home: React.FC = () => {
                     <path d={svgPaths.p1869180} fill="#8DFB8D" />
                   </svg>
                   <p className="font-normal text-base text-[#fdfcff] leading-relaxed">
-                   {conteudo.rodape_localizacao.endereco}
+                    {conteudo.rodape_localizacao.endereco}
                   </p>
                 </div>
 
