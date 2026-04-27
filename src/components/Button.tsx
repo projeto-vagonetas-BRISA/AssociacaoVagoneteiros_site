@@ -47,7 +47,7 @@ export function Button({ text, variant = 'primary', icon, onClick }: ButtonProps
       className={`
         ${getVariantStyles()} 
         flex items-center justify-center gap-3 px-8 py-4 rounded-lg shrink-0 shadow-xl
-        transition-all duration-200 active:scale-95
+        transition-all duration-200 active:scale-95 cursor-pointer
       `}
     >
       <p className="font-bold text-sm tracking-[1.4px] uppercase leading-5">

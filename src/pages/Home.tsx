@@ -5,6 +5,7 @@ import { Button } from "../components/Button";
 import { SectionHeader } from "../components/SectionHeader";
 import { TimelineCard } from "../components/TimelineCard";
 import { ReviewCard } from "../components/ReviewCard";
+import conteudo from "../assets/conteudo.json";
 
 export const Home: React.FC = () => {
   return (
@@ -13,19 +14,18 @@ export const Home: React.FC = () => {
       {/*  style={{ backgroundImage: `url(${imgUrl})` }} */}
       <section className="relative flex items-center justify-center min-h-screen md:min-h-[700px] w-full bg-slate-900 bg-cover bg-center">
         <div className="absolute inset-0 bg-black/50" />
-
         <div className="relative z-10 max-w-7xl w-full px-4 md:px-8 py-20">
           <div className="flex flex-col gap-6 max-w-2xl">
             <Badge text="Est. 1932" />
 
             <div className="flex gap-4 items-center">
               <h1 className="font-bold text-6xl md:text-8xl text-white tracking-tighter leading-none">
-                Vagoneteiros dos Molhes da Barra
+                {conteudo.hero.titulo}
               </h1>
             </div>
 
-            <p className="font-medium text-lg md:text-xl text-white/80 leading-relaxed max-w-lg">
-              Lorem ipsum dolor sit amet consectetur. Ipsum hendrerit feugiat elementum in arcu mattis risus. Blandit malesuada aenean hac vitae. Eget adipiscing malesuada sapien viverra adipiscing. Commodo platea risus amet aliquam tellus. Nullam sit porta nibh.
+            <p className="font-medium text-lg md:text-xl text-white/80 leading-relaxed">
+              {conteudo.hero.descricao}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -40,31 +40,30 @@ export const Home: React.FC = () => {
       <section className="bg-[#f2f3fb] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+
             <div className="flex flex-col gap-4">
               <SectionHeader
                 label="O Legado"
                 title="Nossa História"
                 titleSize="large"
               />
-
               <div className="flex flex-col gap-6 pt-4">
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur. Et in at egestas id placerat sed tristique sed. At phasellus eget ut lectus amet velit. Adipiscing vel libero mattis egestas eu pellentesque malesuada enim. Nibh consectetur orci massa faucibus orci scelerisque sodales. Nibh.
+                  {conteudo.historia.paragrafos}
                 </p>
-
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur. Libero ut leo convallis in quam. Tincidunt vitae tempor pellentesque tortor pharetra pellentesque varius quis tortor. Elementum magna proin eget vitae est fames. Lacinia mattis sed ut proin nullam. Massa mauris morbi.
+                  {conteudo.historia.paragrafos}
                 </p>
               </div>
             </div>
 
-            <div className="bg-[#e6e8f0] rounded-xl aspect-video md:h-[470px] overflow-hidden flex items-center justify-center">
+            <div className="w-full rounded-2xl h-[300px] md:h-[450px] overflow-hidden shadow-2xl bg-[#e6e8f0] flex items-center justify-center">
               {/* img */}
             </div>
+
           </div>
         </div>
       </section>
-
       {/* Linha do Tempo Section */}
       <section className="bg-[#f2f3fb] pb-16 md:pb-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -72,19 +71,20 @@ export const Home: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <SectionHeader
                 title="LINHA DO TEMPO"
-                description="Lorem ipsum dolor sit amet consectetur. Purus ac amet adipiscing phasellus ipsum quisque ornare maecenas. Massa."
+                description={conteudo.linha_do_tempo.descricao}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <TimelineCard year="1881" title="Lorem ipsum" description="Lorem ipsum dolor sit amet..." variant="blue" />
-              <TimelineCard year="1920" title="Lorem" description="Lorem ipsum dolor sit amet..." variant="red" />
-              <TimelineCard year="1970" title="Lorem ipsum" description="Lorem ipsum dolor sit amet..." variant="green" />
-              <TimelineCard year="TODAY" title="Lorem ipsum" description="Lorem ipsum dolor sit amet..." variant="dark" />
+              <TimelineCard year="1881" title={conteudo.linha_do_tempo.eventos[0].titulo} description={conteudo.linha_do_tempo.eventos[0].descricao} variant="blue" />
+              <TimelineCard year="1920" title={conteudo.linha_do_tempo.eventos[1].titulo} description={conteudo.linha_do_tempo.eventos[1].descricao} variant="red" />
+              <TimelineCard year="1970" title={conteudo.linha_do_tempo.eventos[2].titulo} description={conteudo.linha_do_tempo.eventos[2].descricao} variant="green" />
+              <TimelineCard year="TODAY" title={conteudo.linha_do_tempo.eventos[3].titulo} description={conteudo.linha_do_tempo.eventos[3].descricao} variant="dark" />
             </div>
 
-            <Button text="SAIBA MAIS" variant="secondary" icon="arrow" />
-          </div>
+<div className="w-fit">
+  <Button text="SAIBA MAIS" variant="secondary" icon="arrow" />
+</div>          </div>
         </div>
       </section>
 
@@ -97,10 +97,10 @@ export const Home: React.FC = () => {
 
               <div className="flex flex-col gap-6">
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur. Mollis gravida a nunc velit faucibus sit at. Id libero consequat gravida sit adipiscing.
+                  {conteudo.como_funciona.paragrafos}
                 </p>
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur. Orci aliquet id nec at habitant adipiscing. Ut habitasse vel vel aenean sollicitudin id pharetra imperdiet.
+                  {conteudo.como_funciona.paragrafos}
                 </p>
 
                 <div className="flex gap-4 items-center pt-4">
@@ -109,7 +109,7 @@ export const Home: React.FC = () => {
                   </svg>
                   <div>
                     <p className="font-bold text-lg text-[#005f9d] leading-relaxed">Ponto de Partida</p>
-                    <p className="font-normal text-sm text-[#414752] leading-5">Final da Avenida Rio Grande, Molhes da Barra - Cassino.</p>
+                    <p className="font-normal text-sm text-[#414752] leading-5">{conteudo.como_funciona.ponto_partida.endereco}</p>
                   </div>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export const Home: React.FC = () => {
             <div className="relative bg-[#1878c1]/10 rounded-2xl h-[300px] md:h-[450px] overflow-hidden shadow-2xl">
               <div className="absolute bottom-6 left-6 backdrop-blur-sm bg-white/90 rounded-lg p-4 border-l-4 border-[#b61722] shadow-lg">
                 <p className="font-bold text-xs text-[#005f9d] tracking-widest uppercase leading-4">Trajeto</p>
-                <p className="font-bold text-sm text-[#181c21] leading-5 pt-1">4km de imersão no oceano</p>
+                <p className="font-bold text-sm text-[#181c21] leading-5 pt-1">{conteudo.como_funciona.trajeto.descricao}</p>
               </div>
             </div>
           </div>
@@ -134,7 +134,7 @@ export const Home: React.FC = () => {
                 galeria de fotos
               </h2>
               <p className="font-normal text-lg text-[#414752] leading-relaxed pb-8">
-                Lorem ipsum dolor sit amet consectetur. Venenatis justo risus eu dolor feugiat at sed. Non vel aenean hendrerit odio aliquam praesent.
+                {conteudo.galeria_fotos.descricao}
               </p>
               <Button text="VER GALERIA" variant="secondary" icon="image" />
             </div>
@@ -182,8 +182,7 @@ export const Home: React.FC = () => {
                     <path d={svgPaths.p1869180} fill="#8DFB8D" />
                   </svg>
                   <p className="font-normal text-base text-[#fdfcff] leading-relaxed">
-                    Av. Alm. Maximiano Fonseca, S/N -<br />
-                    Cassino, Rio Grande - RS, Brazil
+                   {conteudo.rodape_localizacao.endereco}
                   </p>
                 </div>
 
@@ -193,10 +192,10 @@ export const Home: React.FC = () => {
                   </svg>
                   <div>
                     <p className="font-normal text-base text-[#fdfcff] leading-relaxed">
-                      Funcionamento: 08:00 AM - 06:00 PM
+                      Funcionamento: {conteudo.rodape_localizacao.horario_funcionamento.horario}
                     </p>
                     <p className="font-normal text-xs text-[#71dd74] leading-relaxed mt-1">
-                      Aberto todos os dias
+                      {conteudo.rodape_localizacao.horario_funcionamento.nota}
                     </p>
                   </div>
                 </div>
