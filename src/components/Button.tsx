@@ -1,71 +1,53 @@
-import svgPaths from "../assets/svg-u6pushe3qa";
+import { ArrowRight, Star, Image, PlaneTakeoff, MapPin } from "lucide-react";
 
 interface ButtonProps {
   text: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'white';
-  icon?: 'arrow' | 'star' | 'image' | 'plane';
+  variant?: "primary" | "secondary" | "outline" | "white";
+  icon?: "arrow" | "star" | "image" | "plane" | "pin";
   onClick?: () => void;
 }
 
-export function Button({ text, variant = 'primary', icon, onClick }: ButtonProps) {
-  
+export function Button({ text, variant = "primary", icon, onClick }: ButtonProps) {
   // dicionário de estilos para cada variante (Base, Hover e Cor do Texto)
+
   const getVariantStyles = () => {
     switch (variant) {
-      case 'secondary':
-        return 'bg-[#005f9d] hover:bg-[#004c7d] text-white';
-      case 'outline':
-        return 'backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 text-white';
-      case 'white':
-        return 'bg-white hover:bg-gray-100 text-[#005f9d]';
-      default: // primary
-        return 'bg-[#b61722] hover:bg-[#9a131c] text-white';
-    }
-  };
-
-  // mpeamento de propriedades dos ícones para deixar o JSX mais limpo
-  const getIconProps = () => {
-    switch (icon) {
-      case 'arrow':
-        return { path: svgPaths.p29002e00, size: 'w-5 h-4', viewBox: '0 0 19.5 16' };
-      case 'star':
-        return { path: svgPaths.p252f1a00, size: 'size-6', viewBox: '0 0 22.6 22.6' };
-      case 'image':
-        return { path: svgPaths.p2d60240, size: 'size-5', viewBox: '0 0 20 20' };
-      case 'plane':
-        return { path: svgPaths.p1a406200, size: 'size-4', viewBox: '0 0 16 16' };
+      case "secondary":
+        return "bg-[#005f9d] hover:bg-[#004c7d] text-white";
+      case "outline":
+        return "backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 text-white";
+      case "white":
+        return "bg-white hover:bg-gray-100 text-[#005f9d]";
       default:
-        return null;
+        return "bg-[#b61722] hover:bg-[#9a131c] text-white";
     }
   };
 
-  const iconData = getIconProps();
+  const getIcon = () => {
+    const props = { size: 18, strokeWidth: 2, className: "shrink-0" };
+    switch (icon) {
+      case "arrow": return <ArrowRight {...props} />;
+      case "star":  return <Star {...props} />;
+      case "image": return <Image {...props} />;
+      case "plane": return <PlaneTakeoff {...props} />;
+      case "pin":   return <MapPin {...props} />;
+      default:      return null;
+    }
+  };
 
   return (
     <button
       onClick={onClick}
       className={`
-        ${getVariantStyles()} 
+        ${getVariantStyles()}
         flex items-center justify-center gap-3 px-8 py-4 rounded-lg shrink-0 shadow-xl
         transition-all duration-200 active:scale-95 cursor-pointer
       `}
     >
-      <p className="font-bold text-sm tracking-[1.4px] uppercase leading-5">
+      <span className="font-bold text-sm tracking-[1.4px] uppercase leading-5">
         {text}
-      </p>
-      
-      {iconData && (
-        <svg 
-          className={`${iconData.size} shrink-0`} 
-          fill="none" 
-          viewBox={iconData.viewBox}
-        >
-          <path 
-            d={iconData.path} 
-            fill="currentColor" 
-          />
-        </svg>
-      )}
+      </span>
+      {getIcon()}
     </button>
   );
 }

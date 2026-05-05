@@ -21,6 +21,8 @@
       "Lorem ipsum dolor sit amet consectetur. Et in at egestas id placerat sed tristique sed. At phasellus eget ut lectus amet velit. Adipiscing vel libero mattis egestas eu pellentesque malesuada enim. Nibh consectetur orci massa faucibus orci scelerisque sodales. Nibh.",
       "Lorem ipsum dolor sit amet consectetur. Libero ut leo convallis te quam. Tincidunt vitae tempor pellentesque tortor pharetra pellentesque varius quis tortor. Elementum magna proin eget vitae est fames. Lacinia mattis sed ut proin nullam. Massa mauris morbi."
     ],
+    "citacao_label": "Lorem ipsum dolor sit amet",
+    "citacao": "Lorem ipsum dolor sit amet consectetur. Nunc elit arcu ultrices at neque. Placerat lorem ipsum consectetur adipiscing nulla.",
     "imagem_url": "url_da_imagem_historia.jpg"
   },
   "linha_do_tempo": {
@@ -111,8 +113,28 @@
       }
     ]
   },
+  "vagoneteiros": {
+    "badge": "Lorem ipsum dolor sit amet",
+    "titulo": "Os Vagoneteiros",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Sagittis sed accumsan nec quisque donec ultrices ipsum sed. Id lectus est arcu varius. Consectetur vulputat odio donec. Massa morbi sed feugiat quis orci arcu. Faucibus duis donec adipiscing pretium sagittis turpis nunc. Tempus eu odio aliquam arcu nulla eu tellus placerat nunc.",
+    "features": [
+      {
+        "titulo": "Lorem ipsum dolor sit",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Ultrices eu varius. Consectetur vulputat odio donec feugiat."
+      },
+      {
+        "titulo": "Lorem ipsum dolor sit",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Faucibus ultrices at neque. Placerat lorem ipsum consectetur."
+      }
+    ]
+  },
+  "cta": {
+    "titulo": "Agende Um Passeio!",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Eget in viverra orci nisl nulla."
+  },
   "rodape_localizacao": {
     "titulo": "LOCALIZAÇÃO",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Morbi mauris nunc ipsum non leo lacus blandit. Uma pharetra lectus quis uma viverra etiam turpis a pellentesque.",
     "endereco": "Av. Alm. Maximiano Fonseca, S/N - Cassino, Rio Grande - RS, Brazil",
     "horario_funcionamento": {
       "horario": "08:00 AM - 06:00 PM",

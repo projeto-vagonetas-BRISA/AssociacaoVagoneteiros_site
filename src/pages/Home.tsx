@@ -1,10 +1,11 @@
 import React from "react";
-import svgPaths from "../assets/svg-u6pushe3qa";
+import { MapPin, Clock } from "lucide-react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { SectionHeader } from "../components/SectionHeader";
 import { TimelineCard } from "../components/TimelineCard";
 import { ReviewCard } from "../components/ReviewCard";
+import Logo from "../assets/logo.png";
 import conteudo from "../assets/conteudo.json";
 
 export const Home: React.FC = () => {
@@ -15,16 +16,18 @@ export const Home: React.FC = () => {
       <section className="relative flex items-center justify-center min-h-screen md:min-h-[700px] w-full bg-slate-900 bg-cover bg-center">
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 max-w-7xl w-full px-4 md:px-8 py-20">
-          <div className="flex flex-col gap-6 max-w-2xl">
+          <div className="flex flex-col gap-6 items-center text-center md:items-start md:text-left max-w-2xl mx-auto md:mx-0">
             <Badge text="Est. 1932" />
 
-            <div className="flex gap-4 items-center">
-              <h1 className="font-bold text-6xl md:text-8xl text-white tracking-tighter leading-none">
-                {conteudo.hero.titulo}
+            <div className="flex flex-col items-center text-center md:flex-row md:items-center md:text-left gap-4">
+              <img src={Logo} alt="Logo" className="w-64 h-64 shadow-xl shrink-0" />
+              <h1 className="font-bold text-white tracking-tighter leading-none">
+                <span className="block text-[clamp(2.5rem,7vw,6rem)]">Vagoneteiros</span>
+                <span className="block text-[clamp(2.5rem,7vw,6rem)] whitespace-nowrap">dos Molhes da Barra</span>
               </h1>
             </div>
 
-            <p className="font-medium text-lg md:text-xl text-white/80 leading-relaxed">
+            <p className="font-medium text-lg md:text-lg text-white/80 leading-relaxed">
               {conteudo.hero.descricao}
             </p>
 
@@ -49,10 +52,10 @@ export const Home: React.FC = () => {
               />
               <div className="flex flex-col gap-6 pt-4">
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  {conteudo.historia.paragrafos}
+                  {conteudo.historia.paragrafos[0]}
                 </p>
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  {conteudo.historia.paragrafos}
+                  {conteudo.historia.paragrafos[1]}
                 </p>
               </div>
             </div>
@@ -64,6 +67,7 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
       {/* Linha do Tempo Section */}
       <section className="bg-[#f2f3fb] pb-16 md:pb-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -84,7 +88,8 @@ export const Home: React.FC = () => {
 
             <div className="w-fit">
               <Button text="SAIBA MAIS" variant="secondary" icon="arrow" />
-            </div>          </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -97,16 +102,14 @@ export const Home: React.FC = () => {
 
               <div className="flex flex-col gap-6">
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  {conteudo.como_funciona.paragrafos}
+                  {conteudo.como_funciona.paragrafos[0]}
                 </p>
                 <p className="font-normal text-lg text-[#414752] leading-relaxed">
-                  {conteudo.como_funciona.paragrafos}
+                  {conteudo.como_funciona.paragrafos[1]}
                 </p>
 
                 <div className="flex gap-4 items-center pt-4">
-                  <svg className="size-5 shrink-0" fill="none" viewBox="0 0 20 25">
-                    <path d={svgPaths.p682b940} fill="#006B1E" />
-                  </svg>
+                  <MapPin className="size-5 shrink-0 text-[#006B1E]" strokeWidth={2} />
                   <div>
                     <p className="font-bold text-lg text-[#005f9d] leading-relaxed">Ponto de Partida</p>
                     <p className="font-normal text-sm text-[#414752] leading-5">{conteudo.como_funciona.ponto_partida.endereco}</p>
@@ -178,18 +181,14 @@ export const Home: React.FC = () => {
 
               <div className="flex flex-col gap-6 pb-8">
                 <div className="flex gap-4 items-start">
-                  <svg className="size-5 shrink-0" fill="none" viewBox="0 0 16 20">
-                    <path d={svgPaths.p1869180} fill="#8DFB8D" />
-                  </svg>
+                  <MapPin className="size-5 shrink-0 text-[#8DFB8D] mt-0.5" strokeWidth={2} />
                   <p className="font-normal text-base text-[#fdfcff] leading-relaxed">
                     {conteudo.rodape_localizacao.endereco}
                   </p>
                 </div>
 
                 <div className="flex gap-4 items-start">
-                  <svg className="size-5 shrink-0" fill="none" viewBox="0 0 20 20">
-                    <path d={svgPaths.p256e1340} fill="#8DFB8D" />
-                  </svg>
+                  <Clock className="size-5 shrink-0 text-[#8DFB8D] mt-0.5" strokeWidth={2} />
                   <div>
                     <p className="font-normal text-base text-[#fdfcff] leading-relaxed">
                       Funcionamento: {conteudo.rodape_localizacao.horario_funcionamento.horario}
