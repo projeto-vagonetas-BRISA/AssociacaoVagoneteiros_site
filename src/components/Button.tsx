@@ -1,9 +1,9 @@
-import { ArrowRight, Star, Image, PlaneTakeoff, MapPin } from "lucide-react";
+import { ArrowRight, Star, Image, PlaneTakeoff, MapPin, Upload } from "lucide-react";
 
 interface ButtonProps {
   text: string;
   variant?: "primary" | "secondary" | "outline" | "white";
-  icon?: "arrow" | "star" | "image" | "plane" | "pin";
+  icon?: "arrow" | "star" | "image" | "plane" | "pin" | "upload";
   onClick?: () => void;
 }
 
@@ -29,6 +29,7 @@ export function Button({ text, variant = "primary", icon, onClick }: ButtonProps
       case "arrow": return <ArrowRight {...props} />;
       case "star":  return <Star {...props} />;
       case "image": return <Image {...props} />;
+      case "upload": return <Upload {...props} />;
       case "plane": return <PlaneTakeoff {...props} />;
       case "pin":   return <MapPin {...props} />;
       default:      return null;

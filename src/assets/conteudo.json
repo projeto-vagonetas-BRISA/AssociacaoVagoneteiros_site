@@ -74,6 +74,10 @@
   "galeria_fotos": {
     "titulo": "GALERIA DE FOTOS",
     "descricao": "Lorem ipsum dolor sit amet consectetur. Venenatis justo risus eu dolor feugiat at sed. Non vel aenean hendrerit odio aliquam praesent. Ornare cursus nibh habitant.",
+    "upload": {
+      "titulo": "Envie sua foto",
+      "descricao": "Foi em um dos nossos passeios e quer compartilhar o momento? Envie sua foto e ela pode aparecer aqui!"
+    },
     "botao": {
       "texto": "VER GALERIA",
       "link": "#galeria"

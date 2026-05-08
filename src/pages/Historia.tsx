@@ -50,6 +50,23 @@ export const Historia: React.FC = () => {
                   {conteudo.historia.paragrafos[1]}
                 </p>
               </div>
+              <div className="flex flex-col gap-5 pt-2">
+                <p className="font-normal text-lg text-[#414752] leading-relaxed">
+                  {conteudo.historia.paragrafos[0]}
+                </p>
+                <p className="font-normal text-lg text-[#414752] leading-relaxed">
+                  {conteudo.historia.paragrafos[1]}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-5 pt-2">
+                <p className="font-normal text-lg text-[#414752] leading-relaxed">
+                  {conteudo.historia.paragrafos[0]}
+                </p>
+                <p className="font-normal text-lg text-[#414752] leading-relaxed">
+                  {conteudo.historia.paragrafos[1]}
+                </p>
+              </div>
 
               <div className="border-l-4 border-[#b61722] pl-4 mt-2">
                 <span className="inline-block bg-[#005f9d] text-white text-xs font-bold tracking-widest uppercase px-3 py-1 rounded mb-2">
@@ -61,9 +78,15 @@ export const Historia: React.FC = () => {
               </div>
             </div>
 
-            <div className="w-full rounded-2xl h-[300px] md:h-[450px] overflow-hidden shadow-2xl bg-[#e6e8f0] flex items-center justify-center">
-              {/* img */}
+            <div>
+              <div className="w-full rounded-2xl h-[300px] md:h-[450px] overflow-hidden shadow-2xl bg-[#e6e8f0] flex items-center justify-center mb-8">
+                {/* img */}
+              </div>
+              <div className="w-full rounded-2xl h-[200px] md:h-[250px] overflow-hidden shadow-2xl bg-[#e6e8f0] flex items-center justify-center">
+                {/* img */}
+              </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -169,7 +192,7 @@ export const Historia: React.FC = () => {
         </div>
       </section>
 
- 
+
 
     </div>
   );
