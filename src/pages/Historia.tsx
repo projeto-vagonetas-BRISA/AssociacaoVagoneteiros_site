@@ -6,6 +6,7 @@ import { TimelineItem } from "../components/TimeLineItem";
 import { FeatureCard } from "../components/FeatureCard";
 import conteudo from "../assets/conteudo.json";
 import Logo from "../assets/logo.png";
+import { Link } from "react-router-dom";
 
 export const Historia: React.FC = () => {
   return (
@@ -185,7 +186,7 @@ export const Historia: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <Button text="AGENDAR" icon="plane" />
-              <Button text={conteudo.rodape_localizacao.botao.texto} variant="secondary" icon="pin" />
+              <Button text={conteudo.rodape_localizacao.botao.texto} variant="secondary" icon="pin" onClick={() => window.open('https://www.google.com/maps/place/Vagonetas+dos+Molhes+da+Barra/@-32.1607519,-52.1029801,17z/data=!3m1!4b1!4m5!3m4!1s0x951183d1b248dfb3:0xc051970bebca8884!8m2!3d-32.1607519!4d-52.1007914', '_blank')} />
               <Button text={conteudo.galeria_fotos.botao.texto} variant="secondary" icon="image" />
             </div>
           </div>

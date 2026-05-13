@@ -7,6 +7,7 @@ import { TimelineCard } from "../components/TimelineCard";
 import { ReviewCard } from "../components/ReviewCard";
 import Logo from "../assets/logo.png";
 import conteudo from "../assets/conteudo.json";
+import { Link } from "react-router-dom";
 
 export const Home: React.FC = () => {
   return (
@@ -83,7 +84,7 @@ export const Home: React.FC = () => {
               <TimelineCard year="1881" title={conteudo.linha_do_tempo.eventos[0].titulo} description={conteudo.linha_do_tempo.eventos[0].descricao} variant="blue" />
               <TimelineCard year="1920" title={conteudo.linha_do_tempo.eventos[1].titulo} description={conteudo.linha_do_tempo.eventos[1].descricao} variant="red" />
               <TimelineCard year="1970" title={conteudo.linha_do_tempo.eventos[2].titulo} description={conteudo.linha_do_tempo.eventos[2].descricao} variant="green" />
-              <TimelineCard year="TODAY" title={conteudo.linha_do_tempo.eventos[3].titulo} description={conteudo.linha_do_tempo.eventos[3].descricao} variant="dark" />
+              <TimelineCard year="HOJE" title={conteudo.linha_do_tempo.eventos[3].titulo} description={conteudo.linha_do_tempo.eventos[3].descricao} variant="dark" />
             </div>
 
             <div className="w-fit">
@@ -179,6 +180,7 @@ export const Home: React.FC = () => {
                 LOCALIZAÇÃO
               </h2>
 
+
               <div className="flex flex-col gap-6 pb-8">
                 <div className="flex gap-4 items-start">
                   <MapPin className="size-5 shrink-0 text-[#8DFB8D] mt-0.5" strokeWidth={2} />
@@ -199,12 +201,11 @@ export const Home: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              <Button text="Ver Localização" variant="white" />
+              <Button text="Ver Localização" variant="white" onClick={() => window.open('https://www.google.com/maps/place/Vagonetas+dos+Molhes+da+Barra/@-32.1607519,-52.1029801,17z/data=!3m1!4b1!4m5!3m4!1s0x951183d1b248dfb3:0xc051970bebca8884!8m2!3d-32.1607519!4d-52.1007914', '_blank')} />
             </div>
 
             <div className="flex-1 min-h-[300px] md:min-h-full md:h-[424px] relative bg-slate-200">
-              {/* Mapa entra aqui */}
+              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3377.6125848091906!2d-52.102980147679155!3d-32.160751965596084!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x951183d1b248dfb3%3A0xc051970bebca8884!2sVagonetas%20dos%20Molhes%20da%20Barra!5e0!3m2!1spt-BR!2sbr!4v1778708468619!5m2!1spt-BR!2sbr" width="100%" height="450" loading="lazy"></iframe>
             </div>
           </div>
         </div>
