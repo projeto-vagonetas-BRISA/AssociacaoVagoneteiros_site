@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+
+}
+model Usuario {
+  id              Int      @id @default(autoincrement())
+  name            String
+  cpf             String   @unique
+  historico       String?
+  email           String?  @unique
+  telefone        String
+  senha           String
+  perfil          Perfil   @default(USUARIO)
+  data_associacao DateTime @default(now())
+  foto            Bytes?
+  passeios        Passeio[]
+  createdAt       DateTime @default(now())
+}
+
+enum Perfil {
+  USUARIO
+  ADMIN
+}
+
+model Passeio {
+  id           Int           @id @default(autoincrement())
+  usuarioId   Int
+  usuario     Usuario       @relation(fields: [usuarioId], references: [id])
+  valor        Decimal       @db.Decimal(10, 2)
+  capacidade   Int
+  data         DateTime
+  agendamentos Agendamento[]
+  avaliacoes   Avaliacao[]  
+  createdAt    DateTime      @default(now())
+}
+
+model Clientes {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  cpf          String        @unique
+  telefone     String
+  email        String?       @unique
+  agendamentos Agendamento[] 
+  avaliacoes   Avaliacao[]   
+  createdAt    DateTime      @default(now())
+}
+
+model Avaliacao {
+  id         Int      @id @default(autoincrement())
+  nota       Int
+  comentario String
+  clienteId  Int      
+  cliente    Clientes @relation(fields: [clienteId], references: [id])
+  passeioId  Int      
+  passeio    Passeio  @relation(fields: [passeioId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Agendamento {
+  id        Int               @id @default(autoincrement())
+  clienteId Int               
+  cliente   Clientes          @relation(fields: [clienteId], references: [id])
+  passeioId Int
+  passeio   Passeio           @relation(fields: [passeioId], references: [id])
+  status    StatusAgendamento @default(PENDENTE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+enum StatusAgendamento {
+  PENDENTE
+  CONFIRMADO
+  CANCELADO
+  REMARCADO
+}
