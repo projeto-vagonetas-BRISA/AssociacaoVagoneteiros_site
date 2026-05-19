@@ -1,0 +1,152 @@
+{
+  "hero": {
+    "tagline": "EST. 1957",
+    "titulo": "Vagoneteiros dos Molhes da Barra",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Ipsum hendrerit feugiat elementum in arcu mattis risus. Blandit malesuada aenean hac vitae. Eget adipiscing malesuada sapien viverra adipiscing. Commodo platea risus amet aliquam tellus. Nullam sit porta nibh.",
+    "botoes": {
+      "primario": {
+        "texto": "AGENDAR PASSEIO",
+        "link": "#agendar"
+      },
+      "secundario": {
+        "texto": "VER GALERIA",
+        "link": "#galeria"
+      }
+    }
+  },
+  "historia": {
+    "tag": "O LEGADO",
+    "titulo": "NOSSA HISTÓRIA",
+    "paragrafos": [
+      "Lorem ipsum dolor sit amet consectetur. Et in at egestas id placerat sed tristique sed. At phasellus eget ut lectus amet velit. Adipiscing vel libero mattis egestas eu pellentesque malesuada enim. Nibh consectetur orci massa faucibus orci scelerisque sodales. Nibh.",
+      "Lorem ipsum dolor sit amet consectetur. Libero ut leo convallis te quam. Tincidunt vitae tempor pellentesque tortor pharetra pellentesque varius quis tortor. Elementum magna proin eget vitae est fames. Lacinia mattis sed ut proin nullam. Massa mauris morbi."
+    ],
+    "citacao_label": "Lorem ipsum dolor sit amet",
+    "citacao": "Lorem ipsum dolor sit amet consectetur. Nunc elit arcu ultrices at neque. Placerat lorem ipsum consectetur adipiscing nulla.",
+    "imagem_url": "url_da_imagem_historia.jpg"
+  },
+  "linha_do_tempo": {
+    "titulo": "LINHA DO TEMPO",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Purus ac amet adipiscing phasellus ipsum quisque ornare maecenas. Massa.",
+    "eventos": [
+      {
+        "ano": "1881",
+        "titulo": "Lorem ipsum",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Mauris urna in est ornare velit scelerisque vel aliquam egestas. Ultrices."
+      },
+      {
+        "ano": "1920",
+        "titulo": "Lorem",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Purus vestibulum suspendisse ullamcorper id. Tortor posuere viverra ultrices."
+      },
+      {
+        "ano": "1970",
+        "titulo": "Lorem ipsum",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Cursus sit a sagittis quam. Dui blandit idque non odio elit arcu. Consequat at purus eu."
+      },
+      {
+        "ano": "HOJE",
+        "titulo": "Lorem ipsum",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Sagittis vulputate cursus. Ultrices in auctor morbi arcu nam cras in et nunc."
+      }
+    ],
+    "botao": {
+      "texto": "SAIBA MAIS",
+      "link": "#historia-completa"
+    }
+  },
+  "como_funciona": {
+    "titulo": "COMO FUNCIONA O PASSEIO",
+    "paragrafos": [
+      "Lorem ipsum dolor sit amet consectetur. Morbi gravida a nunc velit faucibus sit at. Id libero consequat gravida sit adipiscing. Tincidunt viverra sollicitudin in neque sit eget in. Vel massa tortor eros orci vitae volutpat nisi imperdiet id. Faucibus sed rhoncus id sed in.",
+      "Lorem ipsum dolor sit amet consectetur. Nisl aliquet id nec at habitant adipiscing. Ut habitasse vel vel aenean sollicitudin id pharetra imperdiet. Aliquet amet faucibus vitae sed nibh odio convallis at. Felis eget neque amet mauris. Morbi blandit ultrices senectus eu urna. Elementum odio leo justo in convallis."
+    ],
+    "ponto_partida": {
+      "rotulo": "Ponto de Partida",
+      "endereco": "Final da Avenida Rio Grande, Molhes da Barra - Cassino."
+    },
+    "trajeto": {
+      "rotulo": "TRAJETO",
+      "descricao": "4km de imersão no oceano",
+      "imagem_url": "url_do_mapa.jpg"
+    }
+  },
+  "galeria_fotos": {
+    "titulo": "GALERIA DE FOTOS",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Venenatis justo risus eu dolor feugiat at sed. Non vel aenean hendrerit odio aliquam praesent. Ornare cursus nibh habitant.",
+    "upload": {
+      "titulo": "Envie sua foto",
+      "descricao": "Foi em um dos nossos passeios e quer compartilhar o momento? Envie sua foto e ela pode aparecer aqui!"
+    },
+    "botao": {
+      "texto": "VER GALERIA",
+      "link": "#galeria"
+    },
+    "imagens": [
+      "url_galeria_1.jpg",
+      "url_galeria_2.jpg"
+    ]
+  },
+  "avaliacoes": {
+    "titulo": "AVALIAÇÕES",
+    "botao": {
+      "texto": "AVALIAR",
+      "link": "#avaliar"
+    },
+    "comentarios": [
+      {
+        "estrelas": 5,
+        "texto": "Lorem ipsum dolor sit amet consectetur. In cras aliquam et orci ultrices. Gravida massa pharetra lacus commodo donec.",
+        "autor": "Maria Silva",
+        "local": "São Paulo, SP",
+        "avatar_inicial": "M"
+      },
+      {
+        "estrelas": 5,
+        "texto": "Lorem ipsum dolor sit amet consectetur. Aliquet lobortis nunc vel sit amet arcu non sem dui. Fames facilisi tellus tincidunt.",
+        "autor": "Ana Beatriz",
+        "local": "Porto Alegre, RS",
+        "avatar_inicial": "A"
+      },
+      {
+        "estrelas": 5,
+        "texto": "Lorem ipsum dolor sit amet consectetur. Euismod vitae eget tempor sagittis elementum mattis vel consectetur duis.",
+        "autor": "João Miller",
+        "local": "Londrina, PR",
+        "avatar_inicial": "J"
+      }
+    ]
+  },
+  "vagoneteiros": {
+    "badge": "Lorem ipsum dolor sit amet",
+    "titulo": "Os Vagoneteiros",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Sagittis sed accumsan nec quisque donec ultrices ipsum sed. Id lectus est arcu varius. Consectetur vulputat odio donec. Massa morbi sed feugiat quis orci arcu. Faucibus duis donec adipiscing pretium sagittis turpis nunc. Tempus eu odio aliquam arcu nulla eu tellus placerat nunc.",
+    "features": [
+      {
+        "titulo": "Lorem ipsum dolor sit",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Ultrices eu varius. Consectetur vulputat odio donec feugiat."
+      },
+      {
+        "titulo": "Lorem ipsum dolor sit",
+        "descricao": "Lorem ipsum dolor sit amet consectetur. Faucibus ultrices at neque. Placerat lorem ipsum consectetur."
+      }
+    ]
+  },
+  "cta": {
+    "titulo": "Agende Um Passeio!",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Eget in viverra orci nisl nulla."
+  },
+  "rodape_localizacao": {
+    "titulo": "LOCALIZAÇÃO",
+    "descricao": "Lorem ipsum dolor sit amet consectetur. Morbi mauris nunc ipsum non leo lacus blandit. Uma pharetra lectus quis uma viverra etiam turpis a pellentesque.",
+    "endereco": "Av. Alm. Maximiano Fonseca, S/N - Cassino, Rio Grande - RS, Brazil",
+    "horario_funcionamento": {
+      "horario": "08:00 AM - 06:00 PM",
+      "nota": "Lorem ipsum dolor sit amet"
+    },
+    "botao": {
+      "texto": "VER LOCALIZAÇÃO",
+      "link": "link_para_maps"
+    }
+  }
+}
