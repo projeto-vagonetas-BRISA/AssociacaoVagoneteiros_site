@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev Tools - Vagoneteiros API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/front-dev/css/style.css" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="app-login" class="login-page" style="display:flex;">
+    <div class="login-card">
+      <h1>🔧 Dev Tools</h1>
+      <p>API Vagoneteiros — Teste dos CRUDs</p>
+      <div id="message" class="alert" style="display:none;"></div>
+      <form id="login-form">
+        <div style="margin-bottom:1.25rem;">
+          <label for="login-identifier">CPF ou E-mail</label>
+          <input type="text" id="login-identifier" placeholder="CPF ou e-mail do associado" autocomplete="username" />
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label for="login-senha">Senha</label>
+          <input type="password" id="login-senha" placeholder="Sua senha" autocomplete="current-password" />
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-primary">Entrar</button>
+      </form>
+      <p style="margin-top:1.5rem;font-size:0.75rem;color:#ffffff55;text-align:center;">
+        Use credenciais de um usuário ADMIN ou REDATOR para testar todos os CRUDs.
+      </p>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app-main" class="app" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h1>🔧 Vagoneteiros Dev</h1>
+      <nav>
+        <a href="#" data-page="passeios" class="active">🚂 Passeios</a>
+        <a href="#" data-page="clientes">👤 Clientes</a>
+        <a href="#" data-page="agendamentos">📅 Agendamentos</a>
+        <a href="#" data-page="avaliacoes">⭐ Avaliações</a>
+        <a href="#" data-page="usuarios">🔐 Usuários</a>
+      </nav>
+      <div class="user-info">
+        <div id="user-name" style="font-weight:600;color:#fff;"></div>
+        <div id="user-perfil" style="font-size:0.7rem;margin-top:0.15rem;"></div>
+        <button id="logout-btn" class="btn btn-sm btn-outline" style="margin-top:0.5rem;width:100%;justify-content:center;border-color:#ffffff30;color:#ffffffaa;border-width:1px;">Sair</button>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content">
+      <div id="message" class="alert" style="display:none;"></div>
+
+      <!-- PASSEIOS -->
+      <section id="page-passeios" class="page active">
+        <div class="toolbar justify-between">
+          <h2 style="font-size:1.25rem;font-weight:700;">🚂 Passeios</h2>
+          <button id="btn-new-passeio" class="btn btn-primary">+ Novo Passeio</button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Data</th><th>Valor</th><th>Vagas</th><th>Vagoneteiro</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="passeios-tbody">
+              <tr><td colspan="6" class="empty">Faça login para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CLIENTES -->
+      <section id="page-clientes" class="page">
+        <div class="toolbar justify-between">
+          <h2 style="font-size:1.25rem;font-weight:700;">👤 Clientes</h2>
+          <button id="btn-new-cliente" class="btn btn-primary">+ Novo Cliente</button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr><th>#</th><th>CPF</th><th>Nome</th><th>Telefone</th><th>E-mail</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="clientes-tbody">
+              <tr><td colspan="6" class="empty">Faça login para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- AGENDAMENTOS -->
+      <section id="page-agendamentos" class="page">
+        <div class="toolbar justify-between">
+          <h2 style="font-size:1.25rem;font-weight:700;">📅 Agendamentos</h2>
+          <button id="btn-new-agendamento" class="btn btn-primary">+ Novo Agendamento</button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Cliente</th><th>Passeio</th><th>Valor</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="agendamentos-tbody">
+              <tr><td colspan="6" class="empty">Faça login para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- AVALIAÇÕES -->
+      <section id="page-avaliacoes" class="page">
+        <div class="toolbar justify-between">
+          <h2 style="font-size:1.25rem;font-weight:700;">⭐ Avaliações</h2>
+          <button id="btn-new-avaliacao" class="btn btn-primary">+ Nova Avaliação</button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Cliente</th><th>Passeio</th><th>Nota</th><th>Comentário</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="avaliacoes-tbody">
+              <tr><td colspan="6" class="empty">Faça login para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- USUÁRIOS -->
+      <section id="page-usuarios" class="page">
+        <div class="toolbar">
+          <h2 style="font-size:1.25rem;font-weight:700;">🔐 Gerenciar Usuários</h2>
+          <span class="text-xs" style="color:#999;">Apenas ADMIN</span>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nome</th><th>CPF</th><th>E-mail</th><th>Perfil</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="usuarios-tbody">
+              <tr><td colspan="6" class="empty">Faça login como ADMIN para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/front-dev/js/app.js"></script>
+</body>
+</html>

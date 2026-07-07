@@ -1,9 +1,16 @@
+import path from 'path';
 import express, { Request, Response, NextFunction } from 'express';
 import routes from './routes';
 
 const app = express();
 
 app.use(express.json());
+
+// Servir o frontend de desenvolvimento (front-dev)
+app.use('/front-dev', express.static(path.join(__dirname, '..', 'front-dev')));
+app.get('/dev', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'front-dev', 'index.html'));
+});
 
 // Middleware de CORS para permitir requisições do frontend
 app.use((req, res, next) => {
