@@ -175,7 +175,7 @@ function openNewPasseio() {
     await api('/passeios', {
       method: 'POST',
       body: JSON.stringify({
-        data: $('#f-passeio-data').value,
+        data: toISOFromLocal($('#f-passeio-data').value),
         valor: $('#f-passeio-valor').value,
         capacidade: $('#f-passeio-capacidade').value,
       }),
@@ -191,14 +191,14 @@ function editPasseio(p) {
     el('div', {}, [el('label', {}, 'Capacidade (vagas)'), el('input', { type: 'number', min: '1', id: 'f-passeio-capacidade', value: p.capacidade })]),
   ]);
   showModal(`Editar Passeio #${p.id}`, form, async () => {
-    await api(`/passeios/${p.id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        data: $('#f-passeio-data').value,
-        valor: $('#f-passeio-valor').value,
-        capacidade: $('#f-passeio-capacidade').value,
-      }),
-    });
+    const body = {};
+    const newData = toISOFromLocal($('#f-passeio-data').value);
+    const newValor = $('#f-passeio-valor').value;
+    const newCapacidade = $('#f-passeio-capacidade').value;
+    if (newData) body.data = newData;
+    if (newValor) body.valor = newValor;
+    if (newCapacidade) body.capacidade = newCapacidade;
+    await api(`/passeios/${p.id}`, { method: 'PUT', body: JSON.stringify(body) });
     loadPasseios();
   });
 }
@@ -520,7 +520,13 @@ async function deleteUsuario(id) {
 // ---------------------------------------
 function formatDate(d) {
   if (!d) return '-';
-  return new Date(d).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const date = new Date(d);
+  // Se a data já veio sem fuso (string ISO sem Z), o JS pode interpretar como UTC
+  // Força interpretação como UTC pra exibir corretamente
+  if (typeof d === 'string' && !d.endsWith('Z') && !d.includes('+') && d.includes('T')) {
+    return new Date(d + 'Z').toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  }
+  return date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
 function toDatetimeLocal(d) {
@@ -528,6 +534,12 @@ function toDatetimeLocal(d) {
   const date = new Date(d);
   const pad = (n) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toISOFromLocal(datetimeLocal) {
+  // Converte o valor do input datetime-local (YYYY-MM-DDTHH:MM) pra ISO com fuso -03:00
+  if (!datetimeLocal) return '';
+  return new Date(datetimeLocal + ':00-03:00').toISOString();
 }
 
 // ---------------------------------------
