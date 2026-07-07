@@ -1,0 +1,183 @@
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../middlewares/auth';
+import prisma from '../lib/prisma';
+
+export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agendamentos = await prisma.agendamento.findMany({
+      include: {
+        cliente: { select: { id: true, nome: true, cpf: true } },
+        passeio: {
+          select: {
+            id: true, data: true, valor: true, capacidade: true,
+            usuario: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(agendamentos);
+  } catch (error) {
+    console.error('Erro ao listar agendamentos:', error);
+    res.status(500).json({ message: 'Erro ao listar agendamentos' });
+  }
+}
+
+export async function buscarPorId(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id },
+      include: {
+        cliente: { select: { id: true, nome: true, cpf: true, telefone: true, email: true } },
+        passeio: {
+          include: { usuario: { select: { id: true, name: true } } },
+        },
+      },
+    });
+
+    if (!agendamento) {
+      res.status(404).json({ message: 'Agendamento não encontrado' });
+      return;
+    }
+
+    res.json(agendamento);
+  } catch (error) {
+    console.error('Erro ao buscar agendamento:', error);
+    res.status(500).json({ message: 'Erro ao buscar agendamento' });
+  }
+}
+
+export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { clienteId, passeioId } = req.body;
+
+    if (!clienteId || !passeioId) {
+      res.status(400).json({ message: 'clienteId e passeioId são obrigatórios' });
+      return;
+    }
+
+    const parsedClienteId = Number(clienteId);
+    const parsedPasseioId = Number(passeioId);
+
+    if (isNaN(parsedClienteId) || isNaN(parsedPasseioId)) {
+      res.status(400).json({ message: 'IDs inválidos' });
+      return;
+    }
+
+    // Verificar se cliente existe
+    const cliente = await prisma.clientes.findUnique({ where: { id: parsedClienteId } });
+    if (!cliente) {
+      res.status(404).json({ message: 'Cliente não encontrado' });
+      return;
+    }
+
+    // Verificar se passeio existe
+    const passeio = await prisma.passeio.findUnique({
+      where: { id: parsedPasseioId },
+      include: { _count: { select: { agendamentos: true } } },
+    });
+    if (!passeio) {
+      res.status(404).json({ message: 'Passeio não encontrado' });
+      return;
+    }
+
+    // Verificar capacidade do passeio
+    if (passeio._count.agendamentos >= passeio.capacidade) {
+      res.status(400).json({ message: 'Passeio lotado. Não há vagas disponíveis' });
+      return;
+    }
+
+    // Verificar se cliente já tem agendamento neste passeio
+    const jaAgendado = await prisma.agendamento.findFirst({
+      where: { clienteId: parsedClienteId, passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
+    });
+    if (jaAgendado) {
+      res.status(400).json({ message: 'Cliente já possui agendamento neste passeio' });
+      return;
+    }
+
+    const agendamento = await prisma.agendamento.create({
+      data: {
+        clienteId: parsedClienteId,
+        passeioId: parsedPasseioId,
+      },
+      include: {
+        cliente: { select: { id: true, nome: true } },
+        passeio: { select: { id: true, data: true, valor: true } },
+      },
+    });
+
+    res.status(201).json(agendamento);
+  } catch (error) {
+    console.error('Erro ao criar agendamento:', error);
+    res.status(500).json({ message: 'Erro ao criar agendamento' });
+  }
+}
+
+export async function atualizarStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const { status } = req.body;
+    const statusValidos = ['PENDENTE', 'CONFIRMADO', 'CANCELADO', 'REMARCADO'];
+
+    if (!status || !statusValidos.includes(status)) {
+      res.status(400).json({
+        message: `Status inválido. Valores permitidos: ${statusValidos.join(', ')}`,
+      });
+      return;
+    }
+
+    const agendamentoExistente = await prisma.agendamento.findUnique({ where: { id } });
+    if (!agendamentoExistente) {
+      res.status(404).json({ message: 'Agendamento não encontrado' });
+      return;
+    }
+
+    const agendamento = await prisma.agendamento.update({
+      where: { id },
+      data: { status },
+      include: {
+        cliente: { select: { id: true, nome: true } },
+        passeio: { select: { id: true, data: true, valor: true } },
+      },
+    });
+
+    res.json(agendamento);
+  } catch (error) {
+    console.error('Erro ao atualizar status do agendamento:', error);
+    res.status(500).json({ message: 'Erro ao atualizar status do agendamento' });
+  }
+}
+
+export async function deletar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const agendamentoExistente = await prisma.agendamento.findUnique({ where: { id } });
+    if (!agendamentoExistente) {
+      res.status(404).json({ message: 'Agendamento não encontrado' });
+      return;
+    }
+
+    await prisma.agendamento.delete({ where: { id } });
+    res.json({ message: 'Agendamento deletado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar agendamento:', error);
+    res.status(500).json({ message: 'Erro ao deletar agendamento' });
+  }
+}
