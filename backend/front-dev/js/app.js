@@ -25,7 +25,7 @@ function el(tag, attrs = {}, children = []) {
   for (const [k, v] of Object.entries(attrs)) {
     if (k === 'className') e.className = v;
     else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
-    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
     else e.setAttribute(k, v);
   }
   for (const c of (Array.isArray(children) ? children : [children])) {
