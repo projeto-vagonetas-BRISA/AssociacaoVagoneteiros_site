@@ -531,6 +531,34 @@ function toDatetimeLocal(d) {
 }
 
 // ---------------------------------------
+// CADASTRO DIRETO DO FRONT-DEV
+// ---------------------------------------
+function showCadastroForm() {
+  const form = el('div', { className: 'form-grid' }, [
+    el('div', { className: 'full' }, [el('label', {}, 'Nome completo'), el('input', { type: 'text', id: 'f-cad-nome', required: true, placeholder: 'Seu nome' })]),
+    el('div', {}, [el('label', {}, 'CPF'), el('input', { type: 'text', id: 'f-cad-cpf', required: true, placeholder: '000.000.000-00' })]),
+    el('div', {}, [el('label', {}, 'Telefone'), el('input', { type: 'text', id: 'f-cad-telefone', required: true, placeholder: '(53) 99999-9999' })]),
+    el('div', { className: 'full' }, [el('label', {}, 'E-mail'), el('input', { type: 'email', id: 'f-cad-email', placeholder: 'opcional@email.com' })]),
+    el('div', { className: 'full' }, [el('label', {}, 'Senha'), el('input', { type: 'password', id: 'f-cad-senha', required: true, minlength: '6', placeholder: 'Mínimo 6 caracteres' })]),
+  ]);
+
+  const modal = showModal('Criar Novo Usuário', form, async () => {
+    await api('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: $('#f-cad-nome').value,
+        cpf: $('#f-cad-cpf').value,
+        telefone: $('#f-cad-telefone').value,
+        email: $('#f-cad-email').value || undefined,
+        senha: $('#f-cad-senha').value,
+      }),
+    });
+    showMessage('Usuário cadastrado com sucesso! Faça login.', 'success');
+  });
+  modal.btnConfirm.textContent = 'Cadastrar';
+}
+
+// ---------------------------------------
 // NAVEGAÇÃO
 // ---------------------------------------
 function initNavigation() {
@@ -550,6 +578,7 @@ function initNavigation() {
 document.addEventListener('DOMContentLoaded', () => {
   $('#login-form').addEventListener('submit', doLogin);
   $('#logout-btn').addEventListener('click', doLogout);
+  $('#btn-show-cadastro')?.addEventListener('click', showCadastroForm);
   checkAuth();
   initNavigation();
 
