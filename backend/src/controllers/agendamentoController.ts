@@ -9,7 +9,7 @@ export async function listar(req: AuthenticatedRequest, res: Response): Promise<
         cliente: { select: { id: true, nome: true, cpf: true } },
         passeio: {
           select: {
-            id: true, data: true, valor: true, capacidade: true,
+            id: true, data: true, preco: true, capacidade: true, horario: true,
             usuario: { select: { id: true, name: true } },
           },
         },

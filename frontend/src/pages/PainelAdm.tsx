@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Users, CheckCircle, DollarSign, Star,
@@ -29,76 +29,84 @@ interface VagoneteirosResponse {
   totalPages: number;
 }
 
-const mockClientes = [
-  { id: 1, nome: "Pedro Alves", telefone: "(51) 99811-0001", tipo: "PF", documento: "111.222.333-44" },
-  { id: 2, nome: "Lucia Martins", telefone: "(51) 99811-0002", tipo: "PF", documento: "222.333.444-55" },
-  { id: 3, nome: "Rafael Costa", telefone: "(11) 99811-0003", tipo: "PJ", documento: "12.345.678/0001-90" },
-  { id: 4, nome: "Fernanda Lima", telefone: "(41) 99811-0004", tipo: "PF", documento: "333.444.555-66" },
-  { id: 5, nome: "Bruno Mendes", telefone: "(21) 99811-0005", tipo: "PF", documento: "444.555.666-77" },
-];
+interface Passeio {
+  id: number;
+  preco: number;
+  capacidade: number;
+  data: string;
+  horario: string;
+  usuario: { id: number; name: string };
+}
 
-const mockPasseios = [
-  { id: 1, valor: 100, capacidade: 5, data_hora: "2025-03-18T09:00:00", id_vagoneteiro: 1 },
-  { id: 2, valor: 100, capacidade: 5, data_hora: "2025-03-18T10:00:00", id_vagoneteiro: 2 },
-  { id: 3, valor: 100, capacidade: 5, data_hora: "2025-03-19T09:00:00", id_vagoneteiro: 1 },
-  { id: 4, valor: 100, capacidade: 5, data_hora: "2025-03-19T14:00:00", id_vagoneteiro: 4 },
-];
+interface Cliente {
+  id: number;
+  nome: string;
+  cpf: string;
+  telefone: string;
+  email: string | null;
+}
 
-const mockAgenda = [
-  { id: 1, situacao: "COMPLETO", vagas: 2, data_horario: "2023-10-15T09:00:00", id_cliente: 1, id_passeio: 1 },
-  { id: 2, situacao: "COMPLETO", vagas: 1, data_horario: "2023-10-15T13:30:00", id_cliente: 2, id_passeio: 2 },
-  { id: 3, situacao: "COMPLETO", vagas: 3, data_horario: "2023-10-14T10:00:00", id_cliente: 3, id_passeio: 1 },
-  { id: 4, situacao: "COMPLETO", vagas: 1, data_horario: "2023-10-14T15:00:00", id_cliente: 4, id_passeio: 3 },
-  { id: 5, situacao: "CANCELADO", vagas: 3, data_horario: "2023-10-13T08:30:00", id_cliente: 5, id_passeio: 2 },
-  { id: 6, situacao: "CONFIRMADA", vagas: 2, data_horario: "2023-10-16T09:00:00", id_cliente: 1, id_passeio: 4 },
-  { id: 7, situacao: "AGUARDANDO APROVAÇÃO", vagas: 1, data_horario: "2023-10-16T14:00:00", id_cliente: 2, id_passeio: 4 },
-];
+interface Agendamento {
+  id: number;
+  status: "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REMARCADO";
+  createdAt: string;
+  cliente: { id: number; nome: string; cpf: string };
+  passeio: {
+    id: number;
+    data: string;
+    preco: number;
+    capacidade: number;
+    horario: string;
+    usuario: { id: number; name: string };
+  };
+}
 
-const mockAvaliacoes = [
-  { id: 1, nota: 5, comentario: "Experiência incrível! Recomendo muito.", id_passeio: 1, id_cliente: 1 },
-  { id: 2, nota: 5, comentario: "Passeio maravilhoso, guia muito atencioso.", id_passeio: 2, id_cliente: 2 },
-  { id: 3, nota: 4, comentario: "Muito bom, valeu cada centavo.", id_passeio: 3, id_cliente: 3 },
-];
+interface Avaliacao {
+  id: number;
+  nota: number;
+  comentario: string;
+  clienteId: number;
+  passeioId: number;
+}
 
 const formatData = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 };
-const formatHorario = (iso: string) => new Date(iso).toTimeString().slice(0, 5);
 
-const getVagoneteiro = (_id: number) => null;
-const getCliente = (id: number) => mockClientes.find(c => c.id === id);
-const getPasseio = (id: number) => mockPasseios.find(p => p.id === id);
+const formatHorario = (horario: string) => horario;
 
 const statusConfig: Record<string, { label: string; pill: string; dot: string }> = {
-  CONFIRMADA: { label: "Confirmada", pill: "bg-blue-accent/10 text-blue-accent border border-blue-accent/25", dot: "bg-blue-accent" },
+  CONFIRMADO: { label: "Confirmado", pill: "bg-blue-accent/10 text-blue-accent border border-blue-accent/25", dot: "bg-blue-accent" },
+  CONFIRMADA: { label: "Confirmado", pill: "bg-blue-accent/10 text-blue-accent border border-blue-accent/25", dot: "bg-blue-accent" },
   COMPLETO: { label: "Completo", pill: "bg-green-timeline/10 text-green-timeline border border-green-timeline/25", dot: "bg-green-timeline" },
   CANCELADO: { label: "Cancelado", pill: "bg-red-dark/10 text-red-dark border border-red-dark/25", dot: "bg-red-dark" },
+  CANCELADA: { label: "Cancelado", pill: "bg-red-dark/10 text-red-dark border border-red-dark/25", dot: "bg-red-dark" },
+  PENDENTE: { label: "Pendente", pill: "bg-amber-500/10 text-amber-500 border border-amber-500/25", dot: "bg-amber-500" },
+  REMARCADO: { label: "Remarcado", pill: "bg-purple-500/10 text-purple-500 border border-purple-500/25", dot: "bg-purple-500" },
   "AGUARDANDO APROVAÇÃO": { label: "Aguardando Aprovação", pill: "bg-amber-500/10 text-amber-500 border border-amber-500/25", dot: "bg-amber-500" },
 };
-
-const passeiosRealizados = mockAgenda.filter(a => a.situacao === "COMPLETO").length;
-const receitaEstimada = mockAgenda.filter(a => a.situacao !== "CANCELADA").length * 100;
-const avaliacaoMedia = (mockAvaliacoes.reduce((s, a) => s + a.nota, 0) / mockAvaliacoes.length).toFixed(1);
-
-const statCards = [
-  { label: "Total de Turistas", value: mockAgenda.filter(a => a.situacao !== "CANCELADA").reduce((total, a) => total + a.vagas, 0), icon: Users, color: "text-blue-accent" },
-  { label: "Passeios Realizados", value: String(passeiosRealizados), icon: CheckCircle, color: "text-green-timeline" },
-  { label: "Receita Estimada", value: `R$ ${receitaEstimada.toLocaleString("pt-BR")}`, icon: DollarSign, color: "text-[#b61722]" },
-  { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
-];
 
 const CARDS_POR_PAGINA = 3;
 const VAG_POR_PAGINA = 9;
 
-const groupAgendaByPasseio = (agenda: typeof mockAgenda) => {
-  const map = new Map<number, typeof mockAgenda>();
+interface GrupoAgenda {
+  id_passeio: number;
+  passeio: Passeio;
+  registros: Agendamento[];
+}
+
+function groupAgendaByPasseio(agenda: Agendamento[], passeios: Passeio[]): GrupoAgenda[] {
+  const map = new Map<number, Agendamento[]>();
   agenda.forEach(a => {
-    if (!map.has(a.id_passeio)) map.set(a.id_passeio, []);
-    map.get(a.id_passeio)!.push(a);
+    if (!map.has(a.passeio.id)) map.set(a.passeio.id, []);
+    map.get(a.passeio.id)!.push(a);
   });
-  return Array.from(map.entries()).map(([id_passeio, registros]) => ({ id_passeio, registros }));
-};
+  return Array.from(map.entries()).map(([id_passeio, registros]) => {
+    const passeio = passeios.find(p => p.id === id_passeio);
+    return { id_passeio, passeio: passeio!, registros };
+  }).filter(g => g.passeio);
+}
 
 export const PainelAdmin: React.FC = () => {
   const navigate = useNavigate();
@@ -110,9 +118,35 @@ export const PainelAdmin: React.FC = () => {
   const [vagLoading, setVagLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
+  const [passeios, setPasseios] = useState<Passeio[]>([]);
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
   useEffect(() => {
     carregarVagoneteiros(1);
+    carregarDados();
   }, []);
+
+  async function carregarDados() {
+    setLoadingData(true);
+    try {
+      const [p, a, av, c] = await Promise.all([
+        api.request<Passeio[]>("/passeios"),
+        api.request<Agendamento[]>("/agendamentos"),
+        api.request<Avaliacao[]>("/avaliacoes"),
+        api.request<Cliente[]>("/clientes"),
+      ]);
+      setPasseios(p);
+      setAgendamentos(a);
+      setAvaliacoes(av);
+      setClientes(c);
+    } catch {
+      // api.request já trata erro
+    }
+    setLoadingData(false);
+  }
 
   async function carregarVagoneteiros(page: number) {
     setVagLoading(true);
@@ -128,22 +162,45 @@ export const PainelAdmin: React.FC = () => {
     setTogglingId(id);
     try {
       await api.request<{ id: number; name: string; ativo: boolean }>(`/usuarios/vagoneteiros/${id}/ativo`, { method: 'PATCH' });
-      // Recarregar dados da página atual
       await carregarVagoneteiros(paginaVag);
     } catch { /* api.request já trata erro */ }
     setTogglingId(null);
   }
 
-  const agendaFiltrada = filtroStatus === "TODOS"
-    ? mockAgenda
-    : mockAgenda.filter(a => a.situacao === filtroStatus);
+  // Estatísticas
+  const agendamentosNaoCancelados = agendamentos.filter(a => a.status !== "CANCELADO");
+  const passeiosRealizados = agendamentos.filter(a =>
+    a.status === "CONFIRMADO" || a.status === "CONFIRMADA"
+  ).length;
+  const totalTuristas = agendamentosNaoCancelados.length;
+  const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => s + Number(a.passeio.preco || 0), 0);
+  const avaliacaoMedia = avaliacoes.length > 0
+    ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / avaliacoes.length).toFixed(1)
+    : "0.0";
 
-  const grupos = groupAgendaByPasseio(agendaFiltrada);
+  const statCards = [
+    { label: "Total de Turistas", value: totalTuristas, icon: Users, color: "text-blue-accent" },
+    { label: "Passeios Realizados", value: String(passeiosRealizados), icon: CheckCircle, color: "text-green-timeline" },
+    { label: "Receita Estimada", value: `R$ ${receitaEstimada.toLocaleString("pt-BR")}`, icon: DollarSign, color: "text-[#b61722]" },
+    { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
+  ];
+
+  // Filtro de agenda
+  const agendaFiltrada = filtroStatus === "TODOS"
+    ? agendamentos
+    : agendamentos.filter(a => {
+        if (filtroStatus === "ANDAMENTO") return a.status === "CONFIRMADO" || a.status === "PENDENTE";
+        return a.status === filtroStatus;
+      });
+
+  const grupos = groupAgendaByPasseio(agendaFiltrada, passeios);
   const totalPaginas = Math.ceil(grupos.length / CARDS_POR_PAGINA);
   const gruposPaginados = grupos.slice((pagina - 1) * CARDS_POR_PAGINA, pagina * CARDS_POR_PAGINA);
 
   const vagPaginados = vagoneteirosData?.data || [];
   const totalPaginasVag = vagoneteirosData?.totalPages || 1;
+
+  const getClienteNome = (id: number) => clientes.find(c => c.id === id)?.nome || `Cliente #${id}`;
 
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
@@ -179,17 +236,28 @@ export const PainelAdmin: React.FC = () => {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {statCards.map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-border flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-[#7a8394] tracking-widest uppercase">{label}</p>
-                <Icon size={16} className={`${color} opacity-60`} />
+        {loadingData ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-border animate-pulse">
+                <div className="h-3 w-20 bg-gray-200 rounded mb-3" />
+                <div className="h-7 w-16 bg-gray-200 rounded" />
               </div>
-              <p className={`font-bold text-2xl md:text-3xl tracking-tight ${color}`}>{value}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {statCards.map(({ label, value, icon: Icon, color }) => (
+              <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-border flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-[#7a8394] tracking-widest uppercase">{label}</p>
+                  <Icon size={16} className={`${color} opacity-60`} />
+                </div>
+                <p className={`font-bold text-2xl md:text-3xl tracking-tight ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Gestão de Passeios */}
         <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
@@ -214,31 +282,32 @@ export const PainelAdmin: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockPasseios.map((p) => {
-                  const vag = getVagoneteiro(p.id_vagoneteiro);
-                  return (
-                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-bg-light-2 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-text-dark whitespace-nowrap">{formatData(p.data_hora)}</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-block bg-blue-accent/10 text-blue-accent border border-blue-accent/20 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
-                          {formatHorario(p.data_hora)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-bold text-green-timeline">R$ {p.valor},00</td>
-                      <td className="px-6 py-4 text-sm text-text-primary">
-                        <span className="font-bold">{String(p.capacidade).padStart(2, "0")}</span>
-                        <span className="text-[#7a8394]"> vagas</span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-text-primary">{(vag as any)?.nome ?? "—"}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <button className="text-[#7a8394] hover:text-blue-accent transition-colors cursor-pointer"><Pencil size={15} /></button>
-                          <button className="text-[#7a8394] hover:text-red-dark transition-colors cursor-pointer"><Trash2 size={15} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {loadingData ? (
+                  <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-[#7a8394]">Carregando...</td></tr>
+                ) : passeios.length === 0 ? (
+                  <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-[#7a8394]">Nenhum passeio cadastrado</td></tr>
+                ) : passeios.map((p) => (
+                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-bg-light-2 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-text-dark whitespace-nowrap">{formatData(p.data)}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-block bg-blue-accent/10 text-blue-accent border border-blue-accent/20 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+                        {p.horario}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-green-timeline">R$ {Number(p.preco).toFixed(2).replace('.', ',')}</td>
+                    <td className="px-6 py-4 text-sm text-text-primary">
+                      <span className="font-bold">{String(p.capacidade).padStart(2, "0")}</span>
+                      <span className="text-[#7a8394]"> vagas</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-primary">{p.usuario?.name || "—"}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <button className="text-[#7a8394] hover:text-blue-accent transition-colors cursor-pointer"><Pencil size={15} /></button>
+                        <button className="text-[#7a8394] hover:text-red-dark transition-colors cursor-pointer"><Trash2 size={15} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -265,7 +334,6 @@ export const PainelAdmin: React.FC = () => {
                 <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Nenhum vagoneteiro cadastrado</div>
               ) : vagPaginados.map((v, i) => (
                 <div key={`${v.id}-${i}`} className="flex items-center gap-2 px-3 py-3 hover:bg-bg-light-2 transition-colors">
-                  {/* Avatar / iniciais */}
                   <Link to={`/admin/vagoneteiros/${v.id}`} className="shrink-0">
                     {v.foto ? (
                       <img src={`data:image/jpeg;base64,${v.foto}`} alt="" className="w-9 h-9 rounded-full object-cover" />
@@ -275,14 +343,10 @@ export const PainelAdmin: React.FC = () => {
                       </div>
                     )}
                   </Link>
-
-                  {/* Nome + info */}
                   <Link to={`/admin/vagoneteiros/${v.id}`} className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-text-dark truncate">{v.name}</p>
                     <p className="text-xs text-[#7a8394] truncate">{v.telefone}</p>
                   </Link>
-
-                  {/* Status badge */}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                     v.ativo
                       ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
@@ -290,8 +354,6 @@ export const PainelAdmin: React.FC = () => {
                   }`}>
                     {v.ativo ? "Ativo" : "Inativo"}
                   </span>
-
-                  {/* Toggle ativar/desativar */}
                   <button
                     onClick={() => toggleAtivo(v.id)}
                     disabled={togglingId === v.id}
@@ -348,25 +410,29 @@ export const PainelAdmin: React.FC = () => {
                   onChange={e => { setFiltroStatus(e.target.value); setPagina(1); }}
                   className="text-xs font-semibold text-text-primary bg-bg-light-1 border border-border rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none">
                   <option value="TODOS">Todos</option>
-                  <option value="ANDAMENTO">Em andamento</option>
+                  <option value="CONFIRMADO">Confirmado</option>
+                  <option value="PENDENTE">Pendente</option>
+                  <option value="CANCELADO">Cancelado</option>
                   <option value="COMPLETO">Completo</option>
-                  <option value="CANCELADA">Cancelada</option>
                 </select>
               </div>
             </div>
 
             {/* Cards */}
             <div className="flex flex-col gap-0 divide-y divide-border flex-1 overflow-y-auto">
-              {gruposPaginados.length === 0 && (
+              {loadingData ? (
+                <div className="flex items-center justify-center py-16 text-sm text-[#7a8394]">Carregando...</div>
+              ) : gruposPaginados.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-[#7a8394]">
                   <Ticket size={32} className="mb-3 opacity-30" />
                   <p className="text-sm font-medium">Nenhum registro encontrado</p>
                 </div>
               )}
 
-              {gruposPaginados.map(({ id_passeio, registros }) => {
-                const passeio = getPasseio(id_passeio);
-                const vag = passeio ? getVagoneteiro(passeio.id_vagoneteiro) : null;
+              {gruposPaginados.map(({ id_passeio, passeio, registros }) => {
+                const vagasOcupadas = registros
+                  .filter(r => r.status !== "CANCELADO")
+                  .reduce((sum, r) => sum + 1, 0);
 
                 return (
                   <div key={id_passeio} className="px-6 py-4">
@@ -375,35 +441,39 @@ export const PainelAdmin: React.FC = () => {
                       <Ticket size={16} className="text-blue-accent shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-text-dark">Passeio #{id_passeio}</p>
-                        {passeio && vag && (
+                        {passeio && (
                           <p className="text-xs text-[#7a8394] mt-0.5">
-                            Data: {formatData(passeio.data_hora)} às {formatHorario(passeio.data_hora)} - Profissional: {(vag as any)?.nome}
+                            Data: {formatData(passeio.data)} às {passeio.horario} — Profissional: {passeio.usuario?.name}
                           </p>
                         )}
                       </div>
                       {passeio && (
                         <div className="text-right shrink-0">
                           <p className="text-xs font-semibold text-text-primary">
-                            {registros.filter(r => r.situacao !== "CANCELADA").reduce((sum, r) => sum + r.vagas, 0)}/{passeio.capacidade}
+                            {vagasOcupadas}/{passeio.capacidade}
                           </p>
                           <p className="text-xs text-[#7a8394]">Vagas Ocupadas</p>
                         </div>
                       )}
                     </div>
 
-                    {/* Lista de reservas */}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-text-dark">Clientes:</span>
+                    {/* Lista de reservas/clientes */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-bold text-text-dark mb-1">Clientes:</span>
+                      {registros.length === 0 && (
+                        <p className="text-xs text-[#7a8394] py-1">Nenhum cliente neste passeio</p>
+                      )}
                       {registros.map(a => {
-                        const cliente = getCliente(a.id_cliente);
-                        const sc = statusConfig[a.situacao] ?? statusConfig["COMPLETO"];
+                        const sc = statusConfig[a.status] || statusConfig["PENDENTE"];
                         return (
-                          <div key={a.id} className="flex items-center justify-between gap-3 text-sm py-2">
+                          <div key={a.id} className="flex items-center justify-between gap-3 text-sm py-1.5">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span className={`w-2 h-2 rounded-full shrink-0 ${sc.dot}`} />
-                              <span className="truncate text-text-primary">{cliente?.nome ?? `Cliente #${a.id_cliente}`}</span>
+                              <span className="truncate text-text-primary">
+                                {a.cliente?.nome || `Cliente #${a.cliente?.id || "?"}`}
+                              </span>
                             </div>
-                            <span className="text-xs text-[#7a8394] shrink-0">{a.vagas} vaga{a.vagas !== 1 ? "s" : ""}</span>
+                            <span className="text-xs text-[#7a8394] shrink-0">1 vaga</span>
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${sc.pill}`}>
                               {sc.label}
                             </span>

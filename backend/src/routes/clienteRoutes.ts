@@ -5,8 +5,8 @@ import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 const router = Router();
 
 // Qualquer usuário autenticado pode listar e buscar clientes
-router.get('/', authMiddleware, listar);
-router.get('/:id', authMiddleware, buscarPorId);
+router.get('/', listar);
+router.get('/:id', buscarPorId);
 
 // Apenas ADMIN e REDATOR podem criar/editar/deletar
 router.post('/', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), criar);

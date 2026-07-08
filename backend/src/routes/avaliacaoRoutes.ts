@@ -4,8 +4,8 @@ import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
-router.get('/', authMiddleware, listar);
-router.get('/:id', authMiddleware, buscarPorId);
+router.get('/', listar);
+router.get('/:id', buscarPorId);
 router.post('/', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), criar);
 router.put('/:id', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), atualizar);
 router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), deletar);
