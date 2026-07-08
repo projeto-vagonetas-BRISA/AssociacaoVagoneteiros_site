@@ -364,7 +364,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                   <div>
                     <p className="text-xs text-[#7a8394]">Total de Passeios</p>
                     <p className="text-sm font-medium text-text-dark">
-                      {vagoneteiro.passeios.length} passeio{vagoneteiro.passeios.length !== 1 ? "s" : ""}
+                      {(vagoneteiro.passeios || []).length} passeio{(vagoneteiro.passeios || []).length !== 1 ? "s" : ""}
                     </p>
                   </div>
                 </div>
@@ -373,7 +373,7 @@ export const VagoneteiroPerfil: React.FC = () => {
           </div>
 
           {/* Passeios realizados */}
-          {vagoneteiro.passeios.length > 0 && (
+          {(vagoneteiro.passeios || []).length > 0 && (
             <div className="border-t border-border px-8 py-6">
               <h3 className="font-bold text-sm text-[#7a8394] uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Calendar size={14} /> Passeios Realizados
