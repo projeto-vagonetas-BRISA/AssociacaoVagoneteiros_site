@@ -26,6 +26,7 @@ interface Passeio {
   capacidade: number;
   data: string;
   horario: string;
+  vagasDisponiveis: number;
   usuario: { id: number; name: string };
 }
 
@@ -123,7 +124,7 @@ export const Agendamento: React.FC = () => {
   // Carregar passeios da API
   useEffect(() => {
     setLoadingPasseios(true);
-    api.request<{ data: Passeio[]; total: number }>('/passeios?limit=100')
+    api.request<{ data: Passeio[] }>('/agendamentos/vagas-disponiveis')
       .then(res => setPasseios(res.data))
       .catch(() => {})
       .finally(() => setLoadingPasseios(false));
@@ -192,7 +193,7 @@ export const Agendamento: React.FC = () => {
   };
 
   // capacidade máxima do passeio selecionado
-  const maxPassageiros = isAgencia ? 999 : (selectedPasseio?.capacidade ?? 5);
+  const maxPassageiros = isAgencia ? 999 : (selectedPasseio?.vagasDisponiveis ?? 5);
   const precoUnitario = selectedPasseio ? Number(selectedPasseio.preco) : 0;
   const subtotal = precoUnitario * passageiros;
 
@@ -231,6 +232,10 @@ export const Agendamento: React.FC = () => {
           telefone,
           email: email.trim() || undefined,
           passeioId: selectedPasseio.id,
+          acompanhantes: passageiros - 1,
+          promocao: consentimento,
+          notificacao: consentimentoNotificacao,
+          ciente,
         }),
       });
       setAgendamentoConfirmado(result);
@@ -239,6 +244,22 @@ export const Agendamento: React.FC = () => {
       setSubmitError(message);
     }
     setSubmitting(false);
+  }
+
+  function handleNovoAgendamento() {
+    setAgendamentoConfirmado(null);
+    setSelectedPasseio(null);
+    setSelectedDay(today.getDate());
+    setCurrentMonth(today.getMonth());
+    setCurrentYear(today.getFullYear());
+    setPassageiros(1);
+    setNome('');
+    setTelefone('');
+    setEmail('');
+    setConsentimento(false);
+    setConsentimentoNotificacao(false);
+    setCiente(false);
+    setSubmitError('');
   }
 
   return (
@@ -320,7 +341,7 @@ export const Agendamento: React.FC = () => {
                     </p>
                     <p className="font-normal text-xs text-text-secondary">
                       {selectedPasseio
-                        ? `${isAgencia ? "Selecione o número total de passageiros para o passeio" : `Máximo ${selectedPasseio.capacidade} passageiros para este horário` }`
+                        ? `${isAgencia ? "Selecione o número total de passageiros para o passeio" : `Máximo ${selectedPasseio.vagasDisponiveis} passageiros para este horário` }`
                         : "Selecione um horário"}
                     </p>
                   </div>
@@ -652,6 +673,13 @@ export const Agendamento: React.FC = () => {
                   <p className="text-xs text-[#7a8394] mt-2">
                     Protocolo: #{agendamentoConfirmado.id}
                   </p>
+                  <button
+                    onClick={handleNovoAgendamento}
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-accent hover:opacity-90 transition-opacity rounded-lg py-3 font-bold text-sm text-white tracking-wide"
+                  >
+                    Novo Agendamento
+                    <ArrowRight className="size-4" strokeWidth={2.5} />
+                  </button>
                 </div>
               ) : (
                 <button

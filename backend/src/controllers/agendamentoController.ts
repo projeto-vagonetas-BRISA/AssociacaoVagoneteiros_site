@@ -55,7 +55,7 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
 
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { clienteId, passeioId } = req.body;
+    const { clienteId, passeioId, acompanhantes } = req.body;
 
     if (!clienteId || !passeioId) {
       res.status(400).json({ message: 'clienteId e passeioId são obrigatórios' });
@@ -86,17 +86,17 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Contar apenas agendamentos ativos (não cancelados)
-    const agendamentosAtivos = await prisma.agendamento.count({
-      where: {
-        passeioId: parsedPasseioId,
-        status: { not: 'CANCELADO' },
-      },
+    // Calcular vagas já ocupadas (1 por agendamento + acompanhantes)
+    const agendamentosAtivos = await prisma.agendamento.findMany({
+      where: { passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
+      select: { acompanhantes: true },
     });
+    const vagasOcupadas = agendamentosAtivos.reduce((sum, a) => sum + 1 + a.acompanhantes, 0);
 
-    // Verificar capacidade do passeio
-    if (agendamentosAtivos >= passeio.capacidade) {
-      res.status(400).json({ message: 'Passeio lotado. Não há vagas disponíveis' });
+    // Verificar capacidade
+    const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
+    if (vagasOcupadas + vagasSolicitadas > passeio.capacidade) {
+      res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
       return;
     }
 
@@ -109,10 +109,12 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
+    const numAcompanhantes = acompanhantes ? Number(acompanhantes) : 0;
     const agendamento = await prisma.agendamento.create({
       data: {
         clienteId: parsedClienteId,
         passeioId: parsedPasseioId,
+        acompanhantes: numAcompanhantes,
       },
       include: {
         cliente: { select: { id: true, nome: true } },
@@ -130,7 +132,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 // Endpoint público para agendamento — busca ou cria cliente automaticamente
 export async function agendarPublico(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { nome, telefone, email, passeioId } = req.body;
+    const { nome, telefone, email, passeioId, promocao, notificacao, ciente, acompanhantes } = req.body;
 
     if (!nome || !telefone || !passeioId) {
       res.status(400).json({ message: 'nome, telefone e passeioId são obrigatórios' });
@@ -152,12 +154,15 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // Contar agendamentos ativos
-    const agendamentosAtivos = await prisma.agendamento.count({
+    // Calcular vagas já ocupadas (1 por agendamento + acompanhantes)
+    const agendamentosAtivos = await prisma.agendamento.findMany({
       where: { passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
+      select: { acompanhantes: true },
     });
-    if (agendamentosAtivos >= passeio.capacidade) {
-      res.status(400).json({ message: 'Passeio lotado. Não há vagas disponíveis' });
+    const vagasOcupadas = agendamentosAtivos.reduce((sum, a) => sum + 1 + a.acompanhantes, 0);
+    const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
+    if (vagasOcupadas + vagasSolicitadas > passeio.capacidade) {
+      res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
       return;
     }
 
@@ -212,6 +217,10 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       data: {
         clienteId: cliente.id,
         passeioId: parsedPasseioId,
+        promocao: promocao === true,
+        notificacao: notificacao === true,
+        ciente: ciente === true,
+        acompanhantes: acompanhantes ? Number(acompanhantes) : 0,
       },
       include: {
         cliente: { select: { id: true, nome: true } },
@@ -223,6 +232,42 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
   } catch (error) {
     console.error('Erro ao criar agendamento público:', error);
     res.status(500).json({ message: 'Erro ao criar agendamento' });
+  }
+}
+
+// Endpoint público — retorna passeios com vagas disponíveis (capacidade - ocupadas)
+export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const passeios = await prisma.passeio.findMany({
+      where: { ativo: true },
+      include: {
+        usuario: { select: { id: true, name: true } },
+        agendamentos: {
+          where: { status: { not: 'CANCELADO' } },
+          select: { acompanhantes: true },
+        },
+      },
+      orderBy: { data: 'asc' },
+    });
+
+    const resultado = passeios.map(p => {
+      const vagasOcupadas = p.agendamentos.reduce((sum, a) => sum + 1 + a.acompanhantes, 0);
+      return {
+        id: p.id,
+        preco: p.preco,
+        capacidade: p.capacidade,
+        data: p.data,
+        horario: p.horario,
+        vagasOcupadas,
+        vagasDisponiveis: p.capacidade - vagasOcupadas,
+        usuario: p.usuario,
+      };
+    });
+
+    res.json({ data: resultado });
+  } catch (error) {
+    console.error('Erro ao buscar vagas disponíveis:', error);
+    res.status(500).json({ message: 'Erro ao buscar vagas disponíveis' });
   }
 }
 

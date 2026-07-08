@@ -58,6 +58,7 @@ interface Agendamento {
   id: number;
   status: "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REMARCADO";
   createdAt: string;
+  acompanhantes: number;
   cliente: { id: number; nome: string; cpf: string };
   passeio: {
     id: number;
@@ -95,7 +96,7 @@ const statusConfig: Record<string, { label: string; pill: string; dot: string }>
   "AGUARDANDO APROVAÇÃO": { label: "Aguardando Aprovação", pill: "bg-amber-500/10 text-amber-500 border border-amber-500/25", dot: "bg-amber-500" },
 };
 
-const CARDS_POR_PAGINA = 3;
+const CARDS_POR_PAGINA = 2;
 const VAG_POR_PAGINA = 9;
 
 interface GrupoAgenda {
@@ -129,6 +130,9 @@ export const PainelAdmin: React.FC = () => {
   const [passeiosData, setPasseiosData] = useState<PasseiosResponse | null>(null);
   const [paginaPasseio, setPaginaPasseio] = useState(1);
 
+  // Todos os passeios para o Histórico — carregado separadamente para não conflitar com a paginação da tabela
+  const [todosPasseios, setTodosPasseios] = useState<Passeio[]>([]);
+
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -139,6 +143,7 @@ export const PainelAdmin: React.FC = () => {
     carregarDados();
   }, []);
 
+  // A tabela usa passeiosData paginado; o histórico usa todosPasseios (carregado com limit=100)
   const passeios = passeiosData?.data || [];
   const totalPaginasPasseio = passeiosData?.totalPages || 1;
 
@@ -153,13 +158,15 @@ export const PainelAdmin: React.FC = () => {
   async function carregarDados() {
     setLoadingData(true);
     try {
-      const [p, a, av, c] = await Promise.all([
+      const [p, t, a, av, c] = await Promise.all([
         api.request<PasseiosResponse>("/passeios?page=1&limit=5"),
+        api.request<PasseiosResponse>('/passeios?limit=100'),
         api.request<Agendamento[]>("/agendamentos"),
         api.request<Avaliacao[]>("/avaliacoes"),
         api.request<Cliente[]>("/clientes"),
       ]);
       setPasseiosData(p);
+      setTodosPasseios(t.data);
       setAgendamentos(a);
       setAvaliacoes(av);
       setClientes(c);
@@ -206,15 +213,17 @@ export const PainelAdmin: React.FC = () => {
     { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
   ];
 
-  // Filtro de agenda
-  const agendaFiltrada = filtroStatus === "TODOS"
-    ? agendamentos
-    : agendamentos.filter(a => {
-        if (filtroStatus === "ANDAMENTO") return a.status === "CONFIRMADO" || a.status === "PENDENTE";
-        return a.status === filtroStatus;
-      });
-
-  const grupos = groupAgendaByPasseio(agendaFiltrada, passeios);
+  // Filtro de agenda — todos os passeios, cada um com seus agendamentos filtrados
+  const grupos = todosPasseios.map(p => {
+    const registros = filtroStatus === 'TODOS'
+      ? agendamentos.filter(a => a.passeio.id === p.id)
+      : agendamentos.filter(a => {
+          if (a.passeio.id !== p.id) return false;
+          if (filtroStatus === 'ANDAMENTO') return a.status === 'CONFIRMADO' || a.status === 'PENDENTE';
+          return a.status === filtroStatus;
+        });
+    return { id_passeio: p.id, passeio: p, registros };
+  });
   const totalPaginas = Math.ceil(grupos.length / CARDS_POR_PAGINA);
   const gruposPaginados = grupos.slice((pagina - 1) * CARDS_POR_PAGINA, pagina * CARDS_POR_PAGINA);
 
@@ -500,7 +509,7 @@ export const PainelAdmin: React.FC = () => {
               {gruposPaginados.map(({ id_passeio, passeio, registros }) => {
                 const vagasOcupadas = registros
                   .filter(r => r.status !== "CANCELADO")
-                  .reduce((sum, r) => sum + 1, 0);
+                  .reduce((sum, r) => sum + 1 + (r.acompanhantes || 0), 0);
 
                 return (
                   <div key={id_passeio} className="px-6 py-4">
@@ -533,6 +542,8 @@ export const PainelAdmin: React.FC = () => {
                       )}
                       {registros.map(a => {
                         const sc = statusConfig[a.status] || statusConfig["PENDENTE"];
+                        const numAcomp = a.acompanhantes || 0;
+                        const totalVagas = 1 + numAcomp;
                         return (
                           <div key={a.id} className="flex items-center justify-between gap-3 text-sm py-1.5">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -541,7 +552,9 @@ export const PainelAdmin: React.FC = () => {
                                 {a.cliente?.nome || `Cliente #${a.cliente?.id || "?"}`}
                               </span>
                             </div>
-                            <span className="text-xs text-[#7a8394] shrink-0">1 vaga</span>
+                            <span className="text-xs text-[#7a8394] shrink-0">
+                              {numAcomp > 0 ? `1 + ${numAcomp} acompanhante${numAcomp > 1 ? 's' : ''}` : `${totalVagas} vaga${totalVagas > 1 ? 's' : ''}`}
+                            </span>
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${sc.pill}`}>
                               {sc.label}
                             </span>

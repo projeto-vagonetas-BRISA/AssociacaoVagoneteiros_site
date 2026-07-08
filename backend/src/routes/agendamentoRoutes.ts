@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { listar, buscarPorId, criar, agendarPublico, atualizarStatus, deletar } from '../controllers/agendamentoController';
+import { listar, buscarPorId, criar, agendarPublico, vagasDisponiveis, atualizarStatus, deletar } from '../controllers/agendamentoController';
 import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
-// Rota pública — qualquer pessoa pode agendar
+// Rotas públicas
+router.get('/vagas-disponiveis', vagasDisponiveis);
 router.post('/publico', agendarPublico);
 
 // Rotas administrativas

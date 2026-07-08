@@ -7,6 +7,7 @@ interface Passeio {
   capacidade: number;
   data: string;
   horario: string;
+  vagasDisponiveis: number;
   usuario: { id: number; name: string };
 }
 
@@ -42,7 +43,8 @@ export const HorariosDia: React.FC<Props> = ({
             Os passeios têm duração aproximada de 1 hora. O horário exibido é o início do passeio.
           </span>
           {passeiosDoDia.map((p) => {
-            const esgotado = p.capacidade === 0;
+            const disponivel = p.vagasDisponiveis ?? p.capacidade;
+            const esgotado = disponivel <= 0;
             const isSelected = selectedPasseio?.id === p.id;
 
             return (
@@ -52,7 +54,7 @@ export const HorariosDia: React.FC<Props> = ({
                 onClick={() => {
                   if (!esgotado) {
                     setSelectedPasseio(p);
-                    setPassageiros((prev) => Math.min(prev, p.capacidade));
+                    setPassageiros((prev) => Math.min(prev, disponivel));
                   }
                 }}
                 className={`relative flex items-center justify-between rounded-lg px-3 py-2.5 border transition-colors text-left
@@ -82,7 +84,7 @@ export const HorariosDia: React.FC<Props> = ({
                           : "text-text-secondary"
                     }`}
                   >
-                    {esgotado ? "Esgotado" : `${p.capacidade} vagas disp.`}
+                    {esgotado ? "Esgotado" : `${disponivel} vaga${disponivel > 1 ? "s" : ""} disp.`}
                   </p>
                 </div>
 
