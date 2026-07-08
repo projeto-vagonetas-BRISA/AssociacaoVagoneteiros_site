@@ -19,7 +19,17 @@
 - [x] Rotas protegidas por perfil (ADMIN, REDATOR, USUARIO)
 - [x] Seed com 3 usuários (ADMIN, REDATOR, USUARIO)
 
-### CRUDs do Backend
+### CRUD Vagoneteiros (COMPLETO)
+- [x] Criar (`POST /auth/register` com perfil USUARIO)
+- [x] Listar paginado (`GET /usuarios/vagoneteiros` — ordem alfabética)
+- [x] Visualizar perfil (`GET /usuarios/:id` com foto e passeios)
+- [x] Atualizar dados e foto (`PUT /usuarios/:id`)
+- [x] Soft-delete via toggle ativo/inativo (`PATCH /usuarios/vagoneteiros/:id/ativo`)
+- [x] Upload de foto (base64, max 5MB)
+- [x] Toggle Power liga/desliga no painel
+- [x] Página de perfil individual com edição inline
+
+### CRUDs do Backend (pendentes de integração)
 - [x] Passeios (controller + routes)
 - [x] Clientes (controller + routes)
 - [x] Agendamentos (controller + routes)
@@ -67,8 +77,7 @@
 - [ ] `CadastroPasseio.tsx` — formulário conectado com `POST /passeios`
 
 ### Melhorias
-- [ ] Upload de foto via arquivo (multipart/form-data) em vez de base64
-- [ ] Editar vagoneteiro (atualizar dados e foto)
+- [ ] Upload de foto via multipart/form-data em vez de base64
 - [ ] Excluir vagoneteiro com confirmação
 - [ ] Filtro por status (ativo/inativo) na listagem de vagoneteiros
 - [ ] Página de listagem completa de vagoneteiros (fora do painel)
