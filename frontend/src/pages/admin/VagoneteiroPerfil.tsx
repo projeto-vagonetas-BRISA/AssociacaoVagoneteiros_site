@@ -37,7 +37,7 @@ const formatTel = (tel: string) => {
   return tel;
 };
 
-const unformatTel = (tel: string) => tel.replace(/\D/g, '');
+const unformatTel = (tel: string) => (tel || '').replace(/\D/g, '');
 
 const formatDataBr = (iso: string) => {
   const d = new Date(iso);
@@ -198,7 +198,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <img src={`data:image/jpeg;base64,${vagoneteiro.foto}`} alt={vagoneteiro.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
               ) : (
                 <div className="w-24 h-24 rounded-full bg-blue-accent/20 text-blue-accent border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold">
-                  {vagoneteiro.name.charAt(0).toUpperCase()}
+                  {(vagoneteiro.name || '?').charAt(0).toUpperCase()}
                 </div>
               )}
               {editando && (
