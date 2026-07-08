@@ -13,17 +13,60 @@ export async function listar(req: AuthenticatedRequest, res: Response): Promise<
         telefone: true,
         perfil: true,
         historico: true,
+        experiencia: true,
         data_associacao: true,
         createdAt: true,
         updatedAt: true,
         _count: { select: { passeios: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { name: 'asc' },
     });
     res.json(usuarios);
   } catch (error) {
     console.error('Erro ao listar usuários:', error);
     res.status(500).json({ message: 'Erro ao listar usuários' });
+  }
+}
+
+export async function listarVagoneteiros(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const skip = (page - 1) * limit;
+
+    const where = { perfil: 'USUARIO' as const };
+
+    const [vagoneteiros, total] = await Promise.all([
+      prisma.usuario.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          cpf: true,
+          email: true,
+          telefone: true,
+          historico: true,
+          experiencia: true,
+          data_associacao: true,
+          _count: { select: { passeios: true } },
+        },
+        orderBy: { name: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.usuario.count({ where }),
+    ]);
+
+    res.json({
+      data: vagoneteiros,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    console.error('Erro ao listar vagoneteiros:', error);
+    res.status(500).json({ message: 'Erro ao listar vagoneteiros' });
   }
 }
 

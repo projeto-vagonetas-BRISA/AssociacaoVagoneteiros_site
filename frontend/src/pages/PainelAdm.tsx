@@ -1,23 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Users, CheckCircle, DollarSign, Star,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
   ChevronRight, UserCheck, Ticket
 } from "lucide-react";
+import { api } from "../services/api";
 
-const mockVagoneteiros = [
-  { id: 1, nome: "João Silva", cpf: "123.456.789-00", historico: "8 anos", ativo: true, telefone: "(53) 99901-1111", data_associacao: "2016-03-10" },
-  { id: 2, nome: "Maria Rocha", cpf: "234.567.890-11", historico: "12 anos", ativo: true, telefone: "(53) 99902-2222", data_associacao: "2012-07-22" },
-  { id: 3, nome: "Carlos Pereira", cpf: "345.678.901-22", historico: "5 anos", ativo: false, telefone: "(53) 99903-3333", data_associacao: "2019-01-15" },
-  { id: 4, nome: "Ana Ferreira", cpf: "456.789.012-33", historico: "15 anos", ativo: true, telefone: "(53) 99904-4444", data_associacao: "2009-11-05" },
-  { id: 5, nome: "Rafael Costa", cpf: "567.890.123-44", historico: "3 anos", ativo: true, telefone: "(53) 99905-5555", data_associacao: "2021-06-30" },
-  { id: 6, nome: "João Silva", cpf: "123.456.789-00", historico: "8 anos", ativo: true, telefone: "(53) 99901-1111", data_associacao: "2016-03-10" },
-  { id: 7, nome: "Maria Rocha", cpf: "234.567.890-11", historico: "12 anos", ativo: true, telefone: "(53) 99902-2222", data_associacao: "2012-07-22" },
-  { id: 8, nome: "Carlos Pereira", cpf: "345.678.901-22", historico: "5 anos", ativo: false, telefone: "(53) 99903-3333", data_associacao: "2019-01-15" },
-  { id: 9, nome: "Ana Ferreira", cpf: "456.789.012-33", historico: "15 anos", ativo: true, telefone: "(53) 99904-4444", data_associacao: "2009-11-05" },
-  { id: 10, nome: "Rafael Costa", cpf: "567.890.123-44", historico: "3 anos", ativo: true, telefone: "(53) 99905-5555", data_associacao: "2021-06-30" },
-];
+interface Vagoneteiro {
+  id: number;
+  name: string;
+  cpf: string;
+  email: string | null;
+  telefone: string;
+  historico: string | null;
+  experiencia: string | null;
+  data_associacao: string;
+  _count: { passeios: number };
+}
+
+interface VagoneteirosResponse {
+  data: Vagoneteiro[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
 
 const mockClientes = [
   { id: 1, nome: "Pedro Alves", telefone: "(51) 99811-0001", tipo: "PF", documento: "111.222.333-44" },
@@ -50,13 +58,15 @@ const mockAvaliacoes = [
   { id: 3, nota: 4, comentario: "Muito bom, valeu cada centavo.", id_passeio: 3, id_cliente: 3 },
 ];
 
+
+
 const formatData = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 };
 const formatHorario = (iso: string) => new Date(iso).toTimeString().slice(0, 5);
 
-const getVagoneteiro = (id: number) => mockVagoneteiros.find(v => v.id === id);
+const getVagoneteiro = (_id: number) => null;
 const getCliente = (id: number) => mockClientes.find(c => c.id === id);
 const getPasseio = (id: number) => mockPasseios.find(p => p.id === id);
 
@@ -92,9 +102,26 @@ const groupAgendaByPasseio = (agenda: typeof mockAgenda) => {
 
 export const PainelAdmin: React.FC = () => {
   const navigate = useNavigate();
+
   const [pagina, setPagina] = useState(1);
   const [filtroStatus, setFiltroStatus] = useState<string>("TODOS");
   const [paginaVag, setPaginaVag] = useState(1);
+  const [vagoneteirosData, setVagoneteirosData] = useState<VagoneteirosResponse | null>(null);
+  const [vagLoading, setVagLoading] = useState(true);
+
+  useEffect(() => {
+    carregarVagoneteiros(1);
+  }, []);
+
+  async function carregarVagoneteiros(page: number) {
+    setVagLoading(true);
+    try {
+      const data = await api.request<VagoneteirosResponse>(`/usuarios/vagoneteiros?page=${page}&limit=${VAG_POR_PAGINA}`);
+      setVagoneteirosData(data);
+      setPaginaVag(page);
+    } catch { /* api.request já trata erro */ }
+    setVagLoading(false);
+  }
 
   const agendaFiltrada = filtroStatus === "TODOS"
     ? mockAgenda
@@ -104,8 +131,8 @@ export const PainelAdmin: React.FC = () => {
   const totalPaginas = Math.ceil(grupos.length / CARDS_POR_PAGINA);
   const gruposPaginados = grupos.slice((pagina - 1) * CARDS_POR_PAGINA, pagina * CARDS_POR_PAGINA);
 
-  const totalPaginasVag = Math.ceil(mockVagoneteiros.length / VAG_POR_PAGINA);
-  const vagPaginados = mockVagoneteiros.slice((paginaVag - 1) * VAG_POR_PAGINA, paginaVag * VAG_POR_PAGINA);
+  const vagPaginados = vagoneteirosData?.data || [];
+  const totalPaginasVag = vagoneteirosData?.totalPages || 1;
 
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
@@ -191,7 +218,7 @@ export const PainelAdmin: React.FC = () => {
                         <span className="font-bold">{String(p.capacidade).padStart(2, "0")}</span>
                         <span className="text-[#7a8394]"> vagas</span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-text-primary">{vag?.nome ?? "—"}</td>
+                      <td className="px-6 py-4 text-sm text-text-primary">{(vag as any)?.nome ?? "—"}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <button className="text-[#7a8394] hover:text-blue-accent transition-colors cursor-pointer"><Pencil size={15} /></button>
@@ -221,17 +248,18 @@ export const PainelAdmin: React.FC = () => {
               </Link>
             </div>
             <div className="flex flex-col divide-y divide-border flex-1">
-              {vagPaginados.map((v, i) => (
+              {vagLoading ? (
+                <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Carregando...</div>
+              ) : vagPaginados.length === 0 ? (
+                <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Nenhum vagoneteiro cadastrado</div>
+              ) : vagPaginados.map((v, i) => (
                 <div key={`${v.id}-${i}`} className="flex items-center gap-3 px-6 py-4 hover:bg-bg-light-2 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text-dark truncate">{v.nome}</p>
-                    <p className="text-xs text-[#7a8394]">{v.historico} de experiência</p>
+                    <p className="text-sm font-semibold text-text-dark truncate">{v.name}</p>
+                    <p className="text-xs text-[#7a8394]">{v.experiencia || '—'} de experiência</p>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${v.ativo
-                      ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
-                      : "bg-red-dark/10 text-red-dark border border-red-dark/20"
-                    }`}>
-                    {v.ativo ? "Ativo" : "Desligado"}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 bg-green-timeline/10 text-green-timeline border border-green-timeline/20">
+                    Ativo
                   </span>
                 </div>
               ))}
@@ -239,16 +267,16 @@ export const PainelAdmin: React.FC = () => {
             <div className="flex items-center justify-between px-6 py-4 border-t border-border">
               <p className="text-xs text-[#7a8394]">Página {paginaVag} de {totalPaginasVag}</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setPaginaVag(p => Math.max(1, p - 1))} disabled={paginaVag === 1}
+                <button onClick={() => carregarVagoneteiros(Math.max(1, paginaVag - 1))} disabled={paginaVag === 1}
                   className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
                   <ChevronLeft size={14} />
                 </button>
                 {Array.from({ length: totalPaginasVag }, (_, i) => i + 1).map(n => (
-                  <button key={n} onClick={() => setPaginaVag(n)}
+                  <button key={n} onClick={() => carregarVagoneteiros(n)}
                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors cursor-pointer ${paginaVag === n ? "bg-blue-accent text-white" : "border border-border text-text-primary hover:bg-bg-light-1"
                       }`}>{n}</button>
                 ))}
-                <button onClick={() => setPaginaVag(p => Math.min(totalPaginasVag, p + 1))} disabled={paginaVag === totalPaginasVag}
+                <button onClick={() => carregarVagoneteiros(Math.min(totalPaginasVag, paginaVag + 1))} disabled={paginaVag === totalPaginasVag}
                   className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
                   <ChevronRight size={14} />
                 </button>
@@ -300,7 +328,7 @@ export const PainelAdmin: React.FC = () => {
                         <p className="text-sm font-bold text-text-dark">Passeio #{id_passeio}</p>
                         {passeio && vag && (
                           <p className="text-xs text-[#7a8394] mt-0.5">
-                            Data: {formatData(passeio.data_hora)} às {formatHorario(passeio.data_hora)} - Profissional: {vag.nome}
+                            Data: {formatData(passeio.data_hora)} às {formatHorario(passeio.data_hora)} - Profissional: {(vag as any)?.nome}
                           </p>
                         )}
                       </div>
