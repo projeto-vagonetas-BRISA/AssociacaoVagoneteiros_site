@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail } from "lucide-react";
+import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera } from "lucide-react";
 import { api } from "../../services/api";
 
 interface VagoneteiroDetalhe {
@@ -37,33 +37,110 @@ const formatTel = (tel: string) => {
   return tel;
 };
 
+const unformatTel = (tel: string) => tel.replace(/\D/g, '');
+
 const formatDataBr = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
-const experienciaLabels: Record<string, string> = {
-  "Menos de 1 ano": "Menos de 1 ano",
-  "1 a 3 anos": "1 a 3 anos",
-  "3 a 5 anos": "3 a 5 anos",
-  "5 a 10 anos": "5 a 10 anos",
-  "Mais de 10 anos": "Mais de 10 anos",
-};
+const experienciaOptions = [
+  { value: "", label: "Selecione" },
+  { value: "Menos de 1 ano", label: "Menos de 1 ano" },
+  { value: "1 a 3 anos", label: "1 a 3 anos" },
+  { value: "3 a 5 anos", label: "3 a 5 anos" },
+  { value: "5 a 10 anos", label: "5 a 10 anos" },
+  { value: "Mais de 10 anos", label: "Mais de 10 anos" },
+];
 
 export const VagoneteiroPerfil: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [vagoneteiro, setVagoneteiro] = useState<VagoneteiroDetalhe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editando, setEditando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form state
+  const [formName, setFormName] = useState("");
+  const [formTel, setFormTel] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [formHistorico, setFormHistorico] = useState("");
+  const [formExperiencia, setFormExperiencia] = useState("");
+  const [formFoto, setFormFoto] = useState<string | null>(null);
+  const [fotoAlterada, setFotoAlterada] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     api.request<VagoneteiroDetalhe>(`/usuarios/${id}`)
-      .then(setVagoneteiro)
+      .then(d => {
+        setVagoneteiro(d);
+        populateForm(d);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  function populateForm(d: VagoneteiroDetalhe) {
+    setFormName(d.name);
+    setFormTel(d.telefone);
+    setFormEmail(d.email || "");
+    setFormHistorico(d.historico || "");
+    setFormExperiencia(d.experiencia || "");
+    setFormFoto(null);
+    setFotoAlterada(false);
+  }
+
+  function entrarEdicao() {
+    if (!vagoneteiro) return;
+    populateForm(vagoneteiro);
+    setEditando(true);
+  }
+
+  function cancelarEdicao() {
+    setEditando(false);
+    setFormFoto(null);
+    setFotoAlterada(false);
+  }
+
+  function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFormFoto(e.target?.result as string);
+      setFotoAlterada(true);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function salvar() {
+    if (!vagoneteiro) return;
+    setSalvando(true);
+    try {
+      const body: any = {
+        name: formName,
+        telefone: unformatTel(formTel),
+        email: formEmail || null,
+        historico: formHistorico || null,
+        experiencia: formExperiencia || null,
+      };
+      if (fotoAlterada) {
+        body.foto = formFoto || null;
+      }
+      const updated = await api.request<VagoneteiroDetalhe>(`/usuarios/${vagoneteiro.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
+      setVagoneteiro(updated);
+      setEditando(false);
+      setFotoAlterada(false);
+      setFormFoto(null);
+    } catch { /* api.request já trata */ }
+    setSalvando(false);
+  }
 
   if (loading) {
     return (
@@ -86,30 +163,65 @@ export const VagoneteiroPerfil: React.FC = () => {
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-10">
         {/* Topo */}
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => navigate('/painel-admin')} className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
-            <ArrowLeft size={20} className="text-text-dark" />
-          </button>
-          <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">Perfil do Vagoneteiro</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/painel-admin')} className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+              <ArrowLeft size={20} className="text-text-dark" />
+            </button>
+            <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
+              {editando ? "Editando Vagoneteiro" : "Perfil do Vagoneteiro"}
+            </h1>
+          </div>
+          {!editando && (
+            <button
+              onClick={entrarEdicao}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <Pencil size={15} /> Editar
+            </button>
+          )}
         </div>
 
         {/* Card principal */}
         <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
           {/* Header com foto */}
-          <div className="bg-gradient-to-r from-blue-accent/10 to-blue-accent/5 px-8 py-8 flex items-center gap-6">
-            {vagoneteiro.foto ? (
-              <img
-                src={`data:image/jpeg;base64,${vagoneteiro.foto}`}
-                alt={vagoneteiro.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-blue-accent/20 text-blue-accent border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold">
-                {vagoneteiro.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <h2 className="text-2xl font-bold text-text-dark">{vagoneteiro.name}</h2>
+          <div className="bg-gradient-to-r from-blue-accent/10 to-blue-accent/5 px-8 py-8 flex items-center gap-6 relative">
+            {/* Foto com hover para trocar (quando editando) */}
+            <div className="relative shrink-0">
+              {(editando && fotoAlterada && formFoto) ? (
+                <img src={formFoto} alt="Nova foto" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+              ) : vagoneteiro.foto && !fotoAlterada ? (
+                <img src={`data:image/jpeg;base64,${vagoneteiro.foto}`} alt={vagoneteiro.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-blue-accent/20 text-blue-accent border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold">
+                  {vagoneteiro.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {editando && (
+                <>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-accent text-white flex items-center justify-center shadow-md hover:bg-blue-dark transition-colors cursor-pointer"
+                    title="Alterar foto"
+                  >
+                    <Camera size={14} />
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} className="hidden" />
+                </>
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              {editando ? (
+                <input
+                  type="text"
+                  value={formName}
+                  onChange={e => setFormName(e.target.value)}
+                  className="text-2xl font-bold text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/40"
+                />
+              ) : (
+                <h2 className="text-2xl font-bold text-text-dark truncate">{vagoneteiro.name}</h2>
+              )}
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                   vagoneteiro.ativo
@@ -134,6 +246,7 @@ export const VagoneteiroPerfil: React.FC = () => {
               </h3>
 
               <div className="space-y-4">
+                {/* CPF (sempre somente leitura) */}
                 <div className="flex items-start gap-3">
                   <User size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
@@ -142,24 +255,45 @@ export const VagoneteiroPerfil: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Telefone */}
                 <div className="flex items-start gap-3">
                   <Phone size={16} className="text-blue-accent mt-0.5 shrink-0" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xs text-[#7a8394]">Telefone</p>
-                    <p className="text-sm font-medium text-text-dark">{formatTel(vagoneteiro.telefone)}</p>
+                    {editando ? (
+                      <input
+                        type="tel"
+                        value={formTel}
+                        onChange={e => setFormTel(e.target.value)}
+                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40"
+                        placeholder="(53) 99999-0000"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-text-dark">{formatTel(vagoneteiro.telefone)}</p>
+                    )}
                   </div>
                 </div>
 
-                {vagoneteiro.email && (
-                  <div className="flex items-start gap-3">
-                    <Mail size={16} className="text-blue-accent mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-[#7a8394]">E-mail</p>
-                      <p className="text-sm font-medium text-text-dark">{vagoneteiro.email}</p>
-                    </div>
+                {/* Email */}
+                <div className="flex items-start gap-3">
+                  <Mail size={16} className="text-blue-accent mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-[#7a8394]">E-mail</p>
+                    {editando ? (
+                      <input
+                        type="email"
+                        value={formEmail}
+                        onChange={e => setFormEmail(e.target.value)}
+                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40"
+                        placeholder="email@exemplo.com"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-text-dark">{vagoneteiro.email || "—"}</p>
+                    )}
                   </div>
-                )}
+                </div>
 
+                {/* Data associação (só leitura) */}
                 <div className="flex items-start gap-3">
                   <Calendar size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
@@ -177,26 +311,50 @@ export const VagoneteiroPerfil: React.FC = () => {
               </h3>
 
               <div className="space-y-4">
+                {/* Experiência */}
                 <div className="flex items-start gap-3">
                   <Clock size={16} className="text-blue-accent mt-0.5 shrink-0" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xs text-[#7a8394]">Experiência</p>
-                    <p className="text-sm font-medium text-text-dark">
-                      {experienciaLabels[vagoneteiro.experiencia ?? ""] || vagoneteiro.experiencia || "Não informado"}
-                    </p>
+                    {editando ? (
+                      <select
+                        value={formExperiencia}
+                        onChange={e => setFormExperiencia(e.target.value)}
+                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40 cursor-pointer"
+                      >
+                        {experienciaOptions.map(o => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-sm font-medium text-text-dark">
+                        {vagoneteiro.experiencia || "Não informado"}
+                      </p>
+                    )}
                   </div>
                 </div>
 
+                {/* Histórico */}
                 <div className="flex items-start gap-3">
                   <MapPin size={16} className="text-blue-accent mt-0.5 shrink-0" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xs text-[#7a8394]">Histórico</p>
-                    <p className="text-sm font-medium text-text-dark">
-                      {vagoneteiro.historico || "Não informado"}
-                    </p>
+                    {editando ? (
+                      <textarea
+                        value={formHistorico}
+                        onChange={e => setFormHistorico(e.target.value)}
+                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40 resize-none"
+                        rows={3}
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-text-dark">
+                        {vagoneteiro.historico || "Não informado"}
+                      </p>
+                    )}
                   </div>
                 </div>
 
+                {/* Total passeios (só leitura) */}
                 <div className="flex items-start gap-3">
                   <Star size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
@@ -242,12 +400,36 @@ export const VagoneteiroPerfil: React.FC = () => {
 
         {/* Ações */}
         <div className="mt-6 flex gap-3">
-          <Link
-            to="/painel-admin"
-            className="px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors"
-          >
-            ← Voltar ao Painel
-          </Link>
+          {editando ? (
+            <>
+              <button
+                onClick={salvar}
+                disabled={salvando}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-timeline hover:bg-green-700 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {salvando ? (
+                  <span className="block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Check size={15} />
+                )}
+                {salvando ? "Salvando..." : "Salvar"}
+              </button>
+              <button
+                onClick={cancelarEdicao}
+                disabled={salvando}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X size={15} /> Cancelar
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/painel-admin"
+              className="px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors"
+            >
+              ← Voltar ao Painel
+            </Link>
+          )}
         </div>
       </main>
     </div>

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listar, listarVagoneteiros, buscarPorId, atualizarPerfil, alternarAtivo, deletar } from '../controllers/usuarioController';
+import { listar, listarVagoneteiros, buscarPorId, atualizar, atualizarPerfil, alternarAtivo, deletar } from '../controllers/usuarioController';
 import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
@@ -14,6 +14,7 @@ router.get('/vagoneteiros', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR'])
 router.patch('/vagoneteiros/:id/ativo', authMiddleware, roleMiddleware(['ADMIN']), alternarAtivo);
 
 router.get('/:id', authMiddleware, roleMiddleware(['ADMIN']), buscarPorId);
+router.put('/:id', authMiddleware, roleMiddleware(['ADMIN']), atualizar);
 router.patch('/:id/perfil', authMiddleware, roleMiddleware(['ADMIN']), atualizarPerfil);
 router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN']), deletar);
 

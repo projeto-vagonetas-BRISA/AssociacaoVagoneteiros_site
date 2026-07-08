@@ -171,6 +171,69 @@ export async function atualizarPerfil(req: AuthenticatedRequest, res: Response):
   }
 }
 
+export async function atualizar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const usuarioExistente = await prisma.usuario.findUnique({ where: { id } });
+    if (!usuarioExistente) {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    const { name, email, telefone, historico, experiencia, foto } = req.body;
+
+    const data: any = {};
+    if (name !== undefined) data.name = name;
+    if (email !== undefined) data.email = email || null;
+    if (telefone !== undefined) data.telefone = telefone;
+    if (historico !== undefined) data.historico = historico || null;
+    if (experiencia !== undefined) data.experiencia = experiencia || null;
+    if (foto !== undefined) {
+      if (foto === null) {
+        data.foto = null;
+      } else {
+        const base64Data = foto.includes('base64,') ? foto.split('base64,')[1] : foto;
+        const fotoBuffer = Buffer.from(base64Data, 'base64');
+        if (fotoBuffer.length > 5 * 1024 * 1024) {
+          res.status(400).json({ message: 'A foto deve ter no máximo 5MB' });
+          return;
+        }
+        data.foto = fotoBuffer;
+      }
+    }
+
+    const updated = await prisma.usuario.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        name: true,
+        cpf: true,
+        email: true,
+        telefone: true,
+        historico: true,
+        experiencia: true,
+        ativo: true,
+        data_associacao: true,
+        foto: true,
+      },
+    });
+
+    res.json({
+      ...updated,
+      foto: updated.foto ? Buffer.from(updated.foto).toString('base64') : null,
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ message: 'Erro ao atualizar usuário' });
+  }
+}
+
 export async function alternarAtivo(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const id = Number(req.params.id);
