@@ -60,6 +60,7 @@ export const VagoneteiroPerfil: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -119,6 +120,7 @@ export const VagoneteiroPerfil: React.FC = () => {
   async function salvar() {
     if (!vagoneteiro) return;
     setSalvando(true);
+    setErroSalvar(null);
     try {
       const body: any = {
         name: formName,
@@ -138,7 +140,9 @@ export const VagoneteiroPerfil: React.FC = () => {
       setEditando(false);
       setFotoAlterada(false);
       setFormFoto(null);
-    } catch { /* api.request já trata */ }
+    } catch (err: any) {
+      setErroSalvar(err instanceof Error ? err.message : 'Erro ao salvar');
+    }
     setSalvando(false);
   }
 
@@ -397,6 +401,13 @@ export const VagoneteiroPerfil: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Erro */}
+        {erroSalvar && (
+          <div className="mt-4 px-4 py-3 rounded-lg bg-red-dark/10 text-red-dark border border-red-dark/20 text-sm font-medium">
+            {erroSalvar}
+          </div>
+        )}
 
         {/* Ações */}
         <div className="mt-6 flex gap-3">
