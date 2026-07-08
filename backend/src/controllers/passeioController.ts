@@ -49,19 +49,20 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
 
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { valor, capacidade, data } = req.body;
+    const { preco, capacidade, data, horario } = req.body;
 
-    if (!valor || !capacidade || !data) {
-      res.status(400).json({ message: 'Valor, capacidade e data são obrigatórios' });
+    if (!preco || !capacidade || !data) {
+      res.status(400).json({ message: 'Preço, capacidade e data são obrigatórios' });
       return;
     }
 
-    const parsedValor = parseFloat(valor);
+    const parsedPreco = parseFloat(preco);
     const parsedCapacidade = parseInt(capacidade, 10);
     const parsedData = new Date(data);
+    const parsedHorario = horario || "08:00";
 
-    if (isNaN(parsedValor) || parsedValor <= 0) {
-      res.status(400).json({ message: 'Valor inválido' });
+    if (isNaN(parsedPreco) || parsedPreco <= 0) {
+      res.status(400).json({ message: 'Preço inválido' });
       return;
     }
     if (isNaN(parsedCapacidade) || parsedCapacidade <= 0) {
@@ -83,9 +84,10 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 
     const passeio = await prisma.passeio.create({
       data: {
-        valor: parsedValor,
+        preco: parsedPreco,
         capacidade: parsedCapacidade,
         data: parsedData,
+        horario: parsedHorario,
         usuarioId,
       },
       include: {
@@ -120,16 +122,16 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
       return;
     }
 
-    const { valor, capacidade, data } = req.body;
+    const { preco, capacidade, data, horario } = req.body;
     const dataAtualizada: any = {};
 
-    if (valor !== undefined) {
-      const parsed = parseFloat(valor);
+    if (preco !== undefined) {
+      const parsed = parseFloat(preco);
       if (isNaN(parsed) || parsed <= 0) {
-        res.status(400).json({ message: 'Valor inválido' });
+        res.status(400).json({ message: 'Preço inválido' });
         return;
       }
-      dataAtualizada.valor = parsed;
+      dataAtualizada.preco = parsed;
     }
     if (capacidade !== undefined) {
       const parsed = parseInt(capacidade, 10);
@@ -146,6 +148,9 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
         return;
       }
       dataAtualizada.data = parsed;
+    }
+    if (horario !== undefined) {
+      dataAtualizada.horario = horario;
     }
 
     const passeio = await prisma.passeio.update({

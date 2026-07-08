@@ -59,14 +59,15 @@ async function main() {
     where: { id: 1 },
     update: {},
     create: {
-      valor: 30.00,
+      preco: 30.00,
       capacidade: 20,
       data: new Date('2026-07-10T09:00:00-03:00'),
+      horario: "09:00",
       usuarioId: usuario.id,
     },
   });
 
-  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.valor}`);
+  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco}`);
 
   console.log('🎉 Seed completo!');
 }

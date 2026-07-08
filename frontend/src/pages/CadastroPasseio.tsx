@@ -1,29 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, CheckCircle, UserCheck, MapPinPen} from "lucide-react";
+import { api } from "../services/api";
 
-const mockVagoneteiros = [
-  { id: 1, nome: "João Silva",     historico: "8 anos",  ativo: true  },
-  { id: 2, nome: "Maria Rocha",    historico: "12 anos", ativo: true  },
-  { id: 3, nome: "Carlos Pereira", historico: "5 anos",  ativo: false },
-  { id: 4, nome: "Ana Ferreira",   historico: "15 anos", ativo: true  },
-];
-
+type VagoneteiroResumo = {
+  id: number;
+  name: string;
+  ativo: boolean;
+};
 
 export const CadastroPasseio: React.FC = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const [capacidade, setCapacidade] = useState("");
   const [preco, setPreco] = useState("");
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
   const [vagSelecionado, setVagSelecionado] = useState<number | null>(null);
+  const [vagoneteiros, setVagoneteiros] = useState<VagoneteiroResumo[]>([]);
 
+  useEffect(() => {
+    async function carregarVagoneteiros() {
+      try {
+        const res = await api.request<{ data: VagoneteiroResumo[] }>("/usuarios/vagoneteiros");
+        // O endpoint retorna paginado: { data, total, page, totalPages }
+        // Precisamos adaptar
+        const body = await fetch(api.baseUrl + "/usuarios/vagoneteiros", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }).then(r => r.json());
+        setVagoneteiros((body.data || body).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          ativo: u.ativo,
+        })));
+      } catch {
+        // fallback vazio
+      }
+    }
+    carregarVagoneteiros();
+  }, []);
 
-  const handleCadastrar = () => {
+  const handleCadastrar = async () => {
     if (!capacidade || !preco || !data || !horario || !vagSelecionado) {
       alert("Preencha todos os campos e selecione um vagoneteiro.");
       return;
+    }
+
+    setLoading(true);
+    setApiError("");
+    try {
+      await api.request("/passeios", {
+        method: "POST",
+        body: JSON.stringify({
+          preco: parseFloat(preco),
+          capacidade: parseInt(capacidade, 10),
+          data: new Date(data + "T" + horario + ":00-03:00").toISOString(),
+          horario,
+          usuarioId: vagSelecionado,
+        }),
+      });
+      navigate("/painel-admin");
+    } catch (err: any) {
+      setApiError(err instanceof Error ? err.message : "Erro ao cadastrar passeio");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,9 +185,9 @@ export const CadastroPasseio: React.FC = () => {
               className="w-full h-10.5 px-3.5 border border-border rounded-lg text-sm text-text-dark outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/10 transition-colors bg-white cursor-pointer appearance-none"
             >
               <option value="" disabled>Selecione um vagoneteiro</option>
-              {mockVagoneteiros.map((v) => (
+              {vagoneteiros.filter(v => v.ativo).map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.nome} {v.ativo ? "" : "(Desligado)"}
+                  {v.name}
                 </option>
               ))}
             </select>
@@ -153,6 +195,9 @@ export const CadastroPasseio: React.FC = () => {
 
           {/* Ações */}
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-bg-light-2">
+            {apiError && (
+              <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg p-2 mr-auto">{apiError}</p>
+            )}
             <button
               onClick={ () => navigate("/painel-admin") }
               className="px-5 h-10.5 rounded-lg border border-border text-text-secondary text-sm font-semibold hover:bg-bg-light-1 hover:border-border-light transition-colors cursor-pointer"
@@ -161,8 +206,13 @@ export const CadastroPasseio: React.FC = () => {
             </button>
             <button
               onClick={handleCadastrar}
-              className="inline-flex items-center gap-2 px-6 h-10.5 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer">           
-              <UserCheck size={15} /> Cadastrar Passeio
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-6 h-10.5 rounded-lg bg-blue-accent hover:bg-blue-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors cursor-pointer">           
+              {loading ? (
+                <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Cadastrando...</>
+              ) : (
+                <><UserCheck size={15} /> Cadastrar Passeio</>
+              )}
             </button>
           </div>
         </div>

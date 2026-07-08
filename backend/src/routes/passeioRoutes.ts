@@ -4,8 +4,11 @@ import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
-router.get('/', authMiddleware, listar);
-router.get('/:id', authMiddleware, buscarPorId);
+// Listagem pública (agendamento público) — sem auth
+router.get('/', listar);
+router.get('/:id', buscarPorId);
+
+// Ações administrativas — auth necessária
 router.post('/', authMiddleware, criar);
 router.put('/:id', authMiddleware, atualizar);
 router.delete('/:id', authMiddleware, deletar);
