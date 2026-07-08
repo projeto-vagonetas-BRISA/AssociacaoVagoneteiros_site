@@ -32,7 +32,7 @@ export async function listar(req: AuthenticatedRequest, res: Response): Promise<
 export async function listarVagoneteiros(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 9));
     const skip = (page - 1) * limit;
 
     const where = { perfil: 'USUARIO' as const };

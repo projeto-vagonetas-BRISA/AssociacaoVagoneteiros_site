@@ -89,7 +89,7 @@ const statCards = [
 ];
 
 const CARDS_POR_PAGINA = 3;
-const VAG_POR_PAGINA = 5;
+const VAG_POR_PAGINA = 9;
 
 const groupAgendaByPasseio = (agenda: typeof mockAgenda) => {
   const map = new Map<number, typeof mockAgenda>();
