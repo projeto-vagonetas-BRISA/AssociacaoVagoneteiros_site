@@ -20,7 +20,7 @@ interface VagoneteiroDetalhe {
   passeios: {
     id: number;
     data: string;
-    valor: number;
+    preco: number;
     capacidade: number;
   }[];
 }
@@ -391,7 +391,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                     {vagoneteiro.passeios.map(p => (
                       <tr key={p.id} className="border-b border-border/50 last:border-0">
                         <td className="py-3 pr-4 text-text-dark">{formatDataBr(p.data)}</td>
-                        <td className="py-3 pr-4 text-green-timeline font-semibold">R$ {Number(p.valor).toFixed(2)}</td>
+                        <td className="py-3 pr-4 text-green-timeline font-semibold">R$ {Number(p.preco).toFixed(2)}</td>
                         <td className="py-3 pr-4 text-text-primary">{p.capacidade} vagas</td>
                       </tr>
                     ))}

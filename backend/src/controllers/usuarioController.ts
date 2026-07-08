@@ -104,7 +104,7 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
         createdAt: true,
         updatedAt: true,
         passeios: {
-          select: { id: true, data: true, valor: true, capacidade: true },
+          select: { id: true, data: true, preco: true, capacidade: true, horario: true },
           orderBy: { data: 'asc' },
         },
       },

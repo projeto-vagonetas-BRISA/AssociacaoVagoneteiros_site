@@ -4,15 +4,33 @@ import prisma from '../lib/prisma';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const passeios = await prisma.passeio.findMany({
-      where: { ativo: true },
-      include: {
-        usuario: { select: { id: true, name: true } },
-        _count: { select: { agendamentos: true, avaliacoes: true } },
-      },
-      orderBy: { data: 'asc' },
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const skip = (page - 1) * limit;
+
+    const where = { ativo: true };
+
+    const [passeios, total] = await Promise.all([
+      prisma.passeio.findMany({
+        where,
+        include: {
+          usuario: { select: { id: true, name: true } },
+          _count: { select: { agendamentos: true, avaliacoes: true } },
+        },
+        orderBy: { data: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.passeio.count({ where }),
+    ]);
+
+    res.json({
+      data: passeios,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
     });
-    res.json(passeios);
   } catch (error) {
     console.error('Erro ao listar passeios:', error);
     res.status(500).json({ message: 'Erro ao listar passeios' });

@@ -38,6 +38,14 @@ interface Passeio {
   usuario: { id: number; name: string };
 }
 
+interface PasseiosResponse {
+  data: Passeio[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 interface Cliente {
   id: number;
   nome: string;
@@ -118,7 +126,9 @@ export const PainelAdmin: React.FC = () => {
   const [vagLoading, setVagLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
-  const [passeios, setPasseios] = useState<Passeio[]>([]);
+  const [passeiosData, setPasseiosData] = useState<PasseiosResponse | null>(null);
+  const [paginaPasseio, setPaginaPasseio] = useState(1);
+
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -129,16 +139,27 @@ export const PainelAdmin: React.FC = () => {
     carregarDados();
   }, []);
 
+  const passeios = passeiosData?.data || [];
+  const totalPaginasPasseio = passeiosData?.totalPages || 1;
+
+  async function carregarPasseios(page: number) {
+    try {
+      const data = await api.request<PasseiosResponse>(`/passeios?page=${page}&limit=5`);
+      setPasseiosData(data);
+      setPaginaPasseio(page);
+    } catch { /* api.request já trata erro */ }
+  }
+
   async function carregarDados() {
     setLoadingData(true);
     try {
       const [p, a, av, c] = await Promise.all([
-        api.request<Passeio[]>("/passeios"),
+        api.request<PasseiosResponse>("/passeios?page=1&limit=5"),
         api.request<Agendamento[]>("/agendamentos"),
         api.request<Avaliacao[]>("/avaliacoes"),
         api.request<Cliente[]>("/clientes"),
       ]);
-      setPasseios(p);
+      setPasseiosData(p);
       setAgendamentos(a);
       setAvaliacoes(av);
       setClientes(c);
@@ -314,7 +335,7 @@ export const PainelAdmin: React.FC = () => {
                             if (!confirm(`Tem certeza que deseja desativar o passeio #${p.id}?`)) return;
                             try {
                               await api.request(`/passeios/${p.id}`, { method: 'DELETE' });
-                              setPasseios(prev => prev.filter(x => x.id !== p.id));
+                              await carregarPasseios(paginaPasseio);
                             } catch { /* api.request já trata erro */ }
                           }}
                           className="text-[#7a8394] hover:text-red-dark transition-colors cursor-pointer"
@@ -329,6 +350,38 @@ export const PainelAdmin: React.FC = () => {
               </tbody>
             </table>
           </div>
+          </div>
+          {/* Paginação da tabela de passeios */}
+          {totalPaginasPasseio > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+              <p className="text-xs text-[#7a8394]">
+                Página {paginaPasseio} de {totalPaginasPasseio} — {passeiosData?.total || 0} passeio{(passeiosData?.total || 0) !== 1 ? "s" : ""}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => carregarPasseios(Math.max(1, paginaPasseio - 1))}
+                  disabled={paginaPasseio === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                {Array.from({ length: totalPaginasPasseio }, (_, i) => i + 1).map(n => (
+                  <button
+                    key={n}
+                    onClick={() => carregarPasseios(n)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors cursor-pointer ${paginaPasseio === n ? "bg-blue-accent text-white" : "border border-border text-text-primary hover:bg-bg-light-1"}`}
+                  >{n}</button>
+                ))}
+                <button
+                  onClick={() => carregarPasseios(Math.min(totalPaginasPasseio, paginaPasseio + 1))}
+                  disabled={paginaPasseio === totalPaginasPasseio}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Vagoneteiros + Histórico */}
