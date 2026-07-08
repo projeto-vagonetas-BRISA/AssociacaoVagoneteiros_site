@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Users, CheckCircle, DollarSign, Star,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
-  ChevronRight, UserCheck, Ticket
+  ChevronRight, UserCheck, Ticket, Power, PowerOff
 } from "lucide-react";
 import { api } from "../services/api";
 
@@ -15,6 +15,8 @@ interface Vagoneteiro {
   telefone: string;
   historico: string | null;
   experiencia: string | null;
+  ativo: boolean;
+  foto: string | null;
   data_associacao: string;
   _count: { passeios: number };
 }
@@ -57,8 +59,6 @@ const mockAvaliacoes = [
   { id: 2, nota: 5, comentario: "Passeio maravilhoso, guia muito atencioso.", id_passeio: 2, id_cliente: 2 },
   { id: 3, nota: 4, comentario: "Muito bom, valeu cada centavo.", id_passeio: 3, id_cliente: 3 },
 ];
-
-
 
 const formatData = (iso: string) => {
   const d = new Date(iso);
@@ -108,6 +108,7 @@ export const PainelAdmin: React.FC = () => {
   const [paginaVag, setPaginaVag] = useState(1);
   const [vagoneteirosData, setVagoneteirosData] = useState<VagoneteirosResponse | null>(null);
   const [vagLoading, setVagLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -121,6 +122,16 @@ export const PainelAdmin: React.FC = () => {
       setPaginaVag(page);
     } catch { /* api.request já trata erro */ }
     setVagLoading(false);
+  }
+
+  async function toggleAtivo(id: number) {
+    setTogglingId(id);
+    try {
+      await api.request<{ id: number; name: string; ativo: boolean }>(`/usuarios/vagoneteiros/${id}/ativo`, { method: 'PATCH' });
+      // Recarregar dados da página atual
+      await carregarVagoneteiros(paginaVag);
+    } catch { /* api.request já trata erro */ }
+    setTogglingId(null);
   }
 
   const agendaFiltrada = filtroStatus === "TODOS"
@@ -253,14 +264,52 @@ export const PainelAdmin: React.FC = () => {
               ) : vagPaginados.length === 0 ? (
                 <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Nenhum vagoneteiro cadastrado</div>
               ) : vagPaginados.map((v, i) => (
-                <div key={`${v.id}-${i}`} className="flex items-center gap-3 px-6 py-4 hover:bg-bg-light-2 transition-colors">
-                  <div className="flex-1 min-w-0">
+                <div key={`${v.id}-${i}`} className="flex items-center gap-2 px-3 py-3 hover:bg-bg-light-2 transition-colors">
+                  {/* Avatar / iniciais */}
+                  <Link to={`/admin/vagoneteiros/${v.id}`} className="shrink-0">
+                    {v.foto ? (
+                      <img src={`data:image/jpeg;base64,${v.foto}`} alt="" className="w-9 h-9 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-blue-accent/20 text-blue-accent flex items-center justify-center text-sm font-bold">
+                        {v.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+
+                  {/* Nome + info */}
+                  <Link to={`/admin/vagoneteiros/${v.id}`} className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-text-dark truncate">{v.name}</p>
-                    <p className="text-xs text-[#7a8394]">{v.experiencia || '—'} de experiência</p>
-                  </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 bg-green-timeline/10 text-green-timeline border border-green-timeline/20">
-                    Ativo
+                    <p className="text-xs text-[#7a8394] truncate">{v.telefone}</p>
+                  </Link>
+
+                  {/* Status badge */}
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                    v.ativo
+                      ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
+                      : "bg-red-dark/10 text-red-dark border border-red-dark/20"
+                  }`}>
+                    {v.ativo ? "Ativo" : "Inativo"}
                   </span>
+
+                  {/* Toggle ativar/desativar */}
+                  <button
+                    onClick={() => toggleAtivo(v.id)}
+                    disabled={togglingId === v.id}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                      v.ativo
+                        ? "text-green-timeline hover:bg-green-timeline/10"
+                        : "text-[#7a8394] hover:bg-red-dark/10 hover:text-red-dark"
+                    } disabled:opacity-40`}
+                    title={v.ativo ? "Desativar" : "Ativar"}
+                  >
+                    {togglingId === v.id ? (
+                      <span className="block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : v.ativo ? (
+                      <PowerOff size={14} />
+                    ) : (
+                      <Power size={14} />
+                    )}
+                  </button>
                 </div>
               ))}
             </div>

@@ -14,6 +14,7 @@ export async function listar(req: AuthenticatedRequest, res: Response): Promise<
         perfil: true,
         historico: true,
         experiencia: true,
+        ativo: true,
         data_associacao: true,
         createdAt: true,
         updatedAt: true,
@@ -47,7 +48,9 @@ export async function listarVagoneteiros(req: AuthenticatedRequest, res: Respons
           telefone: true,
           historico: true,
           experiencia: true,
+          ativo: true,
           data_associacao: true,
+          foto: true,
           _count: { select: { passeios: true } },
         },
         orderBy: { name: 'asc' },
@@ -57,8 +60,14 @@ export async function listarVagoneteiros(req: AuthenticatedRequest, res: Respons
       prisma.usuario.count({ where }),
     ]);
 
+    // Converter foto Bytes → string base64
+    const data = vagoneteiros.map(({ foto, ...rest }) => ({
+      ...rest,
+      foto: foto ? Buffer.from(foto).toString('base64') : null,
+    }));
+
     res.json({
-      data: vagoneteiros,
+      data,
       page,
       limit,
       total,
@@ -88,7 +97,10 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
         telefone: true,
         perfil: true,
         historico: true,
+        experiencia: true,
+        ativo: true,
         data_associacao: true,
+        foto: true,
         createdAt: true,
         updatedAt: true,
         passeios: {
@@ -103,7 +115,10 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    res.json(usuario);
+    res.json({
+      ...usuario,
+      foto: usuario.foto ? Buffer.from(usuario.foto).toString('base64') : null,
+    });
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
     res.status(500).json({ message: 'Erro ao buscar usuário' });
@@ -156,6 +171,33 @@ export async function atualizarPerfil(req: AuthenticatedRequest, res: Response):
   }
 }
 
+export async function alternarAtivo(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const usuario = await prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    const updated = await prisma.usuario.update({
+      where: { id },
+      data: { ativo: !usuario.ativo },
+      select: { id: true, name: true, ativo: true },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Erro ao alternar status:', error);
+    res.status(500).json({ message: 'Erro ao alternar status do vagoneteiro' });
+  }
+}
+
 export async function deletar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const id = Number(req.params.id);
@@ -164,7 +206,6 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
       return;
     }
 
-    // Não permitir auto-deleção
     if (id === req.user!.id) {
       res.status(400).json({ message: 'Você não pode deletar sua própria conta' });
       return;

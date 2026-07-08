@@ -8,6 +8,7 @@ import { Historia } from "../pages/Historia";
 import { PainelAdmin } from "../pages/PainelAdm";
 import { CadastroPasseio } from "../pages/CadastroPasseio";
 import { Investimento } from "../pages/Investimento";
+import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
 
 export const router = createBrowserRouter([
   {
@@ -47,5 +48,9 @@ export const router = createBrowserRouter([
         element: <CadastroPasseio />
       }
     ]
+  },
+  {
+    path: "/admin/vagoneteiros/:id",
+    element: <VagoneteiroPerfil />
   }
 ]);

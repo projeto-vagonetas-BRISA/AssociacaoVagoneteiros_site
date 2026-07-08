@@ -21,11 +21,12 @@ model Usuario {
   telefone        String
   senha           String
   perfil          Perfil   @default(USUARIO)
+  ativo           Boolean  @default(true)
   data_associacao DateTime @default(now())
   foto            Bytes?
   passeios        Passeio[]
   createdAt       DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt       DateTime @updatedAt
 }
 
 enum Perfil {
