@@ -43,6 +43,7 @@ model Passeio {
   capacidade   Int
   data         DateTime
   horario      String        @default("08:00")
+  ativo        Boolean       @default(true)
   agendamentos Agendamento[]
   avaliacoes   Avaliacao[]  
   createdAt    DateTime      @default(now())

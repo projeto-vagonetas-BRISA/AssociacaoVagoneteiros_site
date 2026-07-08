@@ -302,8 +302,26 @@ export const PainelAdmin: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-text-primary">{p.usuario?.name || "—"}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <button className="text-[#7a8394] hover:text-blue-accent transition-colors cursor-pointer"><Pencil size={15} /></button>
-                        <button className="text-[#7a8394] hover:text-red-dark transition-colors cursor-pointer"><Trash2 size={15} /></button>
+                        <button
+                          onClick={() => navigate(`/editar-passeio/${p.id}`)}
+                          className="text-[#7a8394] hover:text-blue-accent transition-colors cursor-pointer"
+                          title="Editar passeio"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Tem certeza que deseja desativar o passeio #${p.id}?`)) return;
+                            try {
+                              await api.request(`/passeios/${p.id}`, { method: 'DELETE' });
+                              setPasseios(prev => prev.filter(x => x.id !== p.id));
+                            } catch { /* api.request já trata erro */ }
+                          }}
+                          className="text-[#7a8394] hover:text-red-dark transition-colors cursor-pointer"
+                          title="Desativar passeio"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </td>
                   </tr>

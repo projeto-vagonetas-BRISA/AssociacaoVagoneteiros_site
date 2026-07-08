@@ -7,6 +7,7 @@ import { Agendamento } from "../pages/Agendamento";
 import { Historia } from "../pages/Historia";
 import { PainelAdmin } from "../pages/PainelAdm";
 import { CadastroPasseio } from "../pages/CadastroPasseio";
+import { EditarPasseio } from "../pages/EditarPasseio";
 import { Investimento } from "../pages/Investimento";
 import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
 
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
       {
         path: "/cadastro-passeio",
         element: <CadastroPasseio />
+      },
+      {
+        path: "/editar-passeio/:id",
+        element: <EditarPasseio />
       }
     ]
   },

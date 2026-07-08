@@ -5,6 +5,7 @@ import prisma from '../lib/prisma';
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const passeios = await prisma.passeio.findMany({
+      where: { ativo: true },
       include: {
         usuario: { select: { id: true, name: true } },
         _count: { select: { agendamentos: true, avaliacoes: true } },
@@ -187,16 +188,10 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
       return;
     }
 
-    await prisma.passeio.delete({ where: { id } });
-    res.json({ message: 'Passeio deletado com sucesso' });
+    await prisma.passeio.update({ where: { id }, data: { ativo: false } });
+    res.json({ message: 'Passeio desativado com sucesso' });
   } catch (error: any) {
-    console.error('Erro ao deletar passeio:', error);
-    if (error?.code === 'P2003') {
-      res.status(400).json({
-        message: 'Passeio não pode ser deletado pois possui agendamentos ou avaliações associadas',
-      });
-      return;
-    }
-    res.status(500).json({ message: 'Erro ao deletar passeio' });
+    console.error('Erro ao desativar passeio:', error);
+    res.status(500).json({ message: 'Erro ao desativar passeio' });
   }
 }
