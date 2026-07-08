@@ -16,6 +16,7 @@ model Usuario {
   name            String
   cpf             String   @unique
   historico       String?
+  experiencia     String?  // tempo de experiência: "Menos de 1 ano", "1 a 3 anos", etc.
   email           String?  @unique
   telefone        String
   senha           String

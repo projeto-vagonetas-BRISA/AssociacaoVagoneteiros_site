@@ -39,6 +39,8 @@ export const authService = {
     email?: string;
     telefone: string;
     historico?: string;
+    experiencia?: string;
+    data_associacao?: string;
   }): Promise<AuthResponse> {
     const result = await api.request<AuthResponse>('/auth/register', {
       method: 'POST',

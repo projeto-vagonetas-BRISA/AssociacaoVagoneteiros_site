@@ -59,6 +59,8 @@ export function Registration_Vagoneteiro() {
                 telefone: rawTel,
                 senha: passwordField.password,
                 historico: history || undefined,
+                experiencia: experience,
+                data_associacao: joinDate ? new Date(joinDate + 'T12:00:00-03:00').toISOString() : undefined,
             });
             navigate("/painel-admin");
         } catch (err: any) {

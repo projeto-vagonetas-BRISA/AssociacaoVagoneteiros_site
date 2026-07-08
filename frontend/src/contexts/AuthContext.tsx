@@ -14,6 +14,8 @@ interface AuthContextType {
     email?: string;
     telefone: string;
     historico?: string;
+    experiencia?: string;
+    data_associacao?: string;
   }) => Promise<User>;
   logout: () => void;
   checkSession: () => Promise<void>;
@@ -39,6 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email?: string;
     telefone: string;
     historico?: string;
+    experiencia?: string;
+    data_associacao?: string;
   }) => {
     const result = await authService.register(data);
     authService.salvarSessao(result.token, result.user);

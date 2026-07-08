@@ -17,7 +17,7 @@ function isValidEmail(email: string): boolean {
 
 export async function cadastro(req: Request, res: Response): Promise<void> {
   try {
-    const { name, cpf, senha, email, telefone, historico } = req.body;
+    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao } = req.body;
 
     // Validar campos obrigatórios
     if (!name || !cpf || !senha || !telefone) {
@@ -67,6 +67,16 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
     const saltRounds = 10;
     const hashedSenha = await bcrypt.hash(senha, saltRounds);
 
+    // Validar data_associacao se fornecida
+    let parsedDataAssociacao = undefined;
+    if (data_associacao) {
+      parsedDataAssociacao = new Date(data_associacao);
+      if (isNaN(parsedDataAssociacao.getTime())) {
+        res.status(400).json({ message: 'Data de associação inválida' });
+        return;
+      }
+    }
+
     // Criar o usuário
     const novoUsuario = await prisma.usuario.create({
       data: {
@@ -76,6 +86,8 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
         email: email || null,
         telefone,
         historico: historico || null,
+        experiencia: experiencia || null,
+        data_associacao: parsedDataAssociacao,
         perfil: 'USUARIO', // Cadastro padrão como USUARIO
       },
     });
