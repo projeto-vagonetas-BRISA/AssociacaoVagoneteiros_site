@@ -7,7 +7,6 @@ import { TimelineCard } from "../components/TimelineCard";
 import { ReviewCard } from "../components/ReviewCard";
 import Logo from "../assets/logo.png";
 import conteudo from "../assets/conteudo.json";
-import { Link } from "react-router-dom";
 
 export const Home: React.FC = () => {
   return (

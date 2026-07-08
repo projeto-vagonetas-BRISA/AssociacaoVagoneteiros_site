@@ -6,7 +6,6 @@ import { TimelineItem } from "../components/TimeLineItem";
 import { FeatureCard } from "../components/FeatureCard";
 import conteudo from "../assets/conteudo.json";
 import Logo from "../assets/logo.png";
-import { Link } from "react-router-dom";
 
 export const Historia: React.FC = () => {
   return (

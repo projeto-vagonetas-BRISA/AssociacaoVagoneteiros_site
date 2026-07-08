@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/authContext";
 
 export const Header: React.FC = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const location = useLocation();
+    const { user, logout } = useAuth();
 
     const navLinks = [
         { label: "Home", path: "/" },
@@ -45,9 +47,23 @@ export const Header: React.FC = () => {
                     <Link to="/agendamento" className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-[#1878c1] hover:bg-[#1265a8] text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
                         Agendar
                     </Link>
-                    <Link to="/entrar" className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-[#b61722] hover:bg-[#9e1320] text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
-                        Entrar
-                    </Link>
+
+                    {user ? (
+                        <>
+                            {['ADMIN', 'REDATOR'].includes(user.perfil) && (
+                                <Link to="/admin" className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-[#1878c1] hover:bg-[#1265a8] text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
+                                    Admin
+                                </Link>
+                            )}
+                            <button onClick={logout} className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-white/10 hover:bg-white/20 text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
+                                Sair
+                            </button>
+                        </>
+                    ) : (
+                        <Link to="/entrar" className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-[#b61722] hover:bg-[#9e1320] text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
+                            Entrar
+                        </Link>
+                    )}
 
                     <button
                         className="md:hidden flex items-center justify-center w-9 h-9 text-white/60 hover:text-white transition-colors cursor-pointer"

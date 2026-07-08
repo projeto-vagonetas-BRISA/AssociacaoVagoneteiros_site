@@ -5,9 +5,10 @@ import { useAuth } from '../contexts/authContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: 'USUARIO' | 'ADMIN' | 'REDATOR';
+  allowedPerfis?: ('USUARIO' | 'ADMIN' | 'REDATOR')[];  // suporte a múltiplos perfis
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole, allowedPerfis }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -25,8 +26,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/entrar" replace />;
   }
 
+  // Verificar permissão: se allowedPerfis foi passado, checa contra a lista
+  if (allowedPerfis && !allowedPerfis.includes(user.perfil)) {
+    return <Navigate to="/" replace />;
+  }
+
   if (requiredRole && user.perfil !== requiredRole) {
-    // Se for admin e o usuário for comum, redirecionar para home
     return <Navigate to="/" replace />;
   }
 
