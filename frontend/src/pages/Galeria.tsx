@@ -12,7 +12,15 @@ const photos: { src: string; alt: string }[] = [
   { src: "https://placehold.co/800x600/005f9d/white?text=Foto+5", alt: "Vagoneteiros foto 5" },
   { src: "https://placehold.co/800x600/b61722/white?text=Foto+6", alt: "Vagoneteiros foto 6" },
   { src: "https://placehold.co/800x600/1878c1/white?text=Foto+7", alt: "Vagoneteiros foto 7" },
+  { src: "https://placehold.co/800x600/1878c1/white?text=Foto+8", alt: "Vagoneteiros foto 8" },
+
 ];
+
+const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
+  <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
+    {icon}
+  </div>
+);
 
 export const Galeria: React.FC = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
@@ -23,7 +31,6 @@ export const Galeria: React.FC = () => {
   const next = () => setLightbox((i) => (i! < photos.length - 1 ? i! + 1 : 0));
 
   const galeria = conteudo.galeria_fotos;
-
   return (
     <div className="flex flex-col items-start w-full">
 
@@ -32,7 +39,7 @@ export const Galeria: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <span className="text-3xl"><GalleryThumbnailsIcon /></span>
+          <SectionIcon icon={<GalleryThumbnailsIcon className="size-4" strokeWidth={2} />} />
               <h1 className="font-bold text-3xl md:text-5xl text-black tracking-tighter">
                 {galeria?.titulo ?? "Galeria de Fotos"}
               </h1>
@@ -66,58 +73,29 @@ export const Galeria: React.FC = () => {
           </div>
 
           <div className="hidden md:grid grid-cols-3 gap-4">
-            <div
-              className="col-span-1 row-span-2 rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-              style={{ gridRow: "span 2" }}
-              onClick={() => openLightbox(0)}
-            >
-              <img
-                src={photos[0].src}
-                alt={photos[0].alt}
-                className="w-full h-full object-cover"
-                style={{ minHeight: "420px" }}
-              />
-            </div>
-
-            {[1, 2].map((i) => (
+            {photos.length > 0 && (
               <div
-                key={i}
-                className="rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-                onClick={() => openLightbox(i)}
+                className="col-span-1 row-span-2 rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+                onClick={() => openLightbox(0)}
               >
                 <img
-                  src={photos[i].src}
-                  alt={photos[i].alt}
+                  src={photos[0].src}
+                  alt={photos[0].alt}
                   className="w-full h-full object-cover"
-                  style={{ minHeight: "200px" }}
+                  style={{ minHeight: "420px" }}
                 />
               </div>
-            ))}
+            )}
 
-            {[3, 4].map((i) => (
+            {photos.slice(1).map((photo, i) => (
               <div
-                key={i}
+                key={i + 1}
                 className="rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-                onClick={() => openLightbox(i)}
+                onClick={() => openLightbox(i + 1)}
               >
                 <img
-                  src={photos[i].src}
-                  alt={photos[i].alt}
-                  className="w-full h-full object-cover"
-                  style={{ minHeight: "200px" }}
-                />
-              </div>
-            ))}
-
-            {[0, 5, 6].map((srcIdx, col) => (
-              <div
-                key={`row3-${col}`}
-                className="rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-                onClick={() => openLightbox(srcIdx)}
-              >
-                <img
-                  src={photos[srcIdx].src}
-                  alt={photos[srcIdx].alt}
+                  src={photo.src}
+                  alt={photo.alt}
                   className="w-full h-full object-cover"
                   style={{ minHeight: "200px" }}
                 />
@@ -134,7 +112,7 @@ export const Galeria: React.FC = () => {
           onClick={closeLightbox}
         >
           <button
-            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white text-4xl font-bold px-3 py-2 hover:text-[#1878c1]"
+            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white text-4xl font-bold px-3 py-2 hover:text-blue-accent"
             onClick={(e) => { e.stopPropagation(); prev(); }}
           >
             ‹
@@ -146,7 +124,7 @@ export const Galeria: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           />
           <button
-            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white text-4xl font-bold px-3 py-2 hover:text-[#1878c1]"
+            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white text-4xl font-bold px-3 py-2 hover:text-blue-accent"
             onClick={(e) => { e.stopPropagation(); next(); }}
           >
             ›
@@ -167,7 +145,7 @@ export const Galeria: React.FC = () => {
             <h2 className="font-bold text-2xl md:text-4xl text-black tracking-tighter">
               {galeria?.upload?.titulo ?? "Envie sua foto"}
             </h2>
-            <p className="font-normal text-sm md:text-base text-[#414752] leading-relaxed">
+            <p className="font-normal text-sm md:text-base text-[#414752] leading-relaxed text-justify md:text-left">
               {galeria?.upload?.descricao ?? "Foi em um dos nossos passeios e quer compartilhar o momento? Envie sua foto e ela pode aparecer aqui!"}
             </p>
             <div className="pt-2">

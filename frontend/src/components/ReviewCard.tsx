@@ -25,14 +25,14 @@ export function ReviewCard({ name, location, comment, rating, avatarLetter, avat
             >
               <path 
                 d={svgPaths.p1f93f980} 
-                fill={i < rating ? '#B61722' : '#E0E0E0'} 
+                fill={i < rating ? 'var(--color-red-dark)' : '#E0E0E0'} 
               />
             </svg>
           ))}
         </div>
 
         {/* comentário */}
-        <p className="italic text-base text-[#414752] leading-relaxed">
+        <p className="italic text-base text-text-primary leading-relaxed text-justify md:text-left">
           {comment}
         </p>
 
@@ -46,10 +46,10 @@ export function ReviewCard({ name, location, comment, rating, avatarLetter, avat
           </div>
 
           <div className="flex flex-col">
-            <p className="font-bold text-base text-[#005f9d]">
+            <p className="font-bold text-base text-blue">
               {name}
             </p>
-            <p className="text-xs text-[#414752]">
+            <p className="text-xs text-text-primary">
               {location}
             </p>
           </div>

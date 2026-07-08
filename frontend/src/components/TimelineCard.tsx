@@ -11,28 +11,28 @@ export function TimelineCard({ year, title, description, variant }: TimelineCard
     switch (variant) {
       case 'blue':
         return {
-          card: 'bg-[#f8f9ff] border-l-4 border-[#005f9d] shadow-sm',
-          year: 'text-[#005f9d]/80',
-          title: 'text-[#005f9d]',
-          desc: 'text-[#414752]'
+          card: 'bg-bg-light-2 border-l-4 border-blue shadow-sm',
+          year: 'text-blue/80',
+          title: 'text-blue',
+          desc: 'text-text-primary'
         };
       case 'red':
         return {
-          card: 'bg-[#f8f9ff] border-l-4 border-[#b61722] shadow-sm',
-          year: 'text-[#b61722]/90',
-          title: 'text-[#005f9d]',
-          desc: 'text-[#414752]'
+          card: 'bg-bg-light-2 border-l-4 border-red-dark shadow-sm',
+          year: 'text-red-dark/90',
+          title: 'text-blue',
+          desc: 'text-text-primary'
         };
       case 'green':
         return {
-          card: 'bg-[#f8f9ff] border-l-4 border-[#0a872a] shadow-sm',
-          year: 'text-[#0a872a]/90',
-          title: 'text-[#005f9d]',
-          desc: 'text-[#414752]'
+          card: 'bg-bg-light-2 border-l-4 border-green-timeline shadow-sm',
+          year: 'text-green-timeline/90',
+          title: 'text-blue',
+          desc: 'text-text-primary'
         };
       case 'dark':
         return {
-          card: 'bg-[#005f9d] shadow-xl',
+          card: 'bg-blue shadow-xl',
           year: 'text-white/90', 
           title: 'text-white',
           desc: 'text-white/70'
@@ -54,7 +54,7 @@ export function TimelineCard({ year, title, description, variant }: TimelineCard
           {title}
         </h3>
 
-        <p className={`text-sm leading-relaxed ${styles.desc}`}>
+        <p className={`text-sm leading-relaxed text-justify md:text-left ${styles.desc}`}>
           {description}
         </p>
         
