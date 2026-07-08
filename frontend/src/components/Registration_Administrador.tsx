@@ -1,32 +1,58 @@
-import { useNameField, useTelField, useEmailField, usePasswordField, field } from "../utils/formValidations";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useNameField, useCpfField, useTelField, useEmailField, usePasswordField, field } from "../utils/formValidations";
+import { authService } from "../services/auth";
 
 export function Registration_Administrador() {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [apiError, setApiError] = useState("");
+
     const nameField     = useNameField();
+    const cpfField      = useCpfField();
     const telField      = useTelField();
     const emailField    = useEmailField();
     const passwordField = usePasswordField();
 
-    function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
         event.preventDefault();
+        setApiError("");
 
+        const rawCpf      = cpfField.cpf.replace(/\D/g, "");
         const rawTel      = telField.stripMask(telField.tel);
         const nameTrimmed = nameField.name.trim();
 
         const newNameError            = nameField.validateName(nameTrimmed);
+        const newCpfError             = cpfField.validateCpf(rawCpf);
         const newTelError             = telField.validateTel(rawTel);
         const newEmailError           = emailField.validateEmail(emailField.email);
         const newPasswordError        = passwordField.validatePassword(passwordField.password);
         const newConfirmPasswordError = passwordField.password !== passwordField.confirmPassword ? "As senhas não coincidem." : "";
 
         nameField.setNameError(newNameError);
+        cpfField.setCpfError(newCpfError);
         telField.setTelError(newTelError);
         emailField.setEmailError(newEmailError);
         passwordField.setPasswordError(newPasswordError);
         passwordField.setConfirmPasswordError(newConfirmPasswordError);
 
-        if (newNameError || newTelError || newEmailError || newPasswordError || newConfirmPasswordError) return;
+        if (newNameError || newCpfError || newTelError || newEmailError || newPasswordError || newConfirmPasswordError) return;
 
-        console.log("Administrador:", { name: nameTrimmed, tel: rawTel, email: emailField.email.trim() });
+        setLoading(true);
+        try {
+            await authService.createAdmin({
+                name: nameTrimmed,
+                cpf: rawCpf,
+                senha: passwordField.password,
+                email: emailField.email.trim(),
+                telefone: rawTel,
+            });
+            navigate("/painel-admin");
+        } catch (err: any) {
+            setApiError(err instanceof Error ? err.message : "Erro ao cadastrar administrador");
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -47,6 +73,18 @@ export function Registration_Administrador() {
                                 className={field(!!nameField.nameError)}
                             />
                             {nameField.nameError && <p className="mt-1 text-xs text-red-500">{nameField.nameError}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">CPF</label>
+                            <input
+                                type="text" name="cpf" required autoComplete="off"
+                                maxLength={14}
+                                value={cpfField.cpf} onChange={cpfField.handleCpfChange}
+                                placeholder="000.000.000-00"
+                                className={field(!!cpfField.cpfError)}
+                            />
+                            {cpfField.cpfError && <p className="mt-1 text-xs text-red-500">{cpfField.cpfError}</p>}
                         </div>
 
                         <div>
@@ -103,8 +141,20 @@ export function Registration_Administrador() {
                             {passwordField.confirmPasswordError && <p className="mt-1 text-xs text-red-500">{passwordField.confirmPasswordError}</p>}
                         </div>
 
-                        <button type="submit" className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-red-dark hover:bg-red active:scale-[0.98] transition-all px-4 py-3 text-sm font-semibold text-white shadow-md cursor-pointer">
-                            Finalizar Cadastro
+                        {apiError && (
+                            <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg p-3">{apiError}</p>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-red-dark hover:bg-red disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all px-4 py-3 text-sm font-semibold text-white shadow-md cursor-pointer"
+                        >
+                            {loading ? (
+                                <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Cadastrando...</>
+                            ) : (
+                                "Finalizar Cadastro"
+                            )}
                         </button>
                     </form>
                 </div>

@@ -187,6 +187,68 @@ export async function login(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function cadastroAdmin(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { name, cpf, senha, email, telefone } = req.body;
+
+    if (!name || !cpf || !senha || !email || !telefone) {
+      res.status(400).json({ message: 'Nome, CPF, Senha, E-mail e Telefone são obrigatórios' });
+      return;
+    }
+
+    const cleanedCpf = cleanCPF(cpf);
+    if (cleanedCpf.length !== 11) {
+      res.status(400).json({ message: 'CPF inválido. Deve conter 11 dígitos' });
+      return;
+    }
+
+    if (senha.length < 6) {
+      res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres' });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({ message: 'Formato de e-mail inválido' });
+      return;
+    }
+
+    const existingCpf = await prisma.usuario.findUnique({ where: { cpf: cleanedCpf } });
+    if (existingCpf) {
+      res.status(400).json({ message: 'Este CPF já está cadastrado' });
+      return;
+    }
+
+    const existingEmail = await prisma.usuario.findUnique({ where: { email } });
+    if (existingEmail) {
+      res.status(400).json({ message: 'Este E-mail já está cadastrado' });
+      return;
+    }
+
+    const hashedSenha = await bcrypt.hash(senha, 10);
+
+    const admin = await prisma.usuario.create({
+      data: {
+        name,
+        cpf: cleanedCpf,
+        senha: hashedSenha,
+        email,
+        telefone,
+        perfil: 'ADMIN',
+      },
+    });
+
+    const { senha: _, ...adminSemSenha } = admin;
+
+    res.status(201).json({
+      message: 'Administrador cadastrado com sucesso',
+      user: adminSemSenha,
+    });
+  } catch (error) {
+    console.error('Erro ao cadastrar admin:', error);
+    res.status(500).json({ message: 'Erro interno ao cadastrar administrador' });
+  }
+}
+
 export async function me(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     // req.user já vem injetado pelo authMiddleware

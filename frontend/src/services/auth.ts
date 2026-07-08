@@ -76,6 +76,20 @@ export const authService = {
     return result.user;
   },
 
+  async createAdmin(data: {
+    name: string;
+    cpf: string;
+    senha: string;
+    email: string;
+    telefone: string;
+  }): Promise<User> {
+    const result = await api.request<CreateOnlyResponse>('/auth/register/admin', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return result.user;
+  },
+
   async me(): Promise<User> {
     const data = await api.request<MeResponse>('/auth/me');
     return data.user;
