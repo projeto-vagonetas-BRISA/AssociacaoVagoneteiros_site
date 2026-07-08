@@ -17,7 +17,7 @@ function isValidEmail(email: string): boolean {
 
 export async function cadastro(req: Request, res: Response): Promise<void> {
   try {
-    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao } = req.body;
+    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto } = req.body;
 
     // Validar campos obrigatórios
     if (!name || !cpf || !senha || !telefone) {
@@ -77,6 +77,18 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       }
     }
 
+    // Processar foto (base64 → Buffer)
+    let fotoBuffer: Buffer | undefined = undefined;
+    if (foto) {
+      // Aceita formato "data:image/...;base64,..." ou base64 puro
+      const base64Data = foto.includes('base64,') ? foto.split('base64,')[1] : foto;
+      fotoBuffer = Buffer.from(base64Data, 'base64');
+      if (fotoBuffer.length > 5 * 1024 * 1024) {
+        res.status(400).json({ message: 'A foto deve ter no máximo 5MB' });
+        return;
+      }
+    }
+
     // Criar o usuário
     const novoUsuario = await prisma.usuario.create({
       data: {
@@ -88,6 +100,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
         historico: historico || null,
         experiencia: experiencia || null,
         data_associacao: parsedDataAssociacao,
+        foto: fotoBuffer,
         perfil: 'USUARIO', // Cadastro padrão como USUARIO
       },
     });

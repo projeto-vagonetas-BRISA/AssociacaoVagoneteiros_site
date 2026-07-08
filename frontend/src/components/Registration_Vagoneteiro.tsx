@@ -60,6 +60,7 @@ export function Registration_Vagoneteiro() {
                 historico: history || undefined,
                 experiencia: experience,
                 data_associacao: joinDate ? new Date(joinDate + 'T12:00:00-03:00').toISOString() : undefined,
+                foto: profileImage || undefined,
             });
             navigate("/painel-admin");
         } catch (err: any) {
