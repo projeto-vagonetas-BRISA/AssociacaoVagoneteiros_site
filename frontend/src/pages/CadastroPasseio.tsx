@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, CheckCircle, UserCheck, MapPinPen} from "lucide-react";
 import { api } from "../services/api";
+import { ComboboxVagoneteiro } from "../components/ComboboxVagoneteiro";
 
 type VagoneteiroResumo = {
   id: number;
@@ -24,13 +25,11 @@ export const CadastroPasseio: React.FC = () => {
   useEffect(() => {
     async function carregarVagoneteiros() {
       try {
-        const res = await api.request<{ data: VagoneteiroResumo[] }>("/usuarios/vagoneteiros");
-        // O endpoint retorna paginado: { data, total, page, totalPages }
-        // Precisamos adaptar
-        const body = await fetch(api.baseUrl + "/usuarios/vagoneteiros", {
+        const body = await fetch(api.baseUrl + "/usuarios/vagoneteiros?limit=200", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }).then(r => r.json());
-        setVagoneteiros((body.data || body).map((u: any) => ({
+        const lista = body.data || body;
+        setVagoneteiros(lista.map((u: any) => ({
           id: u.id,
           name: u.name,
           ativo: u.ativo,
@@ -179,18 +178,11 @@ export const CadastroPasseio: React.FC = () => {
             <label className="block text-xs font-semibold text-text-dark tracking-normal case-sensitive mb-1.5">
               Selecione o Vagoneteiro
             </label>
-            <select
-              value={vagSelecionado ?? ""}
-              onChange={(e) => setVagSelecionado(e.target.value ? Number(e.target.value) : null)}
-              className="w-full h-10.5 px-3.5 border border-border rounded-lg text-sm text-text-dark outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/10 transition-colors bg-white cursor-pointer appearance-none"
-            >
-              <option value="" disabled>Selecione um vagoneteiro</option>
-              {vagoneteiros.filter(v => v.ativo).map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
+            <ComboboxVagoneteiro
+              options={vagoneteiros.filter(v => v.ativo)}
+              value={vagSelecionado}
+              onChange={setVagSelecionado}
+            />
           </div>
 
           {/* Ações */}
