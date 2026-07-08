@@ -80,15 +80,22 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
     // Verificar se passeio existe
     const passeio = await prisma.passeio.findUnique({
       where: { id: parsedPasseioId },
-      include: { _count: { select: { agendamentos: true } } },
     });
     if (!passeio) {
       res.status(404).json({ message: 'Passeio não encontrado' });
       return;
     }
 
+    // Contar apenas agendamentos ativos (não cancelados)
+    const agendamentosAtivos = await prisma.agendamento.count({
+      where: {
+        passeioId: parsedPasseioId,
+        status: { not: 'CANCELADO' },
+      },
+    });
+
     // Verificar capacidade do passeio
-    if (passeio._count.agendamentos >= passeio.capacidade) {
+    if (agendamentosAtivos >= passeio.capacidade) {
       res.status(400).json({ message: 'Passeio lotado. Não há vagas disponíveis' });
       return;
     }

@@ -63,3 +63,19 @@ export function roleMiddleware(allowedRoles: Perfil[]) {
     next();
   };
 }
+
+export function adminOrSelfMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    res.status(401).json({ message: 'Não autorizado' });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  if (req.user.perfil === 'ADMIN' || (!isNaN(id) && req.user.id === id)) {
+    next();
+    return;
+  }
+
+  res.status(403).json({ message: 'Acesso negado: permissão insuficiente' });
+}
+

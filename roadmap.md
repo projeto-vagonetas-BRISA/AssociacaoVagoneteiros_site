@@ -36,6 +36,12 @@
 - [x] Avaliações (controller + routes)
 - [x] Usuários (controller + routes)
 - [x] Documentação da API (`agendamento.md`)
+- [x] Correção de vazamento de conexões Prisma em desenvolvimento
+- [x] Rota `/usuarios/:id` liberada para autoedição/visualização do próprio perfil
+- [x] Bloqueio do servidor em produção caso `JWT_SECRET` não seja fornecido
+- [x] Validação de avaliações (somente clientes com agendamento confirmado)
+- [x] Bug de contagem de capacidade ignorando agendamentos cancelados
+- [x] Tratamento amigável para erro de chave estrangeira (delete cascade) na API
 
 ### Painel Administrativo
 - [x] Painel admin lista vagoneteiros da API com paginação (`GET /usuarios/vagoneteiros`)
@@ -61,31 +67,21 @@
 
 ## 🔄 Em Andamento / Pendente
 
-### Páginas Admin (conectar com API)
-- [ ] `Clientes.tsx` — listar, cadastrar, editar clientes da API
-- [ ] `Passeios.tsx` — listar, cadastrar, editar passeios da API
-- [ ] `Agendamentos.tsx` — listar, cadastrar, editar agendamentos
-- [ ] `Avaliacoes.tsx` — listar avaliações
-- [ ] `Usuarios.tsx` — listar e gerenciar usuários
+### Integração Frontend/Backend (Faltante)
+- [ ] `PainelAdm.tsx` — carregar dados reais e estatísticas de Clientes, Agenda (Agendamentos) e Avaliações vindos do backend (atualmente mockados)
+- [ ] `CadastroPasseio.tsx` — carregar lista real de vagoneteiros (`GET /usuarios/vagoneteiros`) e enviar `POST /passeios`
+- [ ] `Agendamento.tsx` — carregar datas e horários dinâmicos de passeios (`GET /passeios`) e criar reserva com `POST /clientes` + `POST /agendamentos`
+- [ ] `Home.tsx` — carregar depoimentos/avaliações recentes de forma dinâmica (`GET /avaliacoes`)
 
-### Páginas Públicas (conectar com API)
-- [ ] `Home.tsx` — carregar avaliações e passeios da API (em vez de conteúdo estático)
-- [ ] `Agendamento.tsx` — formulário de agendamento integrado com backend
-- [ ] `Cadastro.tsx` (público) — cadastro de cliente integrado
+### Melhorias Gerais
+- [ ] Migrar upload de fotos de Base64 para `multipart/form-data` usando Multer no backend
+- [ ] Diálogo de confirmação visual para exclusões no painel
+- [ ] Filtro rápido por status (ativo/inativo) na tabela de vagoneteiros
 
-### Cadastro de Passeio
-- [ ] `CadastroPasseio.tsx` — formulário conectado com `POST /passeios`
-
-### Melhorias
-- [ ] Upload de foto via multipart/form-data em vez de base64
-- [ ] Excluir vagoneteiro com confirmação
-- [ ] Filtro por status (ativo/inativo) na listagem de vagoneteiros
-- [ ] Página de listagem completa de vagoneteiros (fora do painel)
-
-### Testes
-- [ ] Fluxo completo: login admin → criar vagoneteiro → criar passeio → criar cliente → criar agendamento
-- [ ] Verificar permissões (REDATOR vs ADMIN)
-- [ ] Testar paginação em todas as listagens
+### Testes de Integração
+- [ ] Fluxo completo E2E: criar vagoneteiro -> criar passeio -> agendar passeio publicamente -> aprovar agendamento no painel -> avaliar passeio pós-realização
+- [ ] Testar limites de capacidade de agendamentos em concorrência
+- [ ] Validar comportamento de paginação com grandes volumes de dados
 
 ---
 

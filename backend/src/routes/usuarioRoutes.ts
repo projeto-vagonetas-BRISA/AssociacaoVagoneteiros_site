@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { listar, listarVagoneteiros, buscarPorId, atualizar, atualizarPerfil, alternarAtivo, deletar } from '../controllers/usuarioController';
-import { authMiddleware, roleMiddleware } from '../middlewares/auth';
+import { authMiddleware, roleMiddleware, adminOrSelfMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
@@ -13,9 +13,10 @@ router.get('/vagoneteiros', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR'])
 // Alternar ativo/inativo (admin)
 router.patch('/vagoneteiros/:id/ativo', authMiddleware, roleMiddleware(['ADMIN']), alternarAtivo);
 
-router.get('/:id', authMiddleware, roleMiddleware(['ADMIN']), buscarPorId);
-router.put('/:id', authMiddleware, roleMiddleware(['ADMIN']), atualizar);
+router.get('/:id', authMiddleware, adminOrSelfMiddleware, buscarPorId);
+router.put('/:id', authMiddleware, adminOrSelfMiddleware, atualizar);
 router.patch('/:id/perfil', authMiddleware, roleMiddleware(['ADMIN']), atualizarPerfil);
 router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN']), deletar);
 
 export default router;
+

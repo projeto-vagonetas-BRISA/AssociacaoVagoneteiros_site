@@ -83,6 +83,19 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
+    // Verificar se cliente tem agendamento confirmado neste passeio
+    const agendamentoConfirmado = await prisma.agendamento.findFirst({
+      where: {
+        clienteId: parsedClienteId,
+        passeioId: parsedPasseioId,
+        status: 'CONFIRMADO',
+      },
+    });
+    if (!agendamentoConfirmado) {
+      res.status(400).json({ message: 'Cliente não possui um agendamento confirmado para este passeio' });
+      return;
+    }
+
     // Verificar se cliente já avaliou este passeio
     const jaAvaliou = await prisma.avaliacao.findFirst({
       where: { clienteId: parsedClienteId, passeioId: parsedPasseioId },

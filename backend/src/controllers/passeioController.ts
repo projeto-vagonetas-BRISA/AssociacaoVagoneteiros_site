@@ -184,8 +184,14 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 
     await prisma.passeio.delete({ where: { id } });
     res.json({ message: 'Passeio deletado com sucesso' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao deletar passeio:', error);
+    if (error?.code === 'P2003') {
+      res.status(400).json({
+        message: 'Passeio não pode ser deletado pois possui agendamentos ou avaliações associadas',
+      });
+      return;
+    }
     res.status(500).json({ message: 'Erro ao deletar passeio' });
   }
 }

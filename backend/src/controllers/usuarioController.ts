@@ -282,8 +282,14 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 
     await prisma.usuario.delete({ where: { id } });
     res.json({ message: 'Usuário deletado com sucesso' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao deletar usuário:', error);
+    if (error?.code === 'P2003') {
+      res.status(400).json({
+        message: 'Usuário não pode ser deletado pois possui passeios ou dados associados',
+      });
+      return;
+    }
     res.status(500).json({ message: 'Erro ao deletar usuário' });
   }
 }

@@ -156,8 +156,14 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 
     await prisma.clientes.delete({ where: { id } });
     res.json({ message: 'Cliente deletado com sucesso' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao deletar cliente:', error);
+    if (error?.code === 'P2003') {
+      res.status(400).json({
+        message: 'Cliente não pode ser deletado pois possui agendamentos ou avaliações associadas',
+      });
+      return;
+    }
     res.status(500).json({ message: 'Erro ao deletar cliente' });
   }
 }
