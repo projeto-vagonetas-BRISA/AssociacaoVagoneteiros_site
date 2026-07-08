@@ -116,13 +116,112 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       },
       include: {
         cliente: { select: { id: true, nome: true } },
-        passeio: { select: { id: true, data: true, valor: true } },
+        passeio: { select: { id: true, data: true, preco: true } },
       },
     });
 
     res.status(201).json(agendamento);
   } catch (error) {
     console.error('Erro ao criar agendamento:', error);
+    res.status(500).json({ message: 'Erro ao criar agendamento' });
+  }
+}
+
+// Endpoint público para agendamento — busca ou cria cliente automaticamente
+export async function agendarPublico(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { nome, telefone, email, passeioId } = req.body;
+
+    if (!nome || !telefone || !passeioId) {
+      res.status(400).json({ message: 'nome, telefone e passeioId são obrigatórios' });
+      return;
+    }
+
+    const parsedPasseioId = Number(passeioId);
+    if (isNaN(parsedPasseioId)) {
+      res.status(400).json({ message: 'passeioId inválido' });
+      return;
+    }
+
+    // Verificar se passeio existe
+    const passeio = await prisma.passeio.findUnique({
+      where: { id: parsedPasseioId, ativo: true },
+    });
+    if (!passeio) {
+      res.status(404).json({ message: 'Passeio não encontrado ou inativo' });
+      return;
+    }
+
+    // Contar agendamentos ativos
+    const agendamentosAtivos = await prisma.agendamento.count({
+      where: { passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
+    });
+    if (agendamentosAtivos >= passeio.capacidade) {
+      res.status(400).json({ message: 'Passeio lotado. Não há vagas disponíveis' });
+      return;
+    }
+
+    // Buscar cliente existente por telefone ou email
+    const cleanedTel = telefone.replace(/\D/g, '');
+    const cleanedEmail = email ? email.trim().toLowerCase() : '';
+
+    let cliente = await prisma.clientes.findFirst({
+      where: {
+        OR: [
+          { telefone: cleanedTel },
+          ...(cleanedEmail ? [{ email: cleanedEmail }] : []),
+        ],
+      },
+    });
+
+    // Se não encontrou, cria novo cliente
+    if (!cliente) {
+      const cleanedCpf = `T${Date.now()}`; // CPF temporário para cliente sem doc
+      cliente = await prisma.clientes.create({
+        data: {
+          nome: nome.trim(),
+          cpf: cleanedCpf,
+          telefone: cleanedTel,
+          email: cleanedEmail || null,
+        },
+      });
+    } else {
+      // Atualizar nome se o cliente existente não tiver nome ou se foi fornecido
+      if (nome && nome.trim() !== cliente.nome) {
+        cliente = await prisma.clientes.update({
+          where: { id: cliente.id },
+          data: { nome: nome.trim() },
+        });
+      }
+    }
+
+    // Verificar se já tem agendamento neste passeio
+    const jaAgendado = await prisma.agendamento.findFirst({
+      where: {
+        clienteId: cliente.id,
+        passeioId: parsedPasseioId,
+        status: { not: 'CANCELADO' },
+      },
+    });
+    if (jaAgendado) {
+      res.status(400).json({ message: 'Cliente já possui agendamento neste passeio' });
+      return;
+    }
+
+    const agendamento = await prisma.agendamento.create({
+      data: {
+        clienteId: cliente.id,
+        passeioId: parsedPasseioId,
+      },
+      include: {
+        cliente: { select: { id: true, nome: true } },
+        passeio: { select: { id: true, data: true, horario: true, preco: true } },
+      },
+    });
+
+    res.status(201).json(agendamento);
+  } catch (error) {
+    console.error('Erro ao criar agendamento público:', error);
     res.status(500).json({ message: 'Erro ao criar agendamento' });
   }
 }

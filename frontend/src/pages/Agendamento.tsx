@@ -12,187 +12,22 @@ import {
   ArrowRight,
   CreditCard,
   Globe,
-  ListOrdered
+  ListOrdered,
+  CheckCircle2
 } from "lucide-react";
 import { InformacoesPessoais } from "../components/InformacoesPessoaisForm";
 import { HorariosDia } from "../components/HorariosDias";
 import { useAuth } from "../contexts/AuthContext";
+import { api } from "../services/api";
 
-//tabela de exemplo para referência do formato dos dados que virão do backend
 interface Passeio {
   id: number;
-  valor: number; // preço por pessoa
-  capacidade: number; // vagas totais da vagoneta
-  data_hora: string; // formato "2026-05-25T09:00:00"
-  id_FK: number | null; // fk genérica
+  preco: number;
+  capacidade: number;
+  data: string;
+  horario: string;
+  usuario: { id: number; name: string };
 }
-
-//dados fictícios para simular o backend. passeios de Maio e Junho de 2026, com variação de horários, preços e disponibilidade.
-const PASSEIOS_MOCK: Passeio[] = [
-  // maio 2026
-  {
-    id: 1,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-05-25T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 2,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-05-25T11:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 3,
-    valor: 20,
-    capacidade: 0,
-    data_hora: "2026-05-25T14:00:00",
-    id_FK: 2,
-  }, // esgotado
-  {
-    id: 4,
-    valor: 20,
-    capacidade: 3,
-    data_hora: "2026-05-25T16:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 5,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-05-26T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 6,
-    valor: 20,
-    capacidade: 2,
-    data_hora: "2026-05-26T14:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 7,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-05-27T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 8,
-    valor: 20,
-    capacidade: 4,
-    data_hora: "2026-05-27T11:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 9,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-05-28T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 10,
-    valor: 20,
-    capacidade: 1,
-    data_hora: "2026-05-28T14:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 11,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-05-29T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 12,
-    valor: 20,
-    capacidade: 0,
-    data_hora: "2026-05-29T11:00:00",
-    id_FK: 2,
-  }, // esgotado
-  {
-    id: 13,
-    valor: 20,
-    capacidade: 3,
-    data_hora: "2026-05-29T16:00:00",
-    id_FK: 1,
-  },
-  // junho 2026
-  {
-    id: 14,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-06-01T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 15,
-    valor: 20,
-    capacidade: 3,
-    data_hora: "2026-06-01T14:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 16,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-06-07T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 17,
-    valor: 20,
-    capacidade: 0,
-    data_hora: "2026-06-07T11:00:00",
-    id_FK: 2,
-  }, // esgotado
-  {
-    id: 18,
-    valor: 20,
-    capacidade: 2,
-    data_hora: "2026-06-07T16:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 19,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-06-14T09:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 20,
-    valor: 20,
-    capacidade: 4,
-    data_hora: "2026-06-14T14:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 21,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-06-21T09:00:00",
-    id_FK: 1,
-  },
-  {
-    id: 22,
-    valor: 20,
-    capacidade: 5,
-    data_hora: "2026-06-28T09:00:00",
-    id_FK: 2,
-  },
-  {
-    id: 23,
-    valor: 20,
-    capacidade: 3,
-    data_hora: "2026-06-28T14:00:00",
-    id_FK: 1,
-  },
-];
 
 const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = [
@@ -228,14 +63,37 @@ function getFirstDayOfMonth(year: number, month: number) {
 function toLocalDate(isoString: string) {
   const [datePart, timePart] = isoString.split("T");
   const [y, m, d] = datePart.split("-").map(Number);
-  const [hh, mm] = timePart.split(":").map(Number);
-  return new Date(y, m - 1, d, hh, mm);
+  if (timePart) {
+    const [hh, mm] = timePart.split(":").map(Number);
+    return new Date(y, m - 1, d, hh, mm || 0);
+  }
+  return new Date(y, m - 1, d);
 }
+
+// Converte data ISO (data + horario separados) para Date
+function passeioToDate(passeio: { data: string; horario: string }): Date {
+  const d = new Date(passeio.data);
+  const [hh, mm] = passeio.horario.split(":").map(Number);
+  d.setHours(hh || 0, mm || 0, 0, 0);
+  return d;
+}
+
 function formatHora(isoString: string) {
   const d = toLocalDate(isoString);
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+function formatHoraPasseio(passeio: { data: string; horario: string }): string {
+  return passeio.horario;
+}
+
+function formatDataResumo(data: string): string {
+  const d = new Date(data);
+  return d.toLocaleDateString('pt-BR', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+  });
 }
 
 const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
@@ -256,6 +114,20 @@ export const Agendamento: React.FC = () => {
   const [passageiros, setPassageiros] = useState(1);
   const [email, setEmail] = useState(isAuthenticated && user ? user.email || "" : "");
   const [formaPagamento, setFormaPagamento] = useState("credito");
+  const [passeios, setPasseios] = useState<Passeio[]>([]);
+  const [loadingPasseios, setLoadingPasseios] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [agendamentoConfirmado, setAgendamentoConfirmado] = useState<{ id: number; cliente: { nome: string }; passeio: { data: string; horario: string; preco: number } } | null>(null);
+
+  // Carregar passeios da API
+  useEffect(() => {
+    setLoadingPasseios(true);
+    api.request<{ data: Passeio[]; total: number }>('/passeios?limit=100')
+      .then(res => setPasseios(res.data))
+      .catch(() => {})
+      .finally(() => setLoadingPasseios(false));
+  }, []);
 
   //calendário
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -275,29 +147,28 @@ export const Agendamento: React.FC = () => {
   // dias do mês que possuem passeios disponíveis (para marcar no calendário)
   const daysWithPasseios = useMemo(() => {
     const set = new Set<number>();
-    PASSEIOS_MOCK.forEach((p) => {
-      const d = toLocalDate(p.data_hora);
+    passeios.forEach((p) => {
+      const d = new Date(p.data);
       if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
         set.add(d.getDate());
       }
     });
     return set;
-  }, [currentMonth, currentYear]);
+  }, [currentMonth, currentYear, passeios]);
 
   // passeios do dia selecionado
   const passeiosDoDia = useMemo(() => {
-    return PASSEIOS_MOCK.filter((p) => {
-      const d = toLocalDate(p.data_hora);
+    return passeios.filter((p) => {
+      const d = new Date(p.data);
       return (
         d.getFullYear() === currentYear &&
         d.getMonth() === currentMonth &&
         d.getDate() === selectedDay
       );
     }).sort(
-      (a, b) =>
-        toLocalDate(a.data_hora).getTime() - toLocalDate(b.data_hora).getTime(),
+      (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime(),
     );
-  }, [currentYear, currentMonth, selectedDay]);
+  }, [currentYear, currentMonth, selectedDay, passeios]);
 
   // reset seleção de passeio ao mudar de dia
   const handleSelectDay = (day: number) => {
@@ -322,7 +193,8 @@ export const Agendamento: React.FC = () => {
 
   // capacidade máxima do passeio selecionado
   const maxPassageiros = isAgencia ? 999 : (selectedPasseio?.capacidade ?? 5);
-  const subtotal = selectedPasseio ? selectedPasseio.valor * passageiros : 0;
+  const precoUnitario = selectedPasseio ? Number(selectedPasseio.preco) : 0;
+  const subtotal = precoUnitario * passageiros;
 
   // data formatada para o resumo
   const selectedDate = new Date(currentYear, currentMonth, selectedDay);
@@ -335,11 +207,39 @@ export const Agendamento: React.FC = () => {
     (isAgencia ? documento.trim() !== "" : email.trim() !== "") &&
     selectedPasseio !== null &&
     passageiros >= 1 &&
-    ciente;
+    ciente &&
+    !submitting;
 
     useEffect(() => {
       setPassageiros(1);
     }, [isAgencia]);
+
+  async function handleFinalizarReserva() {
+    if (!podeFinalizarReserva || !selectedPasseio) return;
+    setSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const result = await api.request<{
+        id: number;
+        cliente: { nome: string };
+        passeio: { data: string; horario: string; preco: number };
+      }>('/agendamentos/publico', {
+        method: 'POST',
+        body: JSON.stringify({
+          nome: nome.trim(),
+          telefone,
+          email: email.trim() || undefined,
+          passeioId: selectedPasseio.id,
+        }),
+      });
+      setAgendamentoConfirmado(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao realizar agendamento';
+      setSubmitError(message);
+    }
+    setSubmitting(false);
+  }
 
   return (
     <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
@@ -627,7 +527,7 @@ export const Agendamento: React.FC = () => {
                   </p>
                   <p className="font-semibold text-sm text-text-primary mt-0.5">
                     {selectedPasseio
-                      ? formatHora(selectedPasseio.data_hora)
+                      ? formatHoraPasseio(selectedPasseio)
                       : "—"}
                   </p>
                 </div>
@@ -718,7 +618,7 @@ export const Agendamento: React.FC = () => {
                 {selectedPasseio && (
                   <div className="flex justify-between items-center">
                     <span className="font-normal text-xs text-[#7a8392]">
-                      R$ {selectedPasseio.valor} × {passageiros}{" "}
+                      R$ {precoUnitario.toFixed(2).replace('.', ',')} × {passageiros}{" "}
                       {passageiros === 1 ? "pessoa" : "pessoas"}
                     </span>
                     <span className="font-semibold text-sm text-text-primary">
@@ -736,21 +636,35 @@ export const Agendamento: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                disabled={!podeFinalizarReserva}
-                className="w-full flex items-center justify-center gap-2 bg-red-dark hover:bg-red-hover active:bg-[#8a1020] transition-colors rounded-lg py-3.5 font-bold text-base text-white tracking-wide shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-dark"
-                onClick={() => {
-                  if (!podeFinalizarReserva) return;
-                  alert(
-                    `Reserva confirmada!\n\nNome: ${nome}\nData: ${dataFormatada}\nHorário: ${formatHora(selectedPasseio!.data_hora)}\nPassageiros: ${passageiros}\nTotal: R$ ${subtotal.toFixed(2).replace(".", ",")}\nForma de Pagamento: ${formaPagamento.charAt(0).toUpperCase() + formaPagamento.slice(1)}`,
-                  );
-                }}
-              >
-                Finalizar Reserva
-                <ArrowRight className="size-4" strokeWidth={2.5} />
-              </button>
+              {submitError && (
+                <div className="rounded-lg bg-red-dark/10 border border-red-dark/30 px-4 py-3">
+                  <p className="text-sm text-red-dark text-center">{submitError}</p>
+                </div>
+              )}
 
-              {!podeFinalizarReserva && (
+              {agendamentoConfirmado ? (
+                <div className="rounded-lg bg-green-timeline/10 border border-green-timeline/30 px-4 py-5 text-center">
+                  <CheckCircle2 className="size-10 text-green-timeline mx-auto mb-2" strokeWidth={1.5} />
+                  <p className="font-bold text-base text-green-timeline">Agendamento Confirmado!</p>
+                  <p className="text-xs text-text-primary mt-1">
+                    {agendamentoConfirmado.cliente.nome} — {formatHoraPasseio(agendamentoConfirmado.passeio)} em {formatDataResumo(agendamentoConfirmado.passeio.data)}
+                  </p>
+                  <p className="text-xs text-[#7a8394] mt-2">
+                    Protocolo: #{agendamentoConfirmado.id}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  disabled={!podeFinalizarReserva}
+                  className="w-full flex items-center justify-center gap-2 bg-red-dark hover:bg-red-hover active:bg-[#8a1020] transition-colors rounded-lg py-3.5 font-bold text-base text-white tracking-wide shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-dark"
+                  onClick={handleFinalizarReserva}
+                >
+                  {submitting ? 'Agendando...' : 'Finalizar Reserva'}
+                  <ArrowRight className="size-4" strokeWidth={2.5} />
+                </button>
+              )}
+
+              {!agendamentoConfirmado && !podeFinalizarReserva && (
                 <p className="text-[10px] text-[#9ca3af] text-center -mt-2">
                   {!ciente
                     ? "Confirme que está ciente das condições para continuar."

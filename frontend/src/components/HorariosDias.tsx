@@ -1,11 +1,13 @@
 import React from "react";
 
+// Atualizado para a interface real do backend
 interface Passeio {
   id: number;
-  valor: number;
+  preco: number;
   capacidade: number;
-  data_hora: string;
-  id_FK: number | null;
+  data: string;
+  horario: string;
+  usuario: { id: number; name: string };
 }
 
 interface Props {
@@ -68,7 +70,7 @@ export const HorariosDia: React.FC<Props> = ({
                       isSelected ? "text-white" : "text-text-dark"
                     }`}
                   >
-                    {formatHora(p.data_hora)}
+                    {p.horario}
                   </p>
 
                   <p
@@ -89,7 +91,7 @@ export const HorariosDia: React.FC<Props> = ({
                     isSelected ? "text-white" : "text-text-dark"
                   }`}
                 >
-                  R$ {p.valor}
+                  R$ {Number(p.preco).toFixed(2).replace('.', ',')}
                 </span>
 
                 {isSelected && (

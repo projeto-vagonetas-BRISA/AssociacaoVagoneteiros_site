@@ -350,14 +350,12 @@ export const PainelAdmin: React.FC = () => {
               </tbody>
             </table>
           </div>
-          </div>
           {/* Paginação da tabela de passeios */}
-          {totalPaginasPasseio > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-              <p className="text-xs text-[#7a8394]">
-                Página {paginaPasseio} de {totalPaginasPasseio} — {passeiosData?.total || 0} passeio{(passeiosData?.total || 0) !== 1 ? "s" : ""}
-              </p>
-              <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+            <p className="text-xs text-[#7a8394]">
+              Página {paginaPasseio} de {totalPaginasPasseio} — {passeiosData?.total || 0} passeio{(passeiosData?.total || 0) !== 1 ? "s" : ""}
+            </p>
+                <div className="flex items-center gap-1">
                 <button
                   onClick={() => carregarPasseios(Math.max(1, paginaPasseio - 1))}
                   disabled={paginaPasseio === 1}
@@ -380,8 +378,7 @@ export const PainelAdmin: React.FC = () => {
                   <ChevronRight size={14} />
                 </button>
               </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Vagoneteiros + Histórico */}
