@@ -96,7 +96,16 @@ export const InformacoesPessoais: React.FC<Props> = ({
               <input
                 value={telefone}
                 placeholder="(xx) 9xxxx-xxxx"
-                onChange={(e) => setTelefone(e.target.value)}
+                maxLength={15}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const masked = digits.length <= 2
+                    ? `(${digits}`
+                    : digits.length <= 7
+                      ? `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+                      : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+                  setTelefone(masked);
+                }}
                 className={inputClass}
               />
             </div>
@@ -117,7 +126,16 @@ export const InformacoesPessoais: React.FC<Props> = ({
               <input
                 value={telefone}
                 placeholder="(xx) 9xxxx-xxxx"
-                onChange={(e) => setTelefone(e.target.value)}
+                maxLength={15}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const masked = digits.length <= 2
+                    ? `(${digits}`
+                    : digits.length <= 7
+                      ? `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+                      : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+                  setTelefone(masked);
+                }}
                 className={inputClass}
               />
             </div>
