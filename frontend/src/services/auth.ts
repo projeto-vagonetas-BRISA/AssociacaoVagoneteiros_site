@@ -19,6 +19,11 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface CreateOnlyResponse {
+  message: string;
+  user: User;
+}
+
 export interface MeResponse {
   user: User;
 }
@@ -47,6 +52,27 @@ export const authService = {
       body: JSON.stringify(data),
     });
     return result;
+  },
+
+  /**
+   * Cadastra um usuário SEM alterar a sessão atual.
+   * Útil para admin cadastrar vagoneteiros sem perder o próprio login.
+   */
+  async createOnly(data: {
+    name: string;
+    cpf: string;
+    senha: string;
+    email?: string;
+    telefone: string;
+    historico?: string;
+    experiencia?: string;
+    data_associacao?: string;
+  }): Promise<User> {
+    const result = await api.request<CreateOnlyResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return result.user;
   },
 
   async me(): Promise<User> {

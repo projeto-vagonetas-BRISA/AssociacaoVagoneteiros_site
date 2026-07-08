@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/auth";
 import { useNameField, useCpfField, useTelField, usePasswordField, field, fieldBase } from "../utils/formValidations";
 
 export function Registration_Vagoneteiro() {
@@ -9,7 +9,6 @@ export function Registration_Vagoneteiro() {
     const telField      = useTelField();
     const passwordField = usePasswordField();
 
-    const { register } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [apiError, setApiError] = useState("");
@@ -53,7 +52,7 @@ export function Registration_Vagoneteiro() {
 
         setLoading(true);
         try {
-            await register({
+            await authService.createOnly({
                 name: nameTrimmed,
                 cpf: rawCpf,
                 telefone: rawTel,
