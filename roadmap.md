@@ -67,21 +67,42 @@
 
 ## 🔄 Em Andamento / Pendente
 
-### Integração Frontend/Backend (Faltante)
-- [ ] `PainelAdm.tsx` — carregar dados reais e estatísticas de Clientes, Agenda (Agendamentos) e Avaliações vindos do backend (atualmente mockados)
-- [ ] `CadastroPasseio.tsx` — carregar lista real de vagoneteiros (`GET /usuarios/vagoneteiros`) e enviar `POST /passeios`
-- [ ] `Agendamento.tsx` — carregar datas e horários dinâmicos de passeios (`GET /passeios`) e criar reserva com `POST /clientes` + `POST /agendamentos`
+### Integração Frontend/Backend
+- [x] `PainelAdm.tsx` — agendamentos, avaliações, clientes, passeios e vagoneteiros todos da API real com paginação
+- [x] `Agendamento.tsx` — calendário, horários, vagas disponíveis e criação de agendamento via API real
+- [x] `CadastroPasseio.tsx` — lista real de vagoneteiros e criação de passeio
 - [ ] `Home.tsx` — carregar depoimentos/avaliações recentes de forma dinâmica (`GET /avaliacoes`)
 
 ### Melhorias Gerais
 - [ ] Migrar upload de fotos de Base64 para `multipart/form-data` usando Multer no backend
 - [ ] Diálogo de confirmação visual para exclusões no painel
 - [ ] Filtro rápido por status (ativo/inativo) na tabela de vagoneteiros
+- [ ] Tela de login para turistas consultarem seus agendamentos (sem senha, via token enviado por WhatsApp)
 
 ### Testes de Integração
 - [ ] Fluxo completo E2E: criar vagoneteiro -> criar passeio -> agendar passeio publicamente -> aprovar agendamento no painel -> avaliar passeio pós-realização
 - [ ] Testar limites de capacidade de agendamentos em concorrência
 - [ ] Validar comportamento de paginação com grandes volumes de dados
+
+## ✨ Últimas Adições (2026-07-08)
+
+### Campos de Consentimento (promocao, notificacao, ciente)
+- [x] Adicionados `promocao Boolean`, `notificacao Boolean`, `ciente Boolean` no schema
+- [x] Endpoint público salva os 3 consentimentos ao criar agendamento
+- [x] Checkboxes desmarcados por padrão no formulário público
+- [x] Botão "Novo Agendamento" após confirmação
+
+### Acompanhantes
+- [x] Campo `acompanhantes Int @default(0)` no Agendamento
+- [x] Contagem de vagas considera 1 (cliente) + acompanhantes
+- [x] Exibição "1 + N acompanhante(s)" no histórico
+- [x] Seletor de passageiros envia `acompanhantes: passageiros - 1`
+
+### Vagas Dinâmicas
+- [x] Endpoint público `GET /agendamentos/vagas-disponiveis` com vagas restantes
+- [x] Calendário exibe vagas reais (não capacidade total)
+- [x] Histórico de agenda com paginação de 2 em 2
+- [x] Listagem do histórico separada da tabela de gestão (não conflita paginação)
 
 ---
 
