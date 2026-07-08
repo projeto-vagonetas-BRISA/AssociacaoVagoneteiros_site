@@ -21,7 +21,7 @@ export const HeaderAdm: React.FC = () => {
     };
 
     const navLinks = [
-        { label: "Cadastrar Profissional", path: "/cadastro?tipo=vagoneteiro" },
+        { label: "Cadastrar Vagoneteiro", path: "/cadastro?tipo=vagoneteiro" },
         { label: "Cadastrar Administrador", path: "/cadastro?tipo=administrador" },
         { label: "Painel Adm", path: "/painel-admin" },
         { label: "Cadastrar Passeio", path: "/cadastro-passeio" }

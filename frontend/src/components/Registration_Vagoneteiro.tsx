@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { useNameField, useCpfField, useTelField, usePasswordField, field, fieldBase } from "../utils/formValidations";
 
 export function Registration_Vagoneteiro() {
@@ -6,6 +8,11 @@ export function Registration_Vagoneteiro() {
     const cpfField      = useCpfField();
     const telField      = useTelField();
     const passwordField = usePasswordField();
+
+    const { register } = useAuth();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [apiError, setApiError] = useState("");
 
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [experience, setExperience] = useState("Menos de 1 ano");
@@ -22,8 +29,9 @@ export function Registration_Vagoneteiro() {
         }
     }
 
-    function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
         event.preventDefault();
+        setApiError("");
 
         const rawCpf      = cpfField.cpf.replace(/\D/g, "");
         const rawTel      = telField.stripMask(telField.tel);
@@ -43,7 +51,21 @@ export function Registration_Vagoneteiro() {
 
         if (newNameError || newCpfError || newTelError || newPasswordError || newConfirmPasswordError) return;
 
-        console.log("Vagoneteiro:", { name: nameTrimmed, tel: rawTel, cpf: rawCpf, experience, joinDate, history });
+        setLoading(true);
+        try {
+            await register({
+                name: nameTrimmed,
+                cpf: rawCpf,
+                telefone: rawTel,
+                senha: passwordField.password,
+                historico: history || undefined,
+            });
+            navigate("/painel-admin");
+        } catch (err: any) {
+            setApiError(err instanceof Error ? err.message : 'Erro ao cadastrar vagoneteiro');
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -202,11 +224,20 @@ export function Registration_Vagoneteiro() {
                             </div>
                         </div>
 
+                        {apiError && (
+                            <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg p-3 mb-3">{apiError}</p>
+                        )}
+
                         <button
                             type="submit"
-                            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-red-dark hover:bg-red active:scale-[0.98] transition-all px-4 py-4 text-sm font-semibold text-white shadow-md cursor-pointer"
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-red-dark hover:bg-red disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all px-4 py-4 text-sm font-semibold text-white shadow-md cursor-pointer"
                         >
-                            Finalizar Cadastro
+                            {loading ? (
+                                <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Cadastrando...</>
+                            ) : (
+                                "Finalizar Cadastro"
+                            )}
                         </button>
                     </div>
                 </div>
