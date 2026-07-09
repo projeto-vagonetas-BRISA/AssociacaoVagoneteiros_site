@@ -50,6 +50,37 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
   }
 }
 
+export async function buscarPorDocumento(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const documento = String(req.params.documento);
+    if (!documento) {
+      res.status(400).json({ message: 'Documento é obrigatório' });
+      return;
+    }
+
+    const cleaned = documento.replace(/\D/g, '');
+    if (cleaned.length < 3) {
+      res.status(400).json({ message: 'Documento inválido' });
+      return;
+    }
+
+    // Busca por CPF ou CNPJ — o campo cpf no banco pode conter ambos
+    const cliente = await prisma.clientes.findFirst({
+      where: { cpf: cleaned },
+    });
+
+    if (!cliente) {
+      res.status(404).json({ message: 'Cliente não encontrado' });
+      return;
+    }
+
+    res.json(cliente);
+  } catch (error) {
+    console.error('Erro ao buscar cliente por documento:', error);
+    res.status(500).json({ message: 'Erro ao buscar cliente' });
+  }
+}
+
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { nome, cpf, telefone, email } = req.body;
@@ -60,8 +91,8 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
     }
 
     const cleanedCpf = cleanCPF(cpf);
-    if (cleanedCpf.length !== 11) {
-      res.status(400).json({ message: 'CPF inválido. Deve conter 11 dígitos' });
+    if (cleanedCpf.length !== 11 && cleanedCpf.length !== 14) {
+      res.status(400).json({ message: 'Documento inválido. Deve conter 11 (CPF) ou 14 (CNPJ) dígitos' });
       return;
     }
 

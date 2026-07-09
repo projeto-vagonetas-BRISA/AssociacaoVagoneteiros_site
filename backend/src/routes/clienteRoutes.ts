@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { listar, buscarPorId, criar, atualizar, deletar } from '../controllers/clienteController';
+import { listar, buscarPorId, buscarPorDocumento, criar, atualizar, deletar } from '../controllers/clienteController';
 import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
+
+// Rota pública de busca por documento (CPF/CNPJ) — antes de /:id pra evitar conflito
+router.get('/busca/:documento', buscarPorDocumento);
 
 // Qualquer usuário autenticado pode listar e buscar clientes
 router.get('/', listar);

@@ -205,7 +205,7 @@ export const Agendamento: React.FC = () => {
   const podeFinalizarReserva =
     nome.trim() !== "" &&
     telefone.trim() !== "" &&
-    (isAgencia ? documento.trim() !== "" : email.trim() !== "") &&
+    (isAgencia ? (documento.trim() !== "" && email.trim() !== "") : email.trim() !== "") &&
     selectedPasseio !== null &&
     passageiros >= 1 &&
     ciente &&
@@ -231,6 +231,7 @@ export const Agendamento: React.FC = () => {
           nome: nome.trim(),
           telefone,
           email: email.trim() || undefined,
+          documento: documento.replace(/\D/g, '') || undefined,
           passeioId: selectedPasseio.id,
           acompanhantes: passageiros - 1,
           promocao: consentimento,
@@ -300,7 +301,13 @@ export const Agendamento: React.FC = () => {
                   Cadastrar empresa
                 </Link>
                 <button
-                  onClick={() => setIsAgencia((v) => !v)}
+                  onClick={() => {
+                    setDocumento("");
+                    setNome("");
+                    setTelefone("");
+                    setEmail("");
+                    setIsAgencia((v) => !v);
+                  }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAgencia ? "bg-blue-accent" : "bg-border-light"}`}
                 >
                   <span
@@ -310,91 +317,22 @@ export const Agendamento: React.FC = () => {
               </div>
             </div>
 
-            {/* informações + passageiros */}
-            <div className="flex flex-col gap-5">
-              {/* informações pessoais */}
-              <InformacoesPessoais
-                nome={nome}
-                telefone={telefone}
-                documento={documento}
-                setNome={setNome}
-                email={email}
-                setEmail={setEmail}
-                setTelefone={setTelefone}
-                setDocumento={setDocumento}
-                isAgencia={isAgencia}
-                consentimento={consentimento}
-                setConsentimento={setConsentimento}
-                consentimentoNotificacao={consentimentoNotificacao}
-                setConsentimentoNotificacao={setConsentimentoNotificacao}
-              />
-
-              {/* passageiros */}
-              <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
-                <div className="flex items-center gap-3">
-                  <SectionIcon
-                    icon={<ListOrdered className="size-4" strokeWidth={2} />}
-                  />
-                  <div>
-                    <p className="font-semibold text-sm text-text-dark">
-                      {isAgencia ? "Selecione o Número de Passageiros do Passeio" : "Número de Passageiros"}
-                    </p>
-                    <p className="font-normal text-xs text-text-secondary">
-                      {selectedPasseio
-                        ? `${isAgencia ? "Selecione o número total de passageiros para o passeio" : `Máximo ${selectedPasseio.vagasDisponiveis} passageiros para este horário` }`
-                        : "Selecione um horário"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPassageiros((p) => Math.max(1, p - 1))}
-                    className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-primary hover:bg-bg-light-1 transition-colors"
-                  >
-                    <Minus className="size-3.5" strokeWidth={2.5} />
-                  </button>
-                  <span className="font-bold text-lg text-text-dark w-6 text-center">
-                    {passageiros}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setPassageiros((p) => Math.min(maxPassageiros, p + 1))
-                    }
-                    disabled={!selectedPasseio}
-                    className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-primary hover:bg-bg-light-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <Plus className="size-3.5" strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-
-              {/* forma de pagamento */}
-              <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
-                <div className="flex items-center gap-3">
-                  <SectionIcon
-                    icon={<CreditCard className="size-4" strokeWidth={2} />}
-                  />
-                  <div>
-                    <p className="font-semibold text-sm text-text-dark">
-                      Forma de Pagamento
-                    </p>
-                    <p className="font-normal text-xs text-text-secondary">
-                      Selecione como deseja pagar. <b>Atenção: o pagamento será realizado no local, no dia do passeio.</b>
-                    </p>
-                  </div>
-                </div>
-                <select
-                  value={formaPagamento}
-                  onChange={(e) => setFormaPagamento(e.target.value)}
-                  className="border border-border rounded-lg px-2 py-1.5 text-sm text-text-dark bg-bg-light-2 focus:outline-none focus:border-blue-accent transition-colors cursor-pointer max-w-30"
-                >
-                  <option value="credito">Crédito</option>
-                  <option value="debito">Débito</option>
-                  <option value="pix">PIX</option>
-                  <option value="dinheiro">Dinheiro</option>
-                </select>
-              </div>
-            </div>
+            {/* informações pessoais */}
+            <InformacoesPessoais
+              nome={nome}
+              telefone={telefone}
+              documento={documento}
+              setNome={setNome}
+              email={email}
+              setEmail={setEmail}
+              setTelefone={setTelefone}
+              setDocumento={setDocumento}
+              isAgencia={isAgencia}
+              consentimento={consentimento}
+              setConsentimento={setConsentimento}
+              consentimentoNotificacao={consentimentoNotificacao}
+              setConsentimentoNotificacao={setConsentimentoNotificacao}
+            />
 
             {/* calendário + horários */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-border">
@@ -491,6 +429,75 @@ export const Agendamento: React.FC = () => {
                   setPassageiros={setPassageiros}
                   formatHora={formatHora}
                 />
+              </div>
+            </div>
+
+            {/* forma de pagamento + passageiros */}
+            <div className="flex flex-col gap-5">
+              {/* forma de pagamento */}
+              <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
+                <div className="flex items-center gap-3">
+                  <SectionIcon
+                    icon={<CreditCard className="size-4" strokeWidth={2} />}
+                  />
+                  <div>
+                    <p className="font-semibold text-sm text-text-dark">
+                      Forma de Pagamento
+                    </p>
+                    <p className="font-normal text-xs text-text-secondary">
+                      Selecione como deseja pagar. <b>Atenção: o pagamento será realizado no local, no dia do passeio.</b>
+                    </p>
+                  </div>
+                </div>
+                <select
+                  value={formaPagamento}
+                  onChange={(e) => setFormaPagamento(e.target.value)}
+                  className="border border-border rounded-lg px-2 py-1.5 text-sm text-text-dark bg-bg-light-2 focus:outline-none focus:border-blue-accent transition-colors cursor-pointer max-w-30"
+                >
+                  <option value="credito">Crédito</option>
+                  <option value="debito">Débito</option>
+                  <option value="pix">PIX</option>
+                  <option value="dinheiro">Dinheiro</option>
+                </select>
+              </div>
+
+              {/* passageiros */}
+              <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
+                <div className="flex items-center gap-3">
+                  <SectionIcon
+                    icon={<ListOrdered className="size-4" strokeWidth={2} />}
+                  />
+                  <div>
+                    <p className="font-semibold text-sm text-text-dark">
+                      {isAgencia ? "Selecione o Número de Passageiros do Passeio" : "Número de Passageiros"}
+                    </p>
+                    <p className="font-normal text-xs text-text-secondary">
+                      {selectedPasseio
+                        ? `${isAgencia ? "Selecione o número total de passageiros para o passeio" : `Máximo ${selectedPasseio.vagasDisponiveis} passageiros para este horário` }`
+                        : "Selecione um horário"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPassageiros((p) => Math.max(1, p - 1))}
+                    className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-primary hover:bg-bg-light-1 transition-colors"
+                  >
+                    <Minus className="size-3.5" strokeWidth={2.5} />
+                  </button>
+                  <span className="font-bold text-lg text-text-dark w-6 text-center">
+                    {passageiros}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setPassageiros((p) => Math.min(maxPassageiros, p + 1))
+                    }
+                    disabled={!selectedPasseio}
+                    className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-primary hover:bg-bg-light-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="size-3.5" strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

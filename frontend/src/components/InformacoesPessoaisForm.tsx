@@ -65,15 +65,6 @@ export const InformacoesPessoais: React.FC<Props> = ({
         {isAgencia ? (
           <>
             <div className="flex flex-col gap-1">
-              <label className={labelClass}>Nome da Agência:</label>
-              <input
-                value={nome}
-                placeholder="Razão social ou nome fantasia"
-                onChange={(e) => setNome(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
               <label className={labelClass}>CNPJ:</label>
               <input
                 value={documento}
@@ -87,7 +78,31 @@ export const InformacoesPessoais: React.FC<Props> = ({
                     .replace(/\.(\d{3})(\d)/, ".$1/$2")
                     .replace(/(\d{4})(\d)/, "$1-$2");
                   setDocumento(masked);
+
+                  // Buscar automaticamente quando tiver 14 dígitos
+                  if (digits.length === 14) {
+                    import('../services/api').then(({ api }) => {
+                      api.request(`/clientes/busca/${digits}`)
+                        .then((cliente: any) => {
+                          if (cliente) {
+                            setNome(cliente.nome || '');
+                            setTelefone(cliente.telefone || '');
+                            setEmail(cliente.email || '');
+                          }
+                        })
+                        .catch(() => {});
+                    });
+                  }
                 }}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass}>Nome da Agência:</label>
+              <input
+                value={nome}
+                placeholder="Razão social ou nome fantasia"
+                onChange={(e) => setNome(e.target.value)}
                 className={inputClass}
               />
             </div>
@@ -109,9 +124,50 @@ export const InformacoesPessoais: React.FC<Props> = ({
                 className={inputClass}
               />
             </div>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass}>E-mail:</label>
+              <input
+                value={email}
+                placeholder="agencia@exemplo.com"
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputClass}
+              />
+            </div>
           </>
         ) : (
           <>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass}>CPF:</label>
+              <input
+                value={documento}
+                placeholder="000.000.000-00"
+                maxLength={14}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const masked = digits
+                    .replace(/^(\d{3})(\d)/, "$1.$2")
+                    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+                    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+                  setDocumento(masked);
+
+                  // Buscar automaticamente quando tiver 11 dígitos
+                  if (digits.length === 11) {
+                    import('../services/api').then(({ api }) => {
+                      api.request(`/clientes/busca/${digits}`)
+                        .then((cliente: any) => {
+                          if (cliente) {
+                            setNome(cliente.nome || '');
+                            setTelefone(cliente.telefone || '');
+                            setEmail(cliente.email || '');
+                          }
+                        })
+                        .catch(() => {});
+                    });
+                  }
+                }}
+                className={inputClass}
+              />
+            </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Nome:</label>
               <input

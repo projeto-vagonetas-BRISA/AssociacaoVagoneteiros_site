@@ -132,7 +132,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 // Endpoint público para agendamento — busca ou cria cliente automaticamente
 export async function agendarPublico(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { nome, telefone, email, passeioId, promocao, notificacao, ciente, acompanhantes } = req.body;
+    const { nome, telefone, email, documento, passeioId, promocao, notificacao, ciente, acompanhantes } = req.body;
 
     if (!nome || !telefone || !passeioId) {
       res.status(400).json({ message: 'nome, telefone e passeioId são obrigatórios' });
@@ -166,26 +166,32 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // Buscar cliente existente por telefone ou email
+    // Buscar cliente existente por documento, telefone ou email
     const cleanedTel = telefone.replace(/\D/g, '');
     const cleanedEmail = email ? email.trim().toLowerCase() : '';
+    const cleanedDoc = documento ? documento.replace(/\D/g, '') : '';
+
+    const whereOR: any[] = [
+      { telefone: cleanedTel },
+      ...(cleanedEmail ? [{ email: cleanedEmail }] : []),
+    ];
+    if (cleanedDoc && (cleanedDoc.length === 11 || cleanedDoc.length === 14)) {
+      whereOR.push({ cpf: cleanedDoc });
+    }
 
     let cliente = await prisma.clientes.findFirst({
-      where: {
-        OR: [
-          { telefone: cleanedTel },
-          ...(cleanedEmail ? [{ email: cleanedEmail }] : []),
-        ],
-      },
+      where: { OR: whereOR },
     });
 
     // Se não encontrou, cria novo cliente
     if (!cliente) {
-      const cleanedCpf = `T${Date.now()}`; // CPF temporário para cliente sem doc
+      const cpDoc = cleanedDoc && (cleanedDoc.length === 11 || cleanedDoc.length === 14)
+        ? cleanedDoc
+        : `T${Date.now()}`;
       cliente = await prisma.clientes.create({
         data: {
           nome: nome.trim(),
-          cpf: cleanedCpf,
+          cpf: cpDoc,
           telefone: cleanedTel,
           email: cleanedEmail || null,
         },
