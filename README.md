@@ -14,7 +14,7 @@ Plataforma digital para divulgação, agendamento de passeios e gestão administ
 
 ---
 
-## 📦 Estrutura do Repositório
+## Estrutura do Repositório
 
 ```
 ├── AssociacaoVagoneteiros_site/   # Projeto principal
@@ -73,7 +73,7 @@ O projeto tem como objetivo promover a **valorização, modernização e fortale
 | date-fns | — |
 
 
-## 🚀 Como Rodar
+## Como Rodar
 
 ### Pré-requisitos
 
