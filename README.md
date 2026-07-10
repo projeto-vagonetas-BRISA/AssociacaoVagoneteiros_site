@@ -1,4 +1,4 @@
-# BRISA Vagonetas — Monorepo
+# BRISA Vagonetas
 
 [![Node](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript)](https://www.typescriptlang.org)
