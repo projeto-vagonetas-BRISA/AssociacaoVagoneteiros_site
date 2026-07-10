@@ -45,33 +45,6 @@ O projeto tem como objetivo promover a **valorização, modernização e fortale
 | **Painel Administrativo** | Gestão de vagoneteiros, passeios e agendamentos  |
 | **Responsivo** | Interface adaptada para mobile e desktop |
 
-## Stack Tecnológica
-
-### Backend (`AssociacaoVagoneteiros_site/backend/`)
-
-| Tecnologia | Versão |
-|---|---|
-| Node.js | 20+ |
-| TypeScript | 6 |
-| Express | 5 |
-| Prisma | 6 |
-| PostgreSQL | 16 |
-| JWT (jsonwebtoken) | — |
-| bcrypt | — |
-
-### Frontend (`AssociacaoVagoneteiros_site/frontend/`)
-
-| Tecnologia | Versão |
-|---|---|
-| React | 19 |
-| TypeScript | 6 |
-| Vite | 8 |
-| Tailwind CSS | 4 |
-| React Router | 7 |
-| react-day-picker | 10 |
-| lucide-react | — |
-| date-fns | — |
-
 
 ## Como Rodar
 
