@@ -200,7 +200,7 @@ export const PainelAdmin: React.FC = () => {
   const passeiosRealizados = agendamentos.filter(a =>
     a.status === "CONFIRMADO" || a.status === "CONFIRMADA"
   ).length;
-  const totalTuristas = agendamentosNaoCancelados.length;
+  const totalTuristas = agendamentosNaoCancelados.reduce((sum, a) => sum + 1 + (a.acompanhantes || 0), 0);
   const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => s + Number(a.passeio.preco || 0), 0);
   const avaliacaoMedia = avaliacoes.length > 0
     ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / avaliacoes.length).toFixed(1)

@@ -62,7 +62,7 @@ const { isAuthenticated, isAdmin, isLoading } = useAuth();
   }
 
   // rotas administrativas protegem o acesso
-  if (location.pathname === "/painel-admin" || location.pathname === "/cadastro-passeio") {
+  if (location.pathname.startsWith("/admin/") || location.pathname === "/painel-admin" || location.pathname === "/cadastro-passeio") {
     if (isLoading) {
       return (
         <div className="min-h-screen bg-bg-light-1 flex items-center justify-center">

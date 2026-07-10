@@ -51,11 +51,11 @@ export const router = createBrowserRouter([
       {
         path: "/editar-passeio/:id",
         element: <EditarPasseio />
+      },
+      {
+        path: "/admin/vagoneteiros/:id",
+        element: <VagoneteiroPerfil />
       }
     ]
-  },
-  {
-    path: "/admin/vagoneteiros/:id",
-    element: <VagoneteiroPerfil />
   }
 ]);
