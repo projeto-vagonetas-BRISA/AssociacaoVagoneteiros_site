@@ -45,7 +45,7 @@ O projeto tem como objetivo promover a **valorização, modernização e fortale
 | **Painel Administrativo** | Gestão de vagoneteiros, passeios e agendamentos  |
 | **Responsivo** | Interface adaptada para mobile e desktop |
 
-## 🛠️ Stack Tecnológica
+## Stack Tecnológica
 
 ### Backend (`AssociacaoVagoneteiros_site/backend/`)
 
