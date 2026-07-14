@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, CheckCircle, UserCheck, MapPinPen} from "lucide-react";
+import { Users, CheckCircle, UserCheck, MapPinPen, ArrowLeft } from "lucide-react";
 import { api } from "../services/api";
 import { ComboboxVagoneteiro } from "../components/ComboboxVagoneteiro";
 
@@ -74,6 +74,13 @@ export const CadastroPasseio: React.FC = () => {
 
         {/* Título */}
         <div className="flex items-center gap-3 mb-8">
+          <button
+            onClick={() => navigate("/painel-admin")}
+            className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+            aria-label="Voltar"
+          >
+            <ArrowLeft size={20} className="text-text-dark" />
+          </button>
           <MapPinPen className="text-text-dark" size={28} strokeWidth={1.8} />
           <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
             Cadastrar Passeio
