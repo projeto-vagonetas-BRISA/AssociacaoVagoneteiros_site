@@ -14,7 +14,7 @@ async function main() {
     update: {},
     create: {
       name: 'Administrador',
-      cpf: '00000000000',
+      cpf: '12738985246',
       email: 'admin@vagoneteiros.com',
       telefone: '(53) 99999-0000',
       senha,
@@ -22,14 +22,14 @@ async function main() {
     },
   });
 
-  console.log(`✅ Admin criado: ${admin.name} (CPF: 000.000.000-00, senha: admin123)`);
+  console.log(`✅ Admin criado: ${admin.name} (CPF: 127.389.852-46, senha: admin123)`);
 
   const redator = await prisma.usuario.upsert({
     where: { cpf: '11111111111' },
     update: {},
     create: {
       name: 'Redator Teste',
-      cpf: '11111111111',
+      cpf: '73229928733',
       email: 'redator@vagoneteiros.com',
       telefone: '(53) 99999-0001',
       senha: await bcrypt.hash('redator123', saltRounds),
@@ -37,14 +37,14 @@ async function main() {
     },
   });
 
-  console.log(`✅ Redator criado: ${redator.name} (CPF: 111.111.111-11, senha: redator123)`);
+  console.log(`✅ Redator criado: ${redator.name} (CPF: 732.299.287-33, senha: redator123)`);
 
   const usuario = await prisma.usuario.upsert({
     where: { cpf: '22222222222' },
     update: {},
     create: {
       name: 'Vagoneteiro Teste',
-      cpf: '22222222222',
+      cpf: '87912916407',
       email: 'vagoneteiro@vagoneteiros.com',
       telefone: '(53) 99999-0002',
       senha: await bcrypt.hash('vaga123', saltRounds),
@@ -52,7 +52,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Usuário criado: ${usuario.name} (CPF: 222.222.222-22, senha: vaga123)`);
+  console.log(`✅ Usuário criado: ${usuario.name} (CPF: 879.129.164-07, senha: vaga123)`);
 
   // Criar um passeio de exemplo
   const passeio = await prisma.passeio.upsert({
