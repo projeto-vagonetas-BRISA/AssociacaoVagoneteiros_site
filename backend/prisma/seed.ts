@@ -10,7 +10,7 @@ async function main() {
   const senha = await bcrypt.hash('admin123', saltRounds);
 
   const admin = await prisma.usuario.upsert({
-    where: { cpf: '00000000000' },
+    where: { cpf: '12738985246' },
     update: {},
     create: {
       name: 'Administrador',
@@ -25,7 +25,7 @@ async function main() {
   console.log(`✅ Admin criado: ${admin.name} (CPF: 127.389.852-46, senha: admin123)`);
 
   const redator = await prisma.usuario.upsert({
-    where: { cpf: '11111111111' },
+    where: { cpf: '73229928733' },
     update: {},
     create: {
       name: 'Redator Teste',
@@ -40,7 +40,7 @@ async function main() {
   console.log(`✅ Redator criado: ${redator.name} (CPF: 732.299.287-33, senha: redator123)`);
 
   const usuario = await prisma.usuario.upsert({
-    where: { cpf: '22222222222' },
+    where: { cpf: '87912916407' },
     update: {},
     create: {
       name: 'Vagoneteiro Teste',

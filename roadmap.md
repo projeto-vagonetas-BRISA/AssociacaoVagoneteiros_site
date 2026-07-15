@@ -124,6 +124,6 @@ npm run dev
 **Seed padrão:**
 | Perfil | CPF | Senha |
 |--------|-----|-------|
-| ADMIN | 000.000.000-00 | admin123 |
-| REDATOR | 111.111.111-11 | redator123 |
-| USUARIO | 222.222.222-22 | vaga123 |
+| ADMIN | 127.389.852-46 | admin123 |
+| REDATOR | 732.299.287-33 | redator123 |
+| USUARIO | 879.129.164-07 | vaga123 |
