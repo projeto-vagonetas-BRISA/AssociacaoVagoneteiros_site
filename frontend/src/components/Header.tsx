@@ -17,6 +17,7 @@ export const Header: React.FC = () => {
         { label: "Home", path: "/" },
         { label: "Galeria", path: "/galeria" },
         { label: "Agendar", path: "/agendamento" },
+        { label: "Consultar", path: "/consulta-agendamento" },
         { label: "História", path: "/historia" },
         { label: "Investimento", path: "/investimento" },
     ];
@@ -121,6 +122,9 @@ export const Header: React.FC = () => {
                     <div className="flex gap-3 pt-2">
                         <Link to="/agendamento" className="flex-1 text-center px-4 h-9 rounded bg-blue-accent text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
                             Agendar
+                        </Link>
+                        <Link to="/consulta-agendamento" onClick={() => setMenuOpen(false)} className="flex-1 text-center px-4 h-9 rounded bg-white/10 border border-white/10 text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
+                            Consultar
                         </Link>
                         {isAuthenticated ? (
                             <button

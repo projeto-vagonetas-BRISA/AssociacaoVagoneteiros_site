@@ -4,6 +4,7 @@ import { Layout } from "../components/Layout";
 import { Galeria } from "../pages/Galeria";
 import { Cadastro } from "../pages/Cadastro";
 import { Agendamento } from "../pages/Agendamento";
+import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 import { Historia } from "../pages/Historia";
 import { PainelAdmin } from "../pages/PainelAdm";
 import { CadastroPasseio } from "../pages/CadastroPasseio";
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
         path: "/agendamento",
         element: <Agendamento />
       },      
+      {
+        path: "/consulta-agendamento",
+        element: <ConsultaAgendamento />
+      },
       {
         path: "/historia",
         element: <Historia />
