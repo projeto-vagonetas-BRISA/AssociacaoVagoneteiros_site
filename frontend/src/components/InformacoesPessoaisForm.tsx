@@ -219,7 +219,7 @@ export const InformacoesPessoais: React.FC<Props> = ({
         <label htmlFor="consentimento" className="text-xs text-text-secondary leading-relaxed cursor-pointer">
           Os dados coletados aqui serão usados para processar seu passeio e, caso você autorize, 
           para o envio de novidades e promoções da Associação via{" "}
-          <span className="font-semibold text-text-dark">E-mail</span>.
+          <span className="font-semibold text-text-dark">E-mail/WhatsApp</span>.
         </label>
       </div>
       {/* consentimento notificações */}
