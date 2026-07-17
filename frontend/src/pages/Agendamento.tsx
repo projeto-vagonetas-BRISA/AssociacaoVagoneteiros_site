@@ -177,7 +177,10 @@ export const Agendamento: React.FC = () => {
     setSelectedPasseio(null);
   };
 
+  const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
+
   const prevMonth = () => {
+    if (isCurrentMonth) return; // não voltar para meses passados
     if (currentMonth === 0) {
       setCurrentMonth(11);
       setCurrentYear((y) => y - 1);
@@ -351,7 +354,12 @@ export const Agendamento: React.FC = () => {
                   <div className="flex items-center justify-between mb-3">
                     <button
                       onClick={prevMonth}
-                      className="p-1 rounded-lg hover:bg-bg-light-1 transition-colors"
+                      disabled={isCurrentMonth}
+                      className={`p-1 rounded-lg transition-colors ${
+                        isCurrentMonth
+                          ? 'opacity-30 cursor-not-allowed'
+                          : 'hover:bg-bg-light-1'
+                      }`}
                     >
                       <ChevronLeft
                         className="size-4 text-text-primary"
@@ -391,21 +399,24 @@ export const Agendamento: React.FC = () => {
                       const day = i + 1;
                       const isSelected = day === selectedDay;
                       const hasPasseio = daysWithPasseios.has(day);
+                      const isPast = isCurrentMonth && day < today.getDate();
                       return (
                         <button
                           key={day}
-                          onClick={() => handleSelectDay(day)}
+                          onClick={() => !isPast && handleSelectDay(day)}
                           className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-sm font-medium transition-colors
                             ${
                               isSelected
                                 ? "bg-blue-accent text-white"
-                                : hasPasseio
-                                  ? "text-text-dark hover:bg-bg-light-1"
-                                  : "text-[#c4c8d4] cursor-default"
+                                : isPast
+                                  ? "text-[#e5e7eb] cursor-not-allowed"
+                                  : hasPasseio
+                                    ? "text-text-dark hover:bg-bg-light-1"
+                                    : "text-[#c4c8d4] cursor-default"
                             }`}
                         >
                           {day}
-                          {hasPasseio && !isSelected && (
+                          {hasPasseio && !isSelected && !isPast && (
                             <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-green-timeline" />
                           )}
                         </button>

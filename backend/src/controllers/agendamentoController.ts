@@ -86,6 +86,16 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
+    // 🛑 Validar que o passeio não é no passado
+    const agora = new Date();
+    const dataPasseio = new Date(passeio.data);
+    const fimDoDia = new Date(dataPasseio);
+    fimDoDia.setHours(23, 59, 59, 999);
+    if (fimDoDia < agora) {
+      res.status(400).json({ message: 'Não é possível agendar para uma data passada' });
+      return;
+    }
+
     // Calcular vagas já ocupadas (1 por agendamento + acompanhantes)
     const agendamentosAtivos = await prisma.agendamento.findMany({
       where: { passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
@@ -151,6 +161,16 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
     });
     if (!passeio) {
       res.status(404).json({ message: 'Passeio não encontrado ou inativo' });
+      return;
+    }
+
+    // 🛑 Validar que o passeio não é no passado
+    const agora = new Date();
+    const dataPasseio = new Date(passeio.data);
+    const fimDoDia = new Date(dataPasseio);
+    fimDoDia.setHours(23, 59, 59, 999);
+    if (fimDoDia < agora) {
+      res.status(400).json({ message: 'Não é possível agendar para uma data passada' });
       return;
     }
 
@@ -244,8 +264,14 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
 // Endpoint público — retorna passeios com vagas disponíveis (capacidade - ocupadas)
 export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
     const passeios = await prisma.passeio.findMany({
-      where: { ativo: true },
+      where: {
+        ativo: true,
+        data: { gte: hoje },
+      },
       include: {
         usuario: { select: { id: true, name: true } },
         agendamentos: {

@@ -93,6 +93,14 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
+    // 🛑 Validar que a data não é no passado
+    const fimDoDia = new Date(parsedData);
+    fimDoDia.setHours(23, 59, 59, 999);
+    if (fimDoDia < new Date()) {
+      res.status(400).json({ message: 'Não é possível criar passeio para uma data passada' });
+      return;
+    }
+
     // O vagoneteiro logado (USUARIO comum) pode criar passeio vinculado a ele;
     // ADMIN/REDATOR podem criar para qualquer usuarioId ou para si mesmos.
     const usuarioId = req.body.usuarioId
@@ -164,6 +172,13 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
       const parsed = new Date(data);
       if (isNaN(parsed.getTime())) {
         res.status(400).json({ message: 'Data inválida' });
+        return;
+      }
+      // 🛑 Validar que a data não é no passado
+      const fimDoDia = new Date(parsed);
+      fimDoDia.setHours(23, 59, 59, 999);
+      if (fimDoDia < new Date()) {
+        res.status(400).json({ message: 'Não é possível agendar para uma data passada' });
         return;
       }
       dataAtualizada.data = parsed;
