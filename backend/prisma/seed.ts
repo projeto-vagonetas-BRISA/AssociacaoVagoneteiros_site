@@ -9,6 +9,15 @@ async function main() {
   const saltRounds = 10;
   const senha = await bcrypt.hash('admin123', saltRounds);
 
+  // Remover dados antigos antes de recriar
+  await prisma.avaliacao.deleteMany({});
+  await prisma.agendamento.deleteMany({});
+  await prisma.passeio.deleteMany({});
+  await prisma.clientes.deleteMany({});
+  await prisma.usuario.deleteMany({
+    where: { email: { in: ['admin@vagoneteiros.com', 'redator@vagoneteiros.com', 'vagoneteiro@vagoneteiros.com'] } },
+  });
+
   const admin = await prisma.usuario.upsert({
     where: { cpf: '12738985246' },
     update: {},
@@ -54,20 +63,24 @@ async function main() {
 
   console.log(`✅ Usuário criado: ${usuario.name} (CPF: 879.129.164-07, senha: vaga123)`);
 
-  // Criar um passeio de exemplo
+  // Criar um passeio de exemplo (com data futura)
+  const dataFutura = new Date();
+  dataFutura.setDate(dataFutura.getDate() + 7);
+  dataFutura.setHours(9, 0, 0, 0);
+
   const passeio = await prisma.passeio.upsert({
     where: { id: 1 },
-    update: {},
+    update: { data: dataFutura },
     create: {
       preco: 30.00,
       capacidade: 20,
-      data: new Date('2026-07-10T09:00:00-03:00'),
+      data: dataFutura,
       horario: "09:00",
       usuarioId: usuario.id,
     },
   });
 
-  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco}`);
+  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco} (${dataFutura.toLocaleDateString('pt-BR')})`);
 
   console.log('🎉 Seed completo!');
 }
