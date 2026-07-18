@@ -25,6 +25,8 @@ model Usuario {
   data_associacao DateTime @default(now())
   foto            Bytes?
   passeios        Passeio[]
+  slotPasseios    SlotPasseio[]       @relation("UsuarioSlots")
+  slotAtribuicoes SlotAtribuicao[]    @relation("VagoneteiroAtribuicoes")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -128,4 +130,112 @@ enum StatusAgendamento {
   CONFIRMADO
   CANCELADO
   REMARCADO
+}
+
+// ─── NOVOS MODELOS: Sistema de Agendamento (Composite Pattern) ─────
+
+enum TipoSlot {
+  FIXO
+  LOTE
+  INDIVIDUAL
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+  DOMINGO
+}
+
+enum StatusSlot {
+  DISPONIVEL
+  ATRIBUIDO
+  CANCELADO
+  REALIZADO
+}
+
+enum StatusInstancia {
+  AGENDADO
+  EM_ANDAMENTO
+  REALIZADO
+  CANCELADO
+}
+
+enum StatusAtribuicao {
+  ATRIBUIDO
+  REALIZADO
+  CANCELADO
+}
+
+model SlotPasseio {
+  id             Int       @id @default(autoincrement())
+  tipo           TipoSlot
+  titulo         String
+  descricao      String?
+
+  // Horário
+  horaInicio     String       // "08:00"
+  horaFim        String       // "09:30"
+  duracaoMinutos Int
+
+  // Recorrência (FIXO)
+  diaSemana      DiaSemana?
+  dataInicio     DateTime?    // quando começa a valer
+  dataFim        DateTime?    // quando termina (opcional)
+  intervaloDias  Int?         // a cada N dias
+
+  // Lote
+  loteId         String?      // UUID pra agrupar slots do mesmo lote
+
+  // Capacidade
+  capacidade     Int          @default(1)
+  valor          Decimal      @db.Decimal(10, 2)
+
+  // Vagoneteiro fixo (opcional)
+  usuarioId      Int?
+  usuario        Usuario?     @relation("UsuarioSlots", fields: [usuarioId], references: [id])
+
+  // Status
+  status         StatusSlot   @default(DISPONIVEL)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  instancias     SlotInstancia[]
+  atribuicoes    SlotAtribuicao[]
+}
+
+model SlotInstancia {
+  id             Int           @id @default(autoincrement())
+  slotPasseioId  Int
+  slotPasseio    SlotPasseio   @relation(fields: [slotPasseioId], references: [id], onDelete: Cascade)
+  data           DateTime
+  horaInicio     String
+  horaFim        String
+  status         StatusInstancia @default(AGENDADO)
+  createdAt      DateTime      @default(now())
+
+  atribuicoes    SlotAtribuicao[]
+
+  @@unique([slotPasseioId, data, horaInicio])
+}
+
+model SlotAtribuicao {
+  id              Int               @id @default(autoincrement())
+  slotPasseioId   Int
+  slotPasseio     SlotPasseio       @relation(fields: [slotPasseioId], references: [id], onDelete: Cascade)
+  instanciaId     Int?
+  instancia       SlotInstancia?    @relation(fields: [instanciaId], references: [id], onDelete: SetNull)
+  vagoneteiroId   Int
+  vagoneteiro     Usuario           @relation("VagoneteiroAtribuicoes", fields: [vagoneteiroId], references: [id])
+  status          StatusAtribuicao  @default(ATRIBUIDO)
+  atribuidoEm     DateTime          @default(now())
+  canceladoEm     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([slotPasseioId, instanciaId, vagoneteiroId])
 }

@@ -5,6 +5,7 @@ import clienteRoutes from './clienteRoutes';
 import agendamentoRoutes from './agendamentoRoutes';
 import avaliacaoRoutes from './avaliacaoRoutes';
 import usuarioRoutes from './usuarioRoutes';
+import slotRoutes from './slotRoutes';
 import { listarFotosGaleria, servirImagemGaleria } from '../controllers/galeriaController';
 
 const router = Router();
@@ -19,6 +20,7 @@ router.use('/clientes', clienteRoutes);
 router.use('/agendamentos', agendamentoRoutes);
 router.use('/avaliacoes', avaliacaoRoutes);
 router.use('/usuarios', usuarioRoutes);
+router.use('/slots', slotRoutes);
 
 router.get('/galeria/fotos', listarFotosGaleria);
 router.get('/galeria/imagem/:fileId', servirImagemGaleria);
