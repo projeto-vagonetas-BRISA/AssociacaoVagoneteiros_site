@@ -18,7 +18,9 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "firebase-admin": "^14.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.6.0"
   },
   "devDependencies": {
     "@prisma/config": "^7.6.0",
@@ -27,16 +29,14 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.5.2",
+    "@types/node-cron": "^3.0.11",
     "dotenv": "^17.4.0",
     "nodemon": "^3.1.14",
     "prisma": "^6.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"
   },
-  
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   }
-
-  
 }
