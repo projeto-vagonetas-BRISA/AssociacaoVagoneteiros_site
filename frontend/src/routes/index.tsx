@@ -10,6 +10,7 @@ import { CadastroPasseio } from "../pages/CadastroPasseio";
 import { EditarPasseio } from "../pages/EditarPasseio";
 import { Investimento } from "../pages/Investimento";
 import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
+import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
       {
         path: "/editar-passeio/:id",
         element: <EditarPasseio />
+      },
+      {
+        path: "/consulta-agendamento",
+        element: <ConsultaAgendamento />
       },
       {
         path: "/admin/vagoneteiros/:id",
