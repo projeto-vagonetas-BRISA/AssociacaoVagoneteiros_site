@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
+import { calculateNotificationTimes } from '../utils/notificationUtils';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -55,7 +56,7 @@ export async function buscarPorId(req: AuthenticatedRequest, res: Response): Pro
 
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { clienteId, passeioId, acompanhantes } = req.body;
+    const { clienteId, passeioId, acompanhantes, notificacao, fcmToken } = req.body;
 
     if (!clienteId || !passeioId) {
       res.status(400).json({ message: 'clienteId e passeioId são obrigatórios' });
@@ -110,11 +111,49 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
     }
 
     const numAcompanhantes = acompanhantes ? Number(acompanhantes) : 0;
+
+    const wantsNotification = notificacao === true || notificacao === 'true';
+    const cleanedToken = typeof fcmToken === 'string' ? fcmToken.trim() : '';
+    let pushSubscription = null;
+
+    if (wantsNotification && cleanedToken) {
+      try {
+        pushSubscription = await prisma.pushSubscription.upsert({
+          where: { token: cleanedToken },
+          create: {
+            token: cleanedToken,
+            clienteId: parsedClienteId,
+            userAgent: req.get('user-agent') || undefined,
+          },
+          update: {
+            clienteId: parsedClienteId,
+            userAgent: req.get('user-agent') || undefined,
+          },
+        });
+      } catch (upsertErr) {
+        console.error('Erro ao upsert PushSubscription:', upsertErr);
+        res.status(500).json({ message: 'Erro ao salvar token de notificação' });
+        return;
+      }
+    }
+
+    const notificationSchedules = wantsNotification && pushSubscription
+      ? calculateNotificationTimes(passeio.data, passeio.horario).filter((item) => item.enviarEm > new Date())
+      : [];
+
     const agendamento = await prisma.agendamento.create({
       data: {
         clienteId: parsedClienteId,
         passeioId: parsedPasseioId,
         acompanhantes: numAcompanhantes,
+        notificacao: wantsNotification,
+        notificacoes: pushSubscription && notificationSchedules.length > 0 ? {
+          create: notificationSchedules.map((schedule) => ({
+            tipo: schedule.tipo,
+            enviarEm: schedule.enviarEm,
+            pushSubscription: { connect: { id: pushSubscription.id } },
+          })),
+        } : undefined,
       },
       include: {
         cliente: { select: { id: true, nome: true } },
@@ -219,14 +258,50 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
+    const wantsNotification = notificacao === true || notificacao === 'true';
+    const cleanedToken = typeof (req.body as any).fcmToken === 'string' ? (req.body as any).fcmToken.trim() : '';
+    let pushSubscription = null;
+
+    if (wantsNotification && cleanedToken) {
+      try {
+        pushSubscription = await prisma.pushSubscription.upsert({
+          where: { token: cleanedToken },
+          create: {
+            token: cleanedToken,
+            clienteId: cliente.id,
+            userAgent: req.get('user-agent') || undefined,
+          },
+          update: {
+            clienteId: cliente.id,
+            userAgent: req.get('user-agent') || undefined,
+          },
+        });
+      } catch (upsertErr) {
+        console.error('Erro ao upsert PushSubscription:', upsertErr);
+        res.status(500).json({ message: 'Erro ao salvar token de notificação' });
+        return;
+      }
+    }
+
+    const notificationSchedules = wantsNotification && pushSubscription
+      ? calculateNotificationTimes(passeio.data, passeio.horario).filter((item) => item.enviarEm > new Date())
+      : [];
+
     const agendamento = await prisma.agendamento.create({
       data: {
         clienteId: cliente.id,
         passeioId: parsedPasseioId,
         promocao: promocao === true,
-        notificacao: notificacao === true,
+        notificacao: wantsNotification,
         ciente: ciente === true,
         acompanhantes: acompanhantes ? Number(acompanhantes) : 0,
+        notificacoes: pushSubscription && notificationSchedules.length > 0 ? {
+          create: notificationSchedules.map((schedule) => ({
+            tipo: schedule.tipo,
+            enviarEm: schedule.enviarEm,
+            pushSubscription: { connect: { id: pushSubscription.id } },
+          })),
+        } : undefined,
       },
       include: {
         cliente: { select: { id: true, nome: true } },

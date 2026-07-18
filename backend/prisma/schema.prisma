@@ -50,14 +50,15 @@ model Passeio {
 }
 
 model Clientes {
-  id           Int           @id @default(autoincrement())
-  nome         String
-  cpf          String        @unique
-  telefone     String
-  email        String?       @unique
-  agendamentos Agendamento[] 
-  avaliacoes   Avaliacao[]   
-  createdAt    DateTime      @default(now())
+  id                 Int                 @id @default(autoincrement())
+  nome               String
+  cpf                String              @unique
+  telefone           String
+  email              String?             @unique
+  agendamentos       Agendamento[]
+  avaliacoes         Avaliacao[]
+  pushSubscriptions  PushSubscription[]
+  createdAt          DateTime            @default(now())
 }
 
 model Avaliacao {
@@ -72,18 +73,54 @@ model Avaliacao {
 }
 
 model Agendamento {
-  id        Int               @id @default(autoincrement())
-  clienteId Int               
-  cliente   Clientes          @relation(fields: [clienteId], references: [id])
-  passeioId Int
-  passeio   Passeio           @relation(fields: [passeioId], references: [id])
-  status    StatusAgendamento @default(PENDENTE)
-  promocao    Boolean @default(false)
-  notificacao Boolean @default(false)
-  ciente          Boolean @default(false)
-  acompanhantes   Int     @default(0)
-  createdAt       DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id                 Int                        @id @default(autoincrement())
+  clienteId          Int
+  cliente            Clientes                   @relation(fields: [clienteId], references: [id])
+  passeioId          Int
+  passeio            Passeio                    @relation(fields: [passeioId], references: [id])
+  status             StatusAgendamento          @default(PENDENTE)
+  promocao           Boolean                    @default(false)
+  notificacao        Boolean                    @default(false)
+  ciente             Boolean                    @default(false)
+  acompanhantes       Int                        @default(0)
+  notificacoes       NotificacaoAgendamento[]    
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+}
+
+model NotificacaoAgendamento {
+  id                 Int                            @id @default(autoincrement())
+  agendamentoId      Int
+  agendamento        Agendamento                    @relation(fields: [agendamentoId], references: [id])
+  pushSubscriptionId Int?
+  pushSubscription   PushSubscription?             @relation(fields: [pushSubscriptionId], references: [id])
+  tipo               TipoNotificacaoAgendamento
+  enviarEm           DateTime
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+}
+
+model PushSubscription {
+  id            Int                 @id @default(autoincrement())
+  clienteId     Int
+  cliente       Clientes            @relation(fields: [clienteId], references: [id])
+  token         String              @unique
+  userAgent     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  notificacoes  NotificacaoAgendamento[]
+}
+
+enum TipoNotificacaoAgendamento {
+  ONE_WEEK
+  THREE_DAYS
+  ONE_DAY
+  TWELVE_HOURS
+  SIX_HOURS
+  THREE_HOURS
+  ONE_HOUR
+  THIRTY_MINUTES
+  TEN_MINUTES
 }
 
 enum StatusAgendamento {

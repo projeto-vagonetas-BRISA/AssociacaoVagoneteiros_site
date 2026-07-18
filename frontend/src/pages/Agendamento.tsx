@@ -19,6 +19,7 @@ import { InformacoesPessoais } from "../components/InformacoesPessoaisForm";
 import { HorariosDia } from "../components/HorariosDias";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
+import { getFcmToken } from "../services/firebase";
 
 interface Passeio {
   id: number;
@@ -143,6 +144,7 @@ export const Agendamento: React.FC = () => {
   
   const [consentimento, setConsentimento] = useState(false);
   const [consentimentoNotificacao, setConsentimentoNotificacao] = useState(false);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [ciente, setCiente] = useState(false);
   
   // dias do mês que possuem passeios disponíveis (para marcar no calendário)
@@ -215,10 +217,24 @@ export const Agendamento: React.FC = () => {
       setPassageiros(1);
     }, [isAgencia]);
 
+
   async function handleFinalizarReserva() {
     if (!podeFinalizarReserva || !selectedPasseio) return;
     setSubmitting(true);
     setSubmitError('');
+
+    let token = fcmToken;
+    if (consentimentoNotificacao && !token) {
+      try {
+        token = await getFcmToken();
+        setFcmToken(token);
+      } catch (error) {
+        console.error('Erro ao obter token FCM:', error);
+        setSubmitError('Não foi possível obter o token de notificações.');
+        setSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const result = await api.request<{
@@ -237,6 +253,7 @@ export const Agendamento: React.FC = () => {
           promocao: consentimento,
           notificacao: consentimentoNotificacao,
           ciente,
+          fcmToken: consentimentoNotificacao ? token : undefined,
         }),
       });
       setAgendamentoConfirmado(result);
