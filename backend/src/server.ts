@@ -1,11 +1,13 @@
 import 'dotenv/config';
 import app from './app';
 import prisma from './lib/prisma';
+import { iniciarAgendamentoScheduler } from './services/notificationScheduler';
 
 const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+  iniciarAgendamentoScheduler();
 });
 
 // Tratamento de encerramento gracioso

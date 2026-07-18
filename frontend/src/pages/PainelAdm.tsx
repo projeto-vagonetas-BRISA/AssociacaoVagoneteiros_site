@@ -198,7 +198,7 @@ export const PainelAdmin: React.FC = () => {
   // Estatísticas
   const agendamentosNaoCancelados = agendamentos.filter(a => a.status !== "CANCELADO");
   const passeiosRealizados = agendamentos.filter(a =>
-    a.status === "CONFIRMADO" || a.status === "CONFIRMADA"
+    a.status === "CONFIRMADO"
   ).length;
   const totalTuristas = agendamentosNaoCancelados.reduce((sum, a) => sum + 1 + (a.acompanhantes || 0), 0);
   const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => s + Number(a.passeio.preco || 0), 0);
