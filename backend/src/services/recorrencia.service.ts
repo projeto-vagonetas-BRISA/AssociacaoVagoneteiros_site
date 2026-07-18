@@ -225,7 +225,9 @@ export class RecorrenciaService {
   }
 
   /**
-   * Retorna as instâncias de um slot para um período (já existentes ou calculadas)
+   * Retorna as instâncias de um slot para um período
+   * - Para INDIVIDUAL/LOTE: consulta instâncias existentes
+   * - Para FIXO: primeiro expande (cria as que faltam), depois retorna TODAS do período
    */
   async obterInstancias(
     slotId: number,
@@ -238,17 +240,19 @@ export class RecorrenciaService {
 
     if (!slot) return [];
 
-    // Se for INDIVIDUAL ou LOTE, retorna instâncias existentes
-    if (slot.tipo !== 'FIXO') {
-      return slot.instancias.filter(i => {
-        const d = new Date(i.data);
-        return d >= periodo.inicio && d <= periodo.fim;
-      });
+    // Se for FIXO, primeiro expande para criar instâncias faltantes
+    if (slot.tipo === 'FIXO') {
+      await this.expandirSlot(slot as any, periodo);
     }
 
-    // Se for FIXO, expande e retorna
-    const resultado = await this.expandirSlot(slot as any, periodo);
-    return resultado.instancias;
+    // Retorna TODAS as instâncias do banco no período
+    return prisma.slotInstancia.findMany({
+      where: {
+        slotPasseioId: slotId,
+        data: { gte: periodo.inicio, lte: periodo.fim },
+      },
+      orderBy: { data: 'asc' },
+    });
   }
 }
 
