@@ -6,7 +6,7 @@ export interface User {
   cpf: string;
   email: string | null;
   telefone: string;
-  perfil: 'USUARIO' | 'ADMIN' | 'REDATOR';
+  perfil: 'USUARIO' | 'VAGONETEIRO' | 'ADMIN' | 'REDATOR';
   historico: string | null;
   data_associacao: string;
   createdAt: string;

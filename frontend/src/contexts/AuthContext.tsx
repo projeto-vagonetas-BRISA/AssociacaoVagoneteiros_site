@@ -5,6 +5,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isVagoneteiro: boolean;
   isLoading: boolean;
   login: (identifier: string, senha: string) => Promise<User>;
   register: (data: {
@@ -68,9 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = user !== null;
   const isAdmin = user?.perfil === 'ADMIN' || user?.perfil === 'REDATOR';
+  const isVagoneteiro = user?.perfil === 'VAGONETEIRO';
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, isLoading, login, register, logout, checkSession }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, isVagoneteiro, isLoading, login, register, logout, checkSession }}>
       {children}
     </AuthContext.Provider>
   );

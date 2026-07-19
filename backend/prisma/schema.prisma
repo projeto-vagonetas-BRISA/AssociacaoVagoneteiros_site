@@ -33,6 +33,7 @@ model Usuario {
 
 enum Perfil {
   USUARIO
+  VAGONETEIRO
   ADMIN
   REDATOR
 }
