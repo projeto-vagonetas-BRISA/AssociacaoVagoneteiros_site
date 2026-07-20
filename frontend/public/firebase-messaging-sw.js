@@ -1,7 +1,6 @@
-importScripts('https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/12.16.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-// Replace these values with your Firebase app config.
 const firebaseConfig = {
   apiKey: 'AIzaSyALzmNdQ-Apm9rH2vcvnceGOlfCBdJZ2lw',
   authDomain: 'vagoneteirosteste.firebaseapp.com',
@@ -15,10 +14,14 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
-  const notificationTitle = payload.notification?.title || 'Lembrete de passeio';
+  console.log('[FCM SW] background message received', payload);
+
+  const notificationTitle = payload?.notification?.title || 'Lembrete de passeio';
   const notificationOptions = {
-    body: payload.notification?.body || 'Seu passeio está próximo.',
+    body: payload?.notification?.body || 'Seu passeio está próximo.',
     icon: '/favicon.svg',
+    tag: 'vagoneteiros-reminder',
+    renotify: true,
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

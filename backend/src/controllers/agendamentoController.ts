@@ -3,6 +3,21 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { calculateNotificationTimes } from '../utils/notificationUtils';
 
+async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
+  return prisma.pushSubscription.upsert({
+    where: { token },
+    create: {
+      token,
+      clienteId,
+      userAgent,
+    },
+    update: {
+      clienteId,
+      userAgent,
+    },
+  });
+}
+
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const agendamentos = await prisma.agendamento.findMany({
@@ -128,18 +143,11 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 
     if (wantsNotification && cleanedToken) {
       try {
-        pushSubscription = await prisma.pushSubscription.upsert({
-          where: { token: cleanedToken },
-          create: {
-            token: cleanedToken,
-            clienteId: parsedClienteId,
-            userAgent: req.get('user-agent') || undefined,
-          },
-          update: {
-            clienteId: parsedClienteId,
-            userAgent: req.get('user-agent') || undefined,
-          },
-        });
+        pushSubscription = await upsertPushSubscription(
+          parsedClienteId,
+          cleanedToken,
+          req.get('user-agent') || undefined,
+        );
       } catch (upsertErr) {
         console.error('Erro ao upsert PushSubscription:', upsertErr);
         res.status(500).json({ message: 'Erro ao salvar token de notificação' });
@@ -147,8 +155,9 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       }
     }
 
+    const reminderCutoff = new Date(Date.now() - 15 * 60 * 1000);
     const notificationSchedules = wantsNotification && pushSubscription
-      ? calculateNotificationTimes(passeio.data, passeio.horario).filter((item) => item.enviarEm > new Date())
+      ? calculateNotificationTimes(passeio.data, passeio.horario).filter((item) => item.enviarEm >= reminderCutoff)
       : [];
 
     const agendamento = await prisma.agendamento.create({
@@ -284,18 +293,11 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
 
     if (wantsNotification && cleanedToken) {
       try {
-        pushSubscription = await prisma.pushSubscription.upsert({
-          where: { token: cleanedToken },
-          create: {
-            token: cleanedToken,
-            clienteId: cliente.id,
-            userAgent: req.get('user-agent') || undefined,
-          },
-          update: {
-            clienteId: cliente.id,
-            userAgent: req.get('user-agent') || undefined,
-          },
-        });
+        pushSubscription = await upsertPushSubscription(
+          cliente.id,
+          cleanedToken,
+          req.get('user-agent') || undefined,
+        );
       } catch (upsertErr) {
         console.error('Erro ao upsert PushSubscription:', upsertErr);
         res.status(500).json({ message: 'Erro ao salvar token de notificação' });
@@ -303,8 +305,9 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       }
     }
 
+    const reminderCutoff = new Date(Date.now() - 15 * 60 * 1000);
     const notificationSchedules = wantsNotification && pushSubscription
-      ? calculateNotificationTimes(passeio.data, passeio.horario).filter((item) => item.enviarEm > new Date())
+      ? calculateNotificationTimes(passeio.data, passeio.horario).filter((item) => item.enviarEm >= reminderCutoff)
       : [];
 
     const agendamento = await prisma.agendamento.create({
