@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Users, CheckCircle, DollarSign, Star,
+  Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
   ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff
 } from "lucide-react";
 import { api } from "../services/api";
+import { DashboardProvider } from "../components/dashboard/DashboardProvider";
 
 const MAX_PAG_VISIVEIS = 20;
 
@@ -330,6 +331,21 @@ export const PainelAdmin: React.FC = () => {
           >
             <Plus size={15} /> Cadastrar Passeio
           </Link>
+        </div>
+
+        {/* Dashboard / Métricas */}
+        <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-5">
+            <BarChart3 className="text-blue-accent" size={22} strokeWidth={1.8} />
+            <h2 className="font-bold text-lg text-text-dark">Dashboard</h2>
+          </div>
+          <DashboardProvider />
+        </div>
+
+        {/* Gestão de Passeios e Agendamentos */}
+        <div className="flex items-center gap-3">
+          <Ticket className="text-text-dark" size={22} strokeWidth={1.8} />
+          <h2 className="font-bold text-lg text-text-dark">Gestão de Passeios e Agendamentos</h2>
         </div>
 
         {/* Stat Cards */}
