@@ -10,7 +10,6 @@ import { CadastroPasseio } from "../pages/CadastroPasseio";
 import { EditarPasseio } from "../pages/EditarPasseio";
 import { Investimento } from "../pages/Investimento";
 import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
-import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 import { FeedVagoneteiro } from "../pages/FeedVagoneteiro";
 import { MinhasAtribuicoes } from "../pages/MinhasAtribuicoes";
 

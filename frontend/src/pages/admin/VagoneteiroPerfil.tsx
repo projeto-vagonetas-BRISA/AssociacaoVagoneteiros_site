@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera } from "lucide-react";
+import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera, UserCheck } from "lucide-react";
 import { api } from "../../services/api";
 
 interface VagoneteiroDetalhe {
@@ -69,6 +69,7 @@ export const VagoneteiroPerfil: React.FC = () => {
   const [formEmail, setFormEmail] = useState("");
   const [formHistorico, setFormHistorico] = useState("");
   const [formExperiencia, setFormExperiencia] = useState("");
+  const [formPerfil, setFormPerfil] = useState("VAGONETEIRO");
   const [formFoto, setFormFoto] = useState<string | null>(null);
   const [fotoAlterada, setFotoAlterada] = useState(false);
 
@@ -89,6 +90,7 @@ export const VagoneteiroPerfil: React.FC = () => {
     setFormTel(d.telefone);
     setFormEmail(d.email || "");
     setFormHistorico(d.historico || "");
+    setFormPerfil(d.perfil || "VAGONETEIRO");
     setFormExperiencia(d.experiencia || "");
     setFormFoto(null);
     setFotoAlterada(false);
@@ -129,6 +131,12 @@ export const VagoneteiroPerfil: React.FC = () => {
         historico: formHistorico || null,
         experiencia: formExperiencia || null,
       };
+      if (formPerfil !== vagoneteiro.perfil) {
+        await api.request(`/usuarios/${vagoneteiro.id}/perfil`, {
+          method: 'PATCH',
+          body: JSON.stringify({ perfil: formPerfil }),
+        });
+      }
       if (fotoAlterada) {
         body.foto = formFoto || null;
       }
@@ -293,6 +301,29 @@ export const VagoneteiroPerfil: React.FC = () => {
                       />
                     ) : (
                       <p className="text-sm font-medium text-text-dark">{vagoneteiro.email || "—"}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Perfil */}
+                <div className="flex items-start gap-3">
+                  <UserCheck size={16} className="text-blue-accent mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-[#7a8394]">Perfil</p>
+                    {editando ? (
+                      <select
+                        value={formPerfil}
+                        onChange={e => setFormPerfil(e.target.value)}
+                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40 cursor-pointer"
+                      >
+                        <option value="VAGONETEIRO">Vagoneteiro</option>
+                        <option value="REDATOR">Redator</option>
+                        <option value="ADMIN">Administrador</option>
+                      </select>
+                    ) : (
+                      <span className="text-xs uppercase tracking-wider text-[#7a8394] font-semibold">
+                        {vagoneteiro.perfil}
+                      </span>
                     )}
                   </div>
                 </div>

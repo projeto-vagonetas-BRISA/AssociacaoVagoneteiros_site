@@ -140,7 +140,7 @@ export async function atualizarPerfil(req: AuthenticatedRequest, res: Response):
     }
 
     const { perfil } = req.body;
-    const perfisValidos = ['USUARIO', 'ADMIN', 'REDATOR'];
+    const perfisValidos = ['USUARIO', 'VAGONETEIRO', 'ADMIN', 'REDATOR'];
 
     if (!perfil || !perfisValidos.includes(perfil)) {
       res.status(400).json({
