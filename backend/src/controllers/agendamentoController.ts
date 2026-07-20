@@ -188,6 +188,57 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 }
 
 // Endpoint público para agendamento — busca ou cria cliente automaticamente
+export async function consultaPorDocumento(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    const documento = String(req.params.documento ?? '').replace(/\D/g, '');
+
+    if (isNaN(id) || !documento || documento.length < 11) {
+      res.status(400).json({ message: 'ID e CPF válidos são obrigatórios' });
+      return;
+    }
+
+    const agendamento = await prisma.agendamento.findFirst({
+      where: {
+        id,
+        cliente: {
+          cpf: { contains: documento },
+        },
+      },
+      include: {
+        cliente: { select: { id: true, nome: true, cpf: true } },
+        passeio: {
+          select: {
+            id: true, data: true, horario: true, preco: true,
+            usuario: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    if (!agendamento) {
+      res.status(404).json({ message: 'Nenhum agendamento encontrado para o ID e CPF informados.' });
+      return;
+    }
+
+    const passageiros = 1 + agendamento.acompanhantes;
+
+    res.json({
+      id: agendamento.id,
+      situacao: agendamento.status,
+      data: agendamento.passeio.data.toISOString().split('T')[0],
+      horario: agendamento.passeio.horario,
+      vagas: passageiros,
+      total: Number(agendamento.passeio.preco) * passageiros,
+      cliente: agendamento.cliente.nome,
+      cpf: agendamento.cliente.cpf,
+    });
+  } catch (error) {
+    console.error('Erro ao consultar agendamento:', error);
+    res.status(500).json({ message: 'Erro ao consultar agendamento' });
+  }
+}
+
 export async function agendarPublico(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { nome, telefone, email, documento, passeioId, promocao, notificacao, ciente, acompanhantes } = req.body;

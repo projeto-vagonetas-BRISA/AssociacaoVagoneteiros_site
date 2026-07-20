@@ -1,51 +1,19 @@
 import React, { useMemo, useState } from "react";
 import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, CheckCircle2 } from "lucide-react";
+import { api } from "../services/api";
 
 type SituacaoAgendamento = "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REALIZADO";
 
-interface AgendamentoMock {
+interface AgendamentoResponse {
   id: number;
   cpf: string;
   situacao: SituacaoAgendamento;
   data: string;
   horario: string;
   vagas: number;
-    total: number;
-    cliente: string;
+  total: number;
+  cliente: string;
 }
-
-const AGENDAMENTOS_MOCK: AgendamentoMock[] = [
-  {
-    id: 4821,
-    cpf: "12345678900",
-    situacao: "CONFIRMADO",
-    data: "2026-07-20",
-    horario: "09:30",
-    vagas: 4,
-    total: 200.00,
-    cliente: "João da Silva",
-  },
-  {
-    id: 7394,
-    cpf: "98765432100",
-    situacao: "PENDENTE",
-    data: "2026-07-22",
-    horario: "14:00",
-    vagas: 2,
-    total: 100.00,
-    cliente: "Maria Oliveira",
-  },
-  {
-    id: 5508,
-    cpf: "11122233344",
-    situacao: "CANCELADO",
-    data: "2026-07-18",
-    horario: "10:15",
-    vagas: 0,
-    total: 0.00,
-    cliente: "Carlos Pereira",
-  },
-];
 
 const SITUACAO_LABEL: Record<SituacaoAgendamento, string> = {
   PENDENTE: "Pendente",
@@ -98,10 +66,12 @@ const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
 export const ConsultaAgendamento: React.FC = () => {
   const [id, setId] = useState("");
   const [cpf, setCpf] = useState("");
-  const [consulta, setConsulta] = useState<AgendamentoMock | null>(null);
+  const [consulta, setConsulta] = useState<AgendamentoResponse | null>(null);
   const [erro, setErro] = useState("");
 
   const podeConsultar = useMemo(() => id.trim() !== "" && normalizarCpf(cpf).length === 11, [id, cpf]);
+
+    const [loading, setLoading] = useState(false);
 
   function handleConsulta(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,16 +85,19 @@ export const ConsultaAgendamento: React.FC = () => {
       return;
     }
 
-    const encontrado = AGENDAMENTOS_MOCK.find((item) => item.id === idNumero && item.cpf === cpfLimpo) ?? null;
-
-    if (!encontrado) {
-      setConsulta(null);
-      setErro("Nenhum agendamento foi encontrado para o ID e CPF informados.");
-      return;
-    }
-
+    setLoading(true);
     setErro("");
-    setConsulta(encontrado);
+
+    api.request<AgendamentoResponse>(`/agendamentos/consulta/${idNumero}/${cpfLimpo}`)
+      .then((data) => {
+        setConsulta(data);
+        setErro("");
+      })
+      .catch((error) => {
+        setConsulta(null);
+        setErro(error instanceof Error ? error.message : "Nenhum agendamento foi encontrado para o ID e CPF informados.");
+      })
+      .finally(() => setLoading(false));
   }
 
   return (
