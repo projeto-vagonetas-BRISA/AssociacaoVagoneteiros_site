@@ -25,25 +25,15 @@ export const AdminSlots: React.FC = () => {
   const [diaSemana, setDiaSemana] = useState("SEGUNDA");
   const [dataInicio, setDataInicio] = useState("");
 
-  // LOTE
-  const [datas, setDatas] = useState<string[]>([""]);
+  // LOTE (intervalo)
+  const [loteDataInicio, setLoteDataInicio] = useState("");
+  const [loteDataFim, setLoteDataFim] = useState("");
+  const [loteHoraInicio, setLoteHoraInicio] = useState("08:00");
+  const [loteHoraFim, setLoteHoraFim] = useState("17:00");
+  const [loteDuracao, setLoteDuracao] = useState("40");
 
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
-
-  function adicionarData() {
-    setDatas([...datas, ""]);
-  }
-
-  function removerData(i: number) {
-    setDatas(datas.filter((_, idx) => idx !== i));
-  }
-
-  function atualizarData(i: number, valor: string) {
-    const novas = [...datas];
-    novas[i] = valor;
-    setDatas(novas);
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,20 +43,22 @@ export const AdminSlots: React.FC = () => {
 
     try {
       if (tipo === "LOTE") {
-        const datasValidas = datas.filter((d) => d.trim());
-        await api.request("/slots/lotes/gerar", {
+        const body: any = {
+          titulo,
+          descricao: descricao || undefined,
+          horaInicio: loteHoraInicio,
+          horaFim: loteHoraFim,
+          duracaoMinutos: parseInt(loteDuracao),
+          capacidade: parseInt(capacidade),
+          valor,
+          dataInicio: loteDataInicio,
+          dataFim: loteDataFim,
+        };
+        const result = await api.request<{ total: number }>("/slots/lotes/gerar", {
           method: "POST",
-          body: JSON.stringify({
-            titulo,
-            descricao: descricao || undefined,
-            horaInicio,
-            horaFim,
-            capacidade: parseInt(capacidade),
-            valor,
-            datas: datasValidas,
-          }),
+          body: JSON.stringify(body),
         });
-        setSucesso(`${datasValidas.length} slots criados com sucesso!`);
+        setSucesso(`${result.total} slots criados com sucesso!`);
       } else {
         const body: any = {
           tipo,
@@ -97,7 +89,11 @@ export const AdminSlots: React.FC = () => {
       setHoraFim("09:30");
       setCapacidade("20");
       setValor("30");
-      setDatas([""]);
+      setLoteDataInicio("");
+      setLoteDataFim("");
+      setLoteHoraInicio("08:00");
+      setLoteHoraFim("17:00");
+      setLoteDuracao("40");
       setDataInicio("");
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Erro ao criar slot");
@@ -288,38 +284,74 @@ export const AdminSlots: React.FC = () => {
 
         {tipo === "LOTE" && (
           <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Datas do Lote <span className="text-red-500">*</span>
-            </label>
-            <div className="space-y-2">
-              {datas.map((d, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <input
-                    type="date"
-                    value={d}
-                    onChange={(e) => atualizarData(i, e.target.value)}
-                    required
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  />
-                  {datas.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removerData(i)}
-                      className="text-red-500 hover:text-red-700 text-lg font-bold px-2"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={adicionarData}
-              className="mt-2 text-sm text-purple-600 hover:text-purple-800 font-semibold"
-            >
-              + Adicionar data
-            </button>
+            <p className="text-xs text-purple-600 mb-3 font-semibold">
+              Gera slots a cada {loteDuracao || "X"} min, em cada dia do intervalo
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Data Início <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={loteDataInicio}
+                  onChange={(e) => setLoteDataInicio(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Data Fim <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={loteDataFim}
+                  onChange={(e) => setLoteDataFim(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Hora Início <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={loteHoraInicio}
+                  onChange={(e) => setLoteHoraInicio(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Hora Fim <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={loteHoraFim}
+                  onChange={(e) => setLoteHoraFim(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Duração (minutos) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  value={loteDuracao}
+                  onChange={(e) => setLoteDuracao(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+            </div>\            <p className="mt-3 text-xs text-purple-500">
+              Serão gerados slots a cada {loteDuracao || "X"} min, das {loteHoraInicio} às {loteHoraFim}, para cada dia de {loteDataInicio || "início"} a {loteDataFim || "fim"}.
+            </p>
           </div>
         )}
 

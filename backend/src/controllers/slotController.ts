@@ -297,23 +297,27 @@ export async function listarInstancias(req: AuthenticatedRequest, res: Response)
 
 export async function gerarLote(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { titulo, descricao, horaInicio, horaFim, duracaoMinutos, capacidade, valor, usuarioId, datas } = req.body;
+    const { titulo, descricao, horaInicio, horaFim, duracaoMinutos, capacidade, valor, usuarioId, dataInicio, dataFim } = req.body;
 
-    if (!titulo || !horaInicio || !horaFim || !capacidade || !valor || !datas || !Array.isArray(datas) || datas.length === 0) {
-      res.status(400).json({ message: 'titulo, horaInicio, horaFim, capacidade, valor e datas são obrigatórios' });
+    if (!titulo || !horaInicio || !capacidade || !valor) {
+      res.status(400).json({ message: 'titulo, horaInicio, capacidade e valor são obrigatórios' });
       return;
     }
 
+    // Calcula duracao se não veio
+    const duracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : (horaFim ? calcularDuracao(horaInicio, horaFim) : 60);
+
     const slots = await recorrenciaService.gerarLote({
       titulo,
-      descricao,
+      descricao: descricao || undefined,
       horaInicio,
-      horaFim,
-      duracaoMinutos: duracaoMinutos || calcularDuracao(horaInicio, horaFim),
+      horaFim: horaFim || minutosParaHora(horaParaMinutos(horaInicio) + duracao),
+      duracaoMinutos: duracao,
       capacidade: parseInt(capacidade, 10),
       valor: parseFloat(valor),
       usuarioId: usuarioId ? parseInt(usuarioId, 10) : req.user?.id,
-      datas: datas.map((d: string) => new Date(d)),
+      dataInicio: dataInicio ? new Date(dataInicio) : undefined,
+      dataFim: dataFim ? new Date(dataFim) : undefined,
     });
 
     res.status(201).json({ data: slots, total: slots.length });
