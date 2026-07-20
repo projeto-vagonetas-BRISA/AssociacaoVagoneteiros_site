@@ -7,4 +7,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    allowedHosts: [
+      'vagoneteiros.roberto-openclaw.duckdns.org',
+    ],
+  },
 })

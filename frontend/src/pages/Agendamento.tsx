@@ -233,9 +233,9 @@ export const Agendamento: React.FC = () => {
         setFcmToken(token);
       } catch (error) {
         console.error('Erro ao obter token FCM:', error);
-        setSubmitError('Não foi possível obter o token de notificações.');
-        setSubmitting(false);
-        return;
+        setSubmitError('Não foi possível obter o token de notificações. O agendamento será feito sem notificações.');
+        // Não bloqueia o agendamento se o token falhar
+        // (Service Workers precisam de HTTPS)
       }
     }
 
