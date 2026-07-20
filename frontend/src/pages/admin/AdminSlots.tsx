@@ -18,7 +18,7 @@ export const AdminSlots: React.FC = () => {
   const [descricao, setDescricao] = useState("");
   const [horaInicio, setHoraInicio] = useState("08:00");
   const [horaFim, setHoraFim] = useState("09:30");
-  const [capacidade, setCapacidade] = useState("20");
+  const [capacidade, setCapacidade] = useState("5");
   const [valor, setValor] = useState("30");
 
   // FIXO
@@ -43,8 +43,10 @@ export const AdminSlots: React.FC = () => {
 
     try {
       if (tipo === "LOTE") {
+        // Título auto-gerado da data/hora do primeiro slot
+        const autoTitulo = `Passeio ${loteHoraInicio}`;
         const body: any = {
-          titulo,
+          titulo: autoTitulo,
           descricao: descricao || undefined,
           horaInicio: loteHoraInicio,
           horaFim: loteHoraFim,
@@ -87,7 +89,7 @@ export const AdminSlots: React.FC = () => {
       setDescricao("");
       setHoraInicio("08:00");
       setHoraFim("09:30");
-      setCapacidade("20");
+      setCapacidade("5");
       setValor("30");
       setLoteDataInicio("");
       setLoteDataFim("");
@@ -160,62 +162,62 @@ export const AdminSlots: React.FC = () => {
           </p>
         </div>
 
-        {/* Título e Descrição */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Título <span className="text-red-500">*</span>
-            </label>
-            <input
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Ex: Passeio Matinal"
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Descrição
-            </label>
-            <input
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Opcional"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
+        {/* Descrição (comum a todos) */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Descrição
+          </label>
+          <input
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder="Opcional"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
         </div>
 
-        {/* Horários */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Hora Início <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="time"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
+        {/* Campos comuns (ocultam duplicatas quando LOTE) */}
+        {tipo !== "LOTE" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Título <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                placeholder="Ex: Passeio Matinal"
+                required={tipo !== "LOTE"}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Hora Início <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="time"
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value)}
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Hora Fim <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Hora Fim <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="time"
-              value={horaFim}
-              onChange={(e) => setHoraFim(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
-        </div>
+        )}
 
-        {/* Capacidade e Valor */}
+        {/* Capacidade e Valor (comum a todos) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
