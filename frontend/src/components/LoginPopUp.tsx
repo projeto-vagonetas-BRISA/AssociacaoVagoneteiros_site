@@ -2,9 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useCpfField, useEmailField } from "../utils/formValidations.ts";
 
 interface LoginPopUpProps {
     onClose: () => void;
+}
+
+function looksLikeCpf(value: string): boolean {
+    const withoutMaskChars = value.replace(/[.\-]/g, "");
+    return withoutMaskChars.length === 0 || /^\d+$/.test(withoutMaskChars);
 }
 
 export function LoginPopUp({ onClose }: LoginPopUpProps) {
@@ -16,6 +22,19 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
     const [visible, setVisible] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCpfMode, setIsCpfMode] = useState(false);
+    const cpfField = useCpfField();
+    const emailField = useEmailField();
+
+    function handleIdentifierChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const isCpf = looksLikeCpf(e.target.value);
+        setIsCpfMode(isCpf);
+        if (isCpf) {
+            cpfField.handleCpfChange(e);
+        } else {
+            emailField.handleEmailChange(e);
+        }
+    }
 
     useEffect(() => {
         const id = requestAnimationFrame(() => setVisible(true));
@@ -49,15 +68,33 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        setIsSubmitting(true);
 
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
-        const identifier = formData.get('email') as string;
         const senha = formData.get('password') as string;
+        const rawInput = (formData.get('email_cpf') as string) ?? "";
+
+        const submittedIsCpf = looksLikeCpf(rawInput);
+        const rawIdentifier = submittedIsCpf ? rawInput.replace(/\D/g, "") : rawInput.trim();
+
+        const newIdentifierError = rawIdentifier === ""
+            ? "Informe seu email ou CPF."
+            : submittedIsCpf
+                ? cpfField.validateCpf(rawIdentifier)
+                : emailField.validateEmail(rawIdentifier);
+
+        setIsCpfMode(submittedIsCpf);
+        if (submittedIsCpf) {
+            cpfField.setCpfError(newIdentifierError);
+        } else {
+            emailField.setEmailError(newIdentifierError);
+        }
+        if (newIdentifierError) return;
+
+        setIsSubmitting(true);
 
         try {
-            const loggedUser = await login(identifier, senha);
+            const loggedUser = await login(rawIdentifier, senha);
             onClose();
             // se for admin ou redator, vai para painel; senão para home
             if (loggedUser.perfil === 'ADMIN' || loggedUser.perfil === 'REDATOR') {
@@ -125,23 +162,31 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                 </div>
 
                 <div className="mx-auto mt-8 w-full max-w-sm shrink-0 overflow-y-auto">
-                    <form onSubmit={handleSubmit} className="rounded-2xl px-8 py-8 space-y-5 bg-blue-dark border border-white/[0.08]">
+                    <form onSubmit={handleSubmit} className="rounded-2xl px-7 py-8 space-y-5 bg-blue-dark border border-white/[0.08]">
                         <div>
                             <label
-                                htmlFor="email"
+                                htmlFor="email_cpf"
                                 className="block text-sm font-medium text-slate-400">
                                 Email ou CPF
                             </label>
                             <div className="mt-1.5">
                                 <input
-                                    id="email"
+                                    id="email_cpf"
                                     type="text"
-                                    name="email"
+                                    name="email_cpf"
                                     required
-                                    autoComplete="email"
+                                    autoComplete="username"
+                                    maxLength={isCpfMode ? 14 : undefined}
+                                    value={isCpfMode ? cpfField.cpf : emailField.email}
+                                    onChange={handleIdentifierChange}
                                     placeholder="exemplo@gmail.com"
                                     className="block w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 bg-[#0d1117] border border-white/10 focus:outline-none focus:ring-1 focus:border-blue focus:ring-blue transition-colors" />
                             </div>
+                            {(isCpfMode ? cpfField.cpfError : emailField.emailError) && (
+                                <p className="mt-1.5 text-xs text-red-400">
+                                    {isCpfMode ? cpfField.cpfError : emailField.emailError}
+                                </p>
+                            )}
                         </div>
 
                         <div>

@@ -9,12 +9,21 @@ async function main() {
   const saltRounds = 10;
   const senha = await bcrypt.hash('admin123', saltRounds);
 
+  // Remover dados antigos antes de recriar
+  await prisma.avaliacao.deleteMany({});
+  await prisma.agendamento.deleteMany({});
+  await prisma.passeio.deleteMany({});
+  await prisma.clientes.deleteMany({});
+  await prisma.usuario.deleteMany({
+    where: { email: { in: ['admin@vagoneteiros.com', 'redator@vagoneteiros.com', 'vagoneteiro@vagoneteiros.com'] } },
+  });
+
   const admin = await prisma.usuario.upsert({
-    where: { cpf: '00000000000' },
+    where: { cpf: '12738985246' },
     update: {},
     create: {
       name: 'Administrador',
-      cpf: '00000000000',
+      cpf: '12738985246',
       email: 'admin@vagoneteiros.com',
       telefone: '(53) 99999-0000',
       senha,
@@ -22,14 +31,14 @@ async function main() {
     },
   });
 
-  console.log(`✅ Admin criado: ${admin.name} (CPF: 000.000.000-00, senha: admin123)`);
+  console.log(`✅ Admin criado: ${admin.name} (CPF: 127.389.852-46, senha: admin123)`);
 
   const redator = await prisma.usuario.upsert({
-    where: { cpf: '11111111111' },
+    where: { cpf: '73229928733' },
     update: {},
     create: {
       name: 'Redator Teste',
-      cpf: '11111111111',
+      cpf: '73229928733',
       email: 'redator@vagoneteiros.com',
       telefone: '(53) 99999-0001',
       senha: await bcrypt.hash('redator123', saltRounds),
@@ -37,14 +46,14 @@ async function main() {
     },
   });
 
-  console.log(`✅ Redator criado: ${redator.name} (CPF: 111.111.111-11, senha: redator123)`);
+  console.log(`✅ Redator criado: ${redator.name} (CPF: 732.299.287-33, senha: redator123)`);
 
   const usuario = await prisma.usuario.upsert({
-    where: { cpf: '22222222222' },
+    where: { cpf: '87912916407' },
     update: {},
     create: {
       name: 'Vagoneteiro Teste',
-      cpf: '22222222222',
+      cpf: '87912916407',
       email: 'vagoneteiro@vagoneteiros.com',
       telefone: '(53) 99999-0002',
       senha: await bcrypt.hash('vaga123', saltRounds),
@@ -52,22 +61,26 @@ async function main() {
     },
   });
 
-  console.log(`✅ Usuário criado: ${usuario.name} (CPF: 222.222.222-22, senha: vaga123)`);
+  console.log(`✅ Usuário criado: ${usuario.name} (CPF: 879.129.164-07, senha: vaga123)`);
 
-  // Criar um passeio de exemplo
+  // Criar um passeio de exemplo (com data futura)
+  const dataFutura = new Date();
+  dataFutura.setDate(dataFutura.getDate() + 7);
+  dataFutura.setHours(9, 0, 0, 0);
+
   const passeio = await prisma.passeio.upsert({
     where: { id: 1 },
-    update: {},
+    update: { data: dataFutura },
     create: {
       preco: 30.00,
       capacidade: 20,
-      data: new Date('2026-07-10T09:00:00-03:00'),
+      data: dataFutura,
       horario: "09:00",
       usuarioId: usuario.id,
     },
   });
 
-  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco}`);
+  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco} (${dataFutura.toLocaleDateString('pt-BR')})`);
 
   console.log('🎉 Seed completo!');
 }

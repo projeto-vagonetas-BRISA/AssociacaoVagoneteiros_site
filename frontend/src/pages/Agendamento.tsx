@@ -19,6 +19,7 @@ import { InformacoesPessoais } from "../components/InformacoesPessoaisForm";
 import { HorariosDia } from "../components/HorariosDias";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
+import { getFcmToken } from "../services/firebase";
 
 interface Passeio {
   id: number;
@@ -143,6 +144,7 @@ export const Agendamento: React.FC = () => {
   
   const [consentimento, setConsentimento] = useState(false);
   const [consentimentoNotificacao, setConsentimentoNotificacao] = useState(false);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [ciente, setCiente] = useState(false);
   
   // dias do mês que possuem passeios disponíveis (para marcar no calendário)
@@ -177,7 +179,10 @@ export const Agendamento: React.FC = () => {
     setSelectedPasseio(null);
   };
 
+  const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
+
   const prevMonth = () => {
+    if (isCurrentMonth) return; // não voltar para meses passados
     if (currentMonth === 0) {
       setCurrentMonth(11);
       setCurrentYear((y) => y - 1);
@@ -215,10 +220,24 @@ export const Agendamento: React.FC = () => {
       setPassageiros(1);
     }, [isAgencia]);
 
+
   async function handleFinalizarReserva() {
     if (!podeFinalizarReserva || !selectedPasseio) return;
     setSubmitting(true);
     setSubmitError('');
+
+    let token = fcmToken;
+    if (consentimentoNotificacao && !token) {
+      try {
+        token = await getFcmToken();
+        setFcmToken(token);
+      } catch (error) {
+        console.error('Erro ao obter token FCM:', error);
+        setSubmitError('Não foi possível obter o token de notificações.');
+        setSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const result = await api.request<{
@@ -237,6 +256,7 @@ export const Agendamento: React.FC = () => {
           promocao: consentimento,
           notificacao: consentimentoNotificacao,
           ciente,
+          fcmToken: consentimentoNotificacao ? token : undefined,
         }),
       });
       setAgendamentoConfirmado(result);
@@ -351,7 +371,12 @@ export const Agendamento: React.FC = () => {
                   <div className="flex items-center justify-between mb-3">
                     <button
                       onClick={prevMonth}
-                      className="p-1 rounded-lg hover:bg-bg-light-1 transition-colors"
+                      disabled={isCurrentMonth}
+                      className={`p-1 rounded-lg transition-colors ${
+                        isCurrentMonth
+                          ? 'opacity-30 cursor-not-allowed'
+                          : 'hover:bg-bg-light-1'
+                      }`}
                     >
                       <ChevronLeft
                         className="size-4 text-text-primary"
@@ -391,21 +416,24 @@ export const Agendamento: React.FC = () => {
                       const day = i + 1;
                       const isSelected = day === selectedDay;
                       const hasPasseio = daysWithPasseios.has(day);
+                      const isPast = isCurrentMonth && day < today.getDate();
                       return (
                         <button
                           key={day}
-                          onClick={() => handleSelectDay(day)}
+                          onClick={() => !isPast && handleSelectDay(day)}
                           className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-sm font-medium transition-colors
                             ${
                               isSelected
                                 ? "bg-blue-accent text-white"
-                                : hasPasseio
-                                  ? "text-text-dark hover:bg-bg-light-1"
-                                  : "text-[#c4c8d4] cursor-default"
+                                : isPast
+                                  ? "text-[#e5e7eb] cursor-not-allowed"
+                                  : hasPasseio
+                                    ? "text-text-dark hover:bg-bg-light-1"
+                                    : "text-[#c4c8d4] cursor-default"
                             }`}
                         >
                           {day}
-                          {hasPasseio && !isSelected && (
+                          {hasPasseio && !isSelected && !isPast && (
                             <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-green-timeline" />
                           )}
                         </button>

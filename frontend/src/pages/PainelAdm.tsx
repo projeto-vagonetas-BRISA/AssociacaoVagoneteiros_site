@@ -1,11 +1,79 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Users, CheckCircle, DollarSign, Star,
+  Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
-  ChevronRight, UserCheck, Ticket, Power, PowerOff
+  ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff
 } from "lucide-react";
 import { api } from "../services/api";
+import { DashboardProvider } from "../components/dashboard/DashboardProvider";
+
+const MAX_PAG_VISIVEIS = 20;
+
+function renderPaginacao(
+  atual: number,
+  total: number,
+  onChange: (p: number) => void
+) {
+  if (total <= 1) return null;
+
+  const botoes: React.ReactNode[] = [];
+
+  // Botão anterior
+  botoes.push(
+    <button key="prev" onClick={() => onChange(Math.max(1, atual - 1))}
+      disabled={atual === 1}
+      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
+      <ChevronLeft size={14} />
+    </button>
+  );
+
+  if (total <= MAX_PAG_VISIVEIS) {
+    // Até 20 páginas: mostra todas
+    for (let n = 1; n <= total; n++) {
+      botoes.push(botaoPagina(n, atual, onChange));
+    }
+  } else {
+    // Mais de 20: mostra primeiro bloco + seta, ou bloco atual + navegação
+    const blocoAtual = Math.ceil(atual / MAX_PAG_VISIVEIS);
+    const totalBlocos = Math.ceil(total / MAX_PAG_VISIVEIS);
+    const inicio = (blocoAtual - 1) * MAX_PAG_VISIVEIS + 1;
+    const fim = Math.min(blocoAtual * MAX_PAG_VISIVEIS, total);
+
+    for (let n = inicio; n <= fim; n++) {
+      botoes.push(botaoPagina(n, atual, onChange));
+    }
+
+    // Seta para próximo bloco (se houver)
+    if (blocoAtual < totalBlocos) {
+      botoes.push(
+        <button key="next-block" onClick={() => onChange(fim + 1)}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 transition-colors cursor-pointer">
+          <ChevronsRight size={14} />
+        </button>
+      );
+    }
+  }
+
+  // Botão próximo
+  botoes.push(
+    <button key="next" onClick={() => onChange(Math.min(total, atual + 1))}
+      disabled={atual === total}
+      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
+      <ChevronRight size={14} />
+    </button>
+  );
+
+  return botoes;
+}
+
+function botaoPagina(n: number, atual: number, onChange: (p: number) => void) {
+  return (
+    <button key={n} onClick={() => onChange(n)}
+      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors cursor-pointer ${atual === n ? "bg-blue-accent text-white" : "border border-border text-text-primary hover:bg-bg-light-1"}`}
+    >{n}</button>
+  );
+}
 
 interface Vagoneteiro {
   id: number;
@@ -198,7 +266,7 @@ export const PainelAdmin: React.FC = () => {
   // Estatísticas
   const agendamentosNaoCancelados = agendamentos.filter(a => a.status !== "CANCELADO");
   const passeiosRealizados = agendamentos.filter(a =>
-    a.status === "CONFIRMADO" || a.status === "CONFIRMADA"
+    a.status === "CONFIRMADO"
   ).length;
   const totalTuristas = agendamentosNaoCancelados.reduce((sum, a) => sum + 1 + (a.acompanhantes || 0), 0);
   const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => s + Number(a.passeio.preco || 0), 0);
@@ -263,6 +331,21 @@ export const PainelAdmin: React.FC = () => {
           >
             <Plus size={15} /> Cadastrar Passeio
           </Link>
+        </div>
+
+        {/* Dashboard / Métricas */}
+        <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-5">
+            <BarChart3 className="text-blue-accent" size={22} strokeWidth={1.8} />
+            <h2 className="font-bold text-lg text-text-dark">Dashboard</h2>
+          </div>
+          <DashboardProvider />
+        </div>
+
+        {/* Gestão de Passeios e Agendamentos */}
+        <div className="flex items-center gap-3">
+          <Ticket className="text-text-dark" size={22} strokeWidth={1.8} />
+          <h2 className="font-bold text-lg text-text-dark">Gestão de Passeios e Agendamentos</h2>
         </div>
 
         {/* Stat Cards */}
@@ -372,20 +455,7 @@ export const PainelAdmin: React.FC = () => {
                 >
                   <ChevronLeft size={14} />
                 </button>
-                {Array.from({ length: totalPaginasPasseio }, (_, i) => i + 1).map(n => (
-                  <button
-                    key={n}
-                    onClick={() => carregarPasseios(n)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors cursor-pointer ${paginaPasseio === n ? "bg-blue-accent text-white" : "border border-border text-text-primary hover:bg-bg-light-1"}`}
-                  >{n}</button>
-                ))}
-                <button
-                  onClick={() => carregarPasseios(Math.min(totalPaginasPasseio, paginaPasseio + 1))}
-                  disabled={paginaPasseio === totalPaginasPasseio}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer"
-                >
-                  <ChevronRight size={14} />
-                </button>
+                {renderPaginacao(paginaPasseio, totalPaginasPasseio, carregarPasseios)}
               </div>
           </div>
         </div>
@@ -455,19 +525,7 @@ export const PainelAdmin: React.FC = () => {
             <div className="flex items-center justify-between px-6 py-4 border-t border-border">
               <p className="text-xs text-[#7a8394]">Página {paginaVag} de {totalPaginasVag}</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => carregarVagoneteiros(Math.max(1, paginaVag - 1))} disabled={paginaVag === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
-                  <ChevronLeft size={14} />
-                </button>
-                {Array.from({ length: totalPaginasVag }, (_, i) => i + 1).map(n => (
-                  <button key={n} onClick={() => carregarVagoneteiros(n)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors cursor-pointer ${paginaVag === n ? "bg-blue-accent text-white" : "border border-border text-text-primary hover:bg-bg-light-1"
-                      }`}>{n}</button>
-                ))}
-                <button onClick={() => carregarVagoneteiros(Math.min(totalPaginasVag, paginaVag + 1))} disabled={paginaVag === totalPaginasVag}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
-                  <ChevronRight size={14} />
-                </button>
+                {renderPaginacao(paginaVag, totalPaginasVag, carregarVagoneteiros)}
               </div>
             </div>
           </div>
@@ -574,19 +632,7 @@ export const PainelAdmin: React.FC = () => {
                   Página {pagina} de {totalPaginas} — {grupos.length} passeio{grupos.length !== 1 ? "s" : ""}
                 </p>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
-                    <ChevronLeft size={14} />
-                  </button>
-                  {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(n => (
-                    <button key={n} onClick={() => setPagina(n)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors cursor-pointer ${pagina === n ? "bg-blue-accent text-white" : "border border-border text-text-primary hover:bg-bg-light-1"
-                        }`}>{n}</button>
-                  ))}
-                  <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer">
-                    <ChevronRight size={14} />
-                  </button>
+                  {renderPaginacao(pagina, totalPaginas, (n) => setPagina(n))}
                 </div>
               </div>
             )}

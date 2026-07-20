@@ -1,7 +1,7 @@
 # Roadmap de Integração Frontend/Backend
 
 > Release: `v1.0` (branch `release/v1.0`)
-> Última atualização: 2026-07-08
+> Última atualização: 2026-07-20
 
 ---
 
@@ -65,12 +65,15 @@
 
 ---
 
-## 🔄 Em Andamento / Pendente
+## 🔄 Em Andamento (v1.0)
 
 ### Integração Frontend/Backend
 - [x] `PainelAdm.tsx` — agendamentos, avaliações, clientes, passeios e vagoneteiros todos da API real com paginação
 - [x] `Agendamento.tsx` — calendário, horários, vagas disponíveis e criação de agendamento via API real
 - [x] `CadastroPasseio.tsx` — lista real de vagoneteiros e criação de passeio
+- [x] Perfil VAGONETEIRO adicionado ao enum (BD + schema)
+- [x] Auto-atribuição de vagoneteiro (modelo Uber) — funcional e testada
+- [x] Relatório de vagoneteiros com CPFs válidos
 - [ ] `Home.tsx` — carregar depoimentos/avaliações recentes de forma dinâmica (`GET /avaliacoes`)
 
 ### Melhorias Gerais
@@ -80,9 +83,40 @@
 - [ ] Tela de login para turistas consultarem seus agendamentos (sem senha, via token enviado por WhatsApp)
 
 ### Testes de Integração
-- [ ] Fluxo completo E2E: criar vagoneteiro -> criar passeio -> agendar passeio publicamente -> aprovar agendamento no painel -> avaliar passeio pós-realização
+- [ ] Fluxo completo E2E testado: criar passeio → agendar → auto-atribuir vagoneteiro → realizar
 - [ ] Testar limites de capacidade de agendamentos em concorrência
 - [ ] Validar comportamento de paginação com grandes volumes de dados
+
+---
+
+## 🚀 Próxima Release: v1.1 — Dashboard & Relatórios
+
+> Branch: `release/v1.1`
+
+### Dashboard (Painel Admin Reformulado)
+
+#### Cards de Métricas (com filtro de período)
+- [ ] **Taxa de Ocupação** — (vagas preenchidas / vagas disponibilizadas) × 100
+- [ ] **Picos de Demanda** — gráfico identificando dias e horários com maior volume de passeios
+- [ ] **Taxa de Cancelamento** — % de passeios cancelados sobre o total
+- [ ] **Receita Gerada** — soma dos valores dos passeios realizados
+- [ ] **Índice de Conversão** — comparativo cancelados × realizados
+
+#### Relatório de Faturamento
+- [ ] Tabela detalhada: Vagoneteiro | Passeios Realizados | Valor Arrecadado | Totalização
+- [ ] Checkbox no cabeçalho para ordenação por coluna
+- [ ] Botão **Imprimir** → gera PDF com os filtros aplicados
+
+#### Filtros (aplicados globalmente)
+- [ ] Hoje
+- [ ] Esta semana
+- [ ] Este mês
+- [ ] Personalizado (período início + fim)
+
+#### Stack Planejada
+- [ ] Gráficos: Recharts ou Chart.js
+- [ ] PDF: jsPDF + html2canvas
+- [ ] Backend: novos endpoints agregados (`/dashboard/metricas`, `/dashboard/faturamento`)
 
 ## ✨ Últimas Adições (2026-07-08)
 

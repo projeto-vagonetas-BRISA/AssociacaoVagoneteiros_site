@@ -6,6 +6,9 @@ dist/
 # Keep environment variables out of version control
 .env
 
+# FCM keys
+serviceAccountKey.json
+
 /src/generated/prisma
 
 secrets

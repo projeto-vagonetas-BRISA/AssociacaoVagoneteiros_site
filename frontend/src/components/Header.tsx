@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
     };
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, isAuthenticated, isAdmin, logout } = useAuth();
+    const { user, isAuthenticated, isAdmin, isVagoneteiro, logout } = useAuth();
 
     const navLinks = [
         { label: "Home", path: "/" },
@@ -70,6 +70,13 @@ export const Header: React.FC = () => {
                                     Painel ADM
                                 </button>
                             )}
+                            {isVagoneteiro && (
+                                <button
+                                    onClick={() => navigate("/feed-vagoneteiro")}
+                                    className="hidden sm:inline-flex items-center justify-center px-4 h-9 rounded bg-green-600 hover:bg-green-700 text-white text-xs font-semibold tracking-wide transition-colors cursor-pointer">
+                                    🚂 Pegar Passeio
+                                </button>
+                            )}
                             <button
                                 onClick={() => { logout(); navigate("/"); }}
                                 className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-red-dark hover:bg-red-hover text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
@@ -117,6 +124,14 @@ export const Header: React.FC = () => {
                             onClick={() => setMenuOpen(false)}
                             className="text-sm font-medium text-blue-accent hover:text-white transition-colors cursor-pointer">
                             Painel Administrativo
+                        </Link>
+                    )}
+                    {isVagoneteiro && (
+                        <Link
+                            to="/feed-vagoneteiro"
+                            onClick={() => setMenuOpen(false)}
+                            className="text-sm font-medium text-green-400 hover:text-white transition-colors cursor-pointer">
+                            🚂 Pegar Passeio
                         </Link>
                     )}
                     <div className="flex gap-3 pt-2">

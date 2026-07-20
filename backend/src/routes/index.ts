@@ -5,7 +5,10 @@ import clienteRoutes from './clienteRoutes';
 import agendamentoRoutes from './agendamentoRoutes';
 import avaliacaoRoutes from './avaliacaoRoutes';
 import usuarioRoutes from './usuarioRoutes';
+import slotRoutes from './slotRoutes';
+import atribuicaoRoutes from './atribuicaoRoutes';
 import { listarFotosGaleria, servirImagemGaleria } from '../controllers/galeriaController';
+import { metricas, picosDemanda, faturamento } from '../controllers/dashboardController';
 
 const router = Router();
 
@@ -19,6 +22,16 @@ router.use('/clientes', clienteRoutes);
 router.use('/agendamentos', agendamentoRoutes);
 router.use('/avaliacoes', avaliacaoRoutes);
 router.use('/usuarios', usuarioRoutes);
+router.use('/slots', slotRoutes);
+router.use('/atribuicoes', atribuicaoRoutes);
+
+// Dashboard
+router.get('/dashboard/metricas', metricas);
+router.get('/dashboard/picos', picosDemanda);
+router.get('/dashboard/faturamento', faturamento);
+
+router.get('/galeria/fotos', listarFotosGaleria);
+router.get('/galeria/imagem/:fileId', servirImagemGaleria);
 
 router.get('/galeria/fotos', listarFotosGaleria);
 router.get('/galeria/imagem/:fileId', servirImagemGaleria);
