@@ -33,4 +33,7 @@ router.get('/dashboard/faturamento', faturamento);
 router.get('/galeria/fotos', listarFotosGaleria);
 router.get('/galeria/imagem/:fileId', servirImagemGaleria);
 
+router.get('/galeria/fotos', listarFotosGaleria);
+router.get('/galeria/imagem/:fileId', servirImagemGaleria);
+
 export default router;

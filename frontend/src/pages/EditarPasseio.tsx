@@ -102,6 +102,13 @@ export const EditarPasseio: React.FC = () => {
 
         {/* Título */}
         <div className="flex items-center gap-3 mb-8">
+          <button
+            onClick={() => navigate("/painel-admin")}
+            className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+            aria-label="Voltar"
+          >
+            <ArrowLeft size={20} className="text-text-dark" />
+          </button>
           <MapPinPen className="text-text-dark" size={28} strokeWidth={1.8} />
           <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
             Editar Passeio #{id}

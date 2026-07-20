@@ -225,7 +225,7 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             {isSubmitting ? "Entrando..." : "Login"}
                         </button>
 
-                        <div className="pt-4 border-t border-white/10 space-y-3">
+                        {/* <div className="pt-4 border-t border-white/10 space-y-3">
                             <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
                                 Não tem conta?
                             </p>
@@ -243,7 +243,7 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                                     Cadastrar empresa
                                 </button>
                             </div>
-                        </div>
+                        </div> */}
                     </form>
                 </div>
             </div>

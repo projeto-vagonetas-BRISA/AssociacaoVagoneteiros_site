@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Registration_Usuario } from "../components/Registration_Usuario";
 import { Registration_Vagoneteiro } from "../components/Registration_Vagoneteiro";
 import { Registration_Administrador } from "../components/Registration_Administrador";
@@ -40,6 +41,7 @@ const cadastroConfig: Record<CadastroTipo, { titulo: string; descricao: string; 
 
 
 export const Cadastro: React.FC = () => {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
     const tipo = useMemo<CadastroTipo>(() => {
@@ -59,6 +61,13 @@ export const Cadastro: React.FC = () => {
                 <>
                     <div className="max-w-5xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => navigate("/painel-admin")}
+                                className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                                aria-label="Voltar"
+                            >
+                                <ArrowLeft size={20} className="text-text-dark" />
+                            </button>
                             <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center shrink-0">
                                 <img className="w-4 h-4" src={config.icone} alt="Ícone do cadastro" />
                             </div>

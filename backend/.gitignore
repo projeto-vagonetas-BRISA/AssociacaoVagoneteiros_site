@@ -10,3 +10,5 @@ dist/
 serviceAccountKey.json
 
 /src/generated/prisma
+
+secrets
