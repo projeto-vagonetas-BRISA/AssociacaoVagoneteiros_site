@@ -331,6 +331,12 @@ export const PainelAdmin: React.FC = () => {
           >
             <Plus size={15} /> Cadastrar Passeio
           </Link>
+          <Link
+            to="/admin/slots"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <Plus size={15} /> Gerenciar Slots
+          </Link>
         </div>
 
         {/* Dashboard / Métricas */}
