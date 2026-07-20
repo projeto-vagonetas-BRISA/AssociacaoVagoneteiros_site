@@ -35,7 +35,7 @@ export async function listarVagoneteiros(req: AuthenticatedRequest, res: Respons
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 9));
     const skip = (page - 1) * limit;
 
-    const where = { perfil: 'USUARIO' as const };
+    const where = { perfil: { in: ['USUARIO', 'VAGONETEIRO'] as any } };
 
     const [vagoneteiros, total] = await Promise.all([
       prisma.usuario.findMany({
