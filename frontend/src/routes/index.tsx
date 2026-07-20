@@ -10,8 +10,8 @@ import { CadastroPasseio } from "../pages/CadastroPasseio";
 import { EditarPasseio } from "../pages/EditarPasseio";
 import { Investimento } from "../pages/Investimento";
 import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
-import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 import { FeedVagoneteiro } from "../pages/FeedVagoneteiro";
+import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 import { MinhasAtribuicoes } from "../pages/MinhasAtribuicoes";
 
 export const router = createBrowserRouter([
@@ -35,10 +35,6 @@ export const router = createBrowserRouter([
         path: "/agendamento",
         element: <Agendamento />
       },      
-      {
-        path: "/consulta-agendamento",
-        element: <ConsultaAgendamento />
-      },
       {
         path: "/historia",
         element: <Historia />

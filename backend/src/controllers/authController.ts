@@ -101,7 +101,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
         experiencia: experiencia || null,
         data_associacao: parsedDataAssociacao,
         foto: fotoBuffer,
-        perfil: 'USUARIO', // Cadastro padrão como USUARIO
+        perfil: 'VAGONETEIRO', // Cadastro padrão como vagoneteiro
       },
     });
 
