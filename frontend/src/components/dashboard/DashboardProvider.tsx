@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import api from '../../services/api';
-import { PeriodoPreset, FiltrosPeriodo } from './FiltrosPeriodo';
+import { api } from '../../services/api';
+import { FiltrosPeriodo } from './FiltrosPeriodo';
+import type { PeriodoPreset } from './types';
 import { DashboardMetrics } from './DashboardMetrics';
 import { PicosDemandaChart } from './PicosDemandaChart';
 import { RelatorioFaturamento } from './RelatorioFaturamento';

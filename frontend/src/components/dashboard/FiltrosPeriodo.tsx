@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-
-export type PeriodoPreset = 'hoje' | 'semana' | 'mes' | 'personalizado';
+import type { PeriodoPreset } from './types';
 
 interface Props {
   onChange: (inicio: string, fim: string, preset: PeriodoPreset) => void;
