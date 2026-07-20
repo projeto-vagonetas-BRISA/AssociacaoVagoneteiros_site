@@ -226,8 +226,8 @@ export const Agendamento: React.FC = () => {
     setSubmitting(true);
     setSubmitError('');
 
-    let token = fcmToken;
-    if (consentimentoNotificacao && !token) {
+    let token: string | undefined = undefined;
+    if (consentimentoNotificacao) {
       try {
         token = await getFcmToken();
         setFcmToken(token);

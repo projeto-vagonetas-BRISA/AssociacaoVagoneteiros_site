@@ -1,6 +1,25 @@
 import prisma from '../lib/prisma';
 import { messaging } from '../utils/firebaseAdmin';
 
+function maskToken(token?: string | null) {
+  if (!token) return 'none';
+  if (token.length <= 12) return token;
+  return `${token.slice(0, 8)}...${token.slice(-6)}`;
+}
+
+function logTokenFailure(subscription: { id: number; token?: string | null } | null | undefined, error: unknown, context: string) {
+  const tokenPreview = maskToken(subscription?.token);
+  console.warn(`[FCM] ${context} subscriptionId=${subscription?.id ?? 'unknown'} token=${tokenPreview}`, error);
+}
+
+function isNotRegisteredError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+
+  const code = 'code' in error ? (error as { code?: string }).code : undefined;
+  const message = 'message' in error ? (error as { message?: string }).message : undefined;
+  return code === 'messaging/registration-token-not-registered' || message === 'NotRegistered';
+}
+
 const INTERVALOS = [
   'ONE_WEEK',
   'THREE_DAYS',
@@ -117,20 +136,29 @@ export async function processarNotificacoesAgendamento() {
   if (!notificacoes.length) return;
 
   for (const notificacao of notificacoes) {
-    if (!notificacao.pushSubscription?.token) continue;
+    const subscription = notificacao.pushSubscription;
+    if (!subscription?.token) continue;
 
     const passeioDate = getPasseioDate(notificacao.agendamento.passeio);
     const payload = getMessageForType(notificacao.tipo as Intervalo, passeioDate);
 
     try {
       await messaging.send({
-        token: notificacao.pushSubscription.token,
+        token: subscription.token,
         ...payload,
       });
       // remove the notification row after successful delivery to simplify state
       await prisma.notificacaoAgendamento.delete({ where: { id: notificacao.id } });
     } catch (error) {
-      console.error('Erro enviando notificação:', error);
+      if (isNotRegisteredError(error)) {
+        logTokenFailure(subscription, error, 'token failed with NotRegistered; removing stale subscription');
+        await prisma.notificacaoAgendamento.deleteMany({
+          where: { pushSubscriptionId: subscription.id },
+        });
+        await prisma.pushSubscription.delete({ where: { id: subscription.id } });
+      } else {
+        logTokenFailure(subscription, error, 'token send failed');
+      }
     }
   }
 }
