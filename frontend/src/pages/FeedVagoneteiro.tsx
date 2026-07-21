@@ -123,11 +123,19 @@ export const FeedVagoneteiro: React.FC = () => {
   const diasSemanaPt = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
   const formatarData = (dataStr: string): string => {
-    const d = new Date(dataStr + 'T12:00:00');
-    const dia = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+    const datePart = dataStr.split('T')[0];
+    const d = new Date(datePart + 'T12:00:00');
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const ano = d.getFullYear();
     const diaSemana = diasSemana[d.getDay()];
     const idx = diasSemana.indexOf(diaSemana);
-    return `${dia} (${diasSemanaPt[idx] || diaSemana})`;
+    const diaSemanaNome = diasSemanaPt[idx] || diaSemana;
+    
+    // Capitalize first letter of diaSemanaNome
+    const diaCapitalizado = diaSemanaNome.charAt(0).toUpperCase() + diaSemanaNome.slice(1);
+    
+    return `${dia}/${mes}/${ano} - ${diaCapitalizado}`;
   };
 
   const formatarValor = (valor: string): string => {

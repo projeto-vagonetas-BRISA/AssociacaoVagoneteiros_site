@@ -13,18 +13,7 @@ function parseEnum<T extends Record<string, string>>(enumObj: T, value: string):
   return vals.includes(value as any) ? (value as T[keyof T]) : null;
 }
 
-/** Converte "HH:MM" para total de minutos */
-function horaParaMinutos(hora: string): number {
-  const [h, m] = hora.split(':').map(Number);
-  return h * 60 + (m ?? 0);
-}
 
-/** Converte total de minutos para "HH:MM" */
-function minutosParaHora(minutos: number): string {
-  const h = Math.floor(minutos / 60) % 24;
-  const m = minutos % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
 
 /** Calcula a duração em minutos entre duas strings "HH:MM" */
 function calcularDuracao(horaInicio: string, horaFim: string): number {

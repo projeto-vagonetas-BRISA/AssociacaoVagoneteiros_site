@@ -18,6 +18,7 @@ import {
 import { InformacoesPessoais } from "../components/InformacoesPessoaisForm";
 import { HorariosDia } from "../components/HorariosDias";
 import { useAuth } from "../contexts/AuthContext";
+import conteudo from "../assets/conteudo.json";
 import { api } from "../services/api";
 import { getFcmToken } from "../services/firebase";
 
@@ -566,7 +567,7 @@ export const Agendamento: React.FC = () => {
                     Endereço
                   </p>
                   <p className="font-semibold text-sm text-text-primary mt-0.5">
-                    Av. Rio Grande, s/n — Cassino, RS
+                    {conteudo.rodape_localizacao.endereco}
                   </p>
                 </div>
               </div>

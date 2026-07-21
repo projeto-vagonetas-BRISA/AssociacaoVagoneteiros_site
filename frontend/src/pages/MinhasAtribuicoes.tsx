@@ -138,7 +138,8 @@ export const MinhasAtribuicoes: React.FC = () => {
   // Helpers locais de formatação
 
   const formatarData = (dataStr: string): string => {
-    const d = new Date(dataStr + 'T12:00:00');
+    const datePart = dataStr.split('T')[0];
+    const d = new Date(datePart + 'T12:00:00');
     return d.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',

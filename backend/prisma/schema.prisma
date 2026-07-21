@@ -50,6 +50,7 @@ model Passeio {
   ativo        Boolean       @default(true)
   agendamentos Agendamento[]
   avaliacoes   Avaliacao[]  
+  slotAtribuicaoId Int?      @unique
   createdAt    DateTime      @default(now())
 }
 
