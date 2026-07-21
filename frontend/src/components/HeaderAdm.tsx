@@ -54,7 +54,9 @@ export const HeaderAdm: React.FC = () => {
                 </ul>
 
                 <div className="flex items-center gap-3 shrink-0">
-                    <button className="hidden sm:inline-flex items-center gap-2 px-4 h-9 rounded bg-blue-accent text-white text-sm font-semibold transition-colors cursor-pointer">
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('gerarRelatorioGeral'))}
+                        className="hidden sm:inline-flex items-center gap-2 px-4 h-9 rounded bg-blue-accent hover:bg-blue-accent/80 text-white text-sm font-semibold transition-colors cursor-pointer">
                         <FileText size={15} /> Relatório Geral
                     </button>
                     {isAuthenticated && (
@@ -101,7 +103,9 @@ export const HeaderAdm: React.FC = () => {
                         </Link>
                     ))}
                     <div className="flex gap-3 pt-2">
-                        <button className="flex-1 inline-flex items-center justify-center gap-2 px-4 h-9 rounded bg-blue-accent text-white text-sm font-semibold cursor-pointer">
+                        <button
+                            onClick={() => { window.dispatchEvent(new CustomEvent('gerarRelatorioGeral')); setMenuOpen(false); }}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-4 h-9 rounded bg-blue-accent hover:bg-blue-accent/80 text-white text-sm font-semibold cursor-pointer">
                             <FileText size={14} /> Relatório
                         </button>
                         {isAuthenticated && (

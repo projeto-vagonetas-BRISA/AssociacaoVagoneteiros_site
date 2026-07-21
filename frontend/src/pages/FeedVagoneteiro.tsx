@@ -2,8 +2,18 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
+import {
+  Train,
+  Clock,
+  Users,
+  CalendarDays,
+  SearchX,
+  Loader2,
+  CheckCircle2,
+  ClipboardList,
+} from 'lucide-react';
 
-// ─── TIPOS ─────────────────────────────────────────────────────────
+// Tipos
 
 interface SlotInfo {
   id: number;
@@ -38,7 +48,15 @@ interface FeedResponse {
   flat: FeedItem[];
 }
 
-// ─── COMPONENTE ────────────────────────────────────────────────────
+// Funções Auxiliares
+
+const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
+  <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
+    {icon}
+  </div>
+);
+
+// Componente Principal
 
 export const FeedVagoneteiro: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -50,7 +68,7 @@ export const FeedVagoneteiro: React.FC = () => {
   const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
   const [filtro, setFiltro] = useState<string>('');
 
-  // ─── CARREGAR FEED ───────────────────────────────────────────────
+  // Carregar dados do feed
 
   const carregarFeed = useCallback(async () => {
     setLoading(true);
@@ -73,7 +91,7 @@ export const FeedVagoneteiro: React.FC = () => {
     carregarFeed();
   }, [carregarFeed]);
 
-  // ─── AUTO-ATRIBUIR ───────────────────────────────────────────────
+  // Atribuir passeio ao vagoneteiro
 
   const pegarPasseio = async (instanciaId: number) => {
     if (!isAuthenticated) {
@@ -90,8 +108,8 @@ export const FeedVagoneteiro: React.FC = () => {
         body: JSON.stringify({ instanciaId }),
       });
 
-      setMensagem({ tipo: 'sucesso', texto: '🚂 Passeio pego com sucesso!' });
-      carregarFeed(); // recarregar
+      setMensagem({ tipo: 'sucesso', texto: 'Passeio pego com sucesso!' });
+      carregarFeed();
     } catch (error: any) {
       setMensagem({ tipo: 'erro', texto: error.message || 'Erro ao pegar passeio' });
     } finally {
@@ -99,7 +117,7 @@ export const FeedVagoneteiro: React.FC = () => {
     }
   };
 
-  // ─── DIA DA SEMANA PT-BR ─────────────────────────────────────────
+  // Helpers de formatação
 
   const diasSemana = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
   const diasSemanaPt = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -117,19 +135,29 @@ export const FeedVagoneteiro: React.FC = () => {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
-  // ─── RENDER ──────────────────────────────────────────────────────
+  // Renderização
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="bg-white rounded-2xl shadow-lg p-12">
-            <div className="text-6xl mb-4">🚂</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Feed de Passeios</h2>
-            <p className="text-gray-600 mb-6">
-              Faça login como vagoneteiro para ver os passeios disponíveis e se auto-atribuir!
+      <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
+        <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={<Train className="size-4" strokeWidth={2} />} />
+            <h1 className="font-bold text-3xl md:text-4xl text-text-dark tracking-tight">
+              Feed de Passeios
+            </h1>
+          </div>
+        </div>
+        <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pb-16">
+          <div className="bg-white rounded-xl shadow-sm border border-border p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-blue-accent/10 flex items-center justify-center mx-auto mb-6">
+              <Train className="size-8 text-blue-accent" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-2xl font-bold text-text-dark mb-3">Acesso restrito</h2>
+            <p className="text-text-secondary mb-2">
+              Faça login como vagoneteiro para ver os passeios disponíveis e se auto-atribuir.
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-text-secondary">
               Ainda não é vagoneteiro? Fale com um administrador para se cadastrar.
             </p>
           </div>
@@ -139,43 +167,56 @@ export const FeedVagoneteiro: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              🚂 Feed de Passeios
-            </h1>
-            <p className="text-sm text-gray-500">
-              {flat.length} passeio{flat.length !== 1 ? 's' : ''} disponívei{flat.length !== 1 ? 's' : ''}
-              {' · '}
-              <button
-                onClick={() => navigate('/minhas-atribuicoes')}
-                className="text-blue-600 hover:text-blue-800 underline"
-              >
-                Minhas atribuições →
-              </button>
-            </p>
+    <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
+      {/* Cabeçalho */}
+      <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={<Train className="size-4" strokeWidth={2} />} />
+            <div>
+              <h1 className="font-bold text-3xl md:text-4xl text-text-dark tracking-tight">
+                Feed de Passeios
+              </h1>
+              <p className="text-sm text-text-secondary mt-1">
+                {flat.length} passeio{flat.length !== 1 ? 's' : ''} disponível{flat.length !== 1 ? 'eis' : ''}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-700">{user?.name}</p>
+
+          <div className="flex items-center gap-3">
             <button
-              onClick={logout}
-              className="text-xs text-red-500 hover:text-red-700"
+              onClick={() => navigate('/minhas-atribuicoes')}
+              className="inline-flex items-center gap-2 px-4 h-9 rounded-lg border border-blue-accent text-blue-accent text-sm font-semibold hover:bg-blue-accent hover:text-white transition-colors"
             >
-              Sair
+              <ClipboardList className="size-4" />
+              Minhas Atribuições
             </button>
+            <div className="hidden sm:flex items-center gap-2 border-l border-border pl-3">
+              <span className="w-7 h-7 rounded-full bg-blue-accent flex items-center justify-center text-xs font-bold text-white shrink-0">
+                {user?.name?.charAt(0).toUpperCase()}
+              </span>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-text-dark leading-tight">{user?.name}</p>
+                <button
+                  onClick={logout}
+                  className="text-xs text-red hover:text-red-dark transition-colors"
+                >
+                  Sair
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pb-16 flex flex-col gap-5">
         {/* Mensagem */}
         {mensagem && (
           <div
-            className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${
+            className={`px-4 py-3 rounded-xl text-sm font-medium border ${
               mensagem.tipo === 'sucesso'
-                ? 'bg-green-100 text-green-800 border border-green-200'
-                : 'bg-red-100 text-red-800 border border-red-200'
+                ? 'bg-green-50 text-green-800 border-green-200'
+                : 'bg-red-50 text-red border-red/20'
             }`}
           >
             {mensagem.texto}
@@ -183,96 +224,127 @@ export const FeedVagoneteiro: React.FC = () => {
         )}
 
         {/* Filtro */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-600 mb-1">
-            Filtrar por data (mês):
-          </label>
-          <input
-            type="month"
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+        <div className="bg-white rounded-xl shadow-sm border border-border p-4 flex items-center gap-4">
+          <SectionIcon icon={<CalendarDays className="size-4" strokeWidth={2} />} />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+            <label className="text-sm font-medium text-text-dark whitespace-nowrap">
+              Filtrar por mês:
+            </label>
+            <input
+              type="month"
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              className="border border-border rounded-lg px-3 py-1.5 text-sm text-text-dark focus:ring-2 focus:ring-blue-accent/30 focus:border-blue-accent outline-none bg-bg-light-2 transition"
+            />
+            {filtro && (
+              <button
+                onClick={() => setFiltro('')}
+                className="text-xs text-text-secondary hover:text-text-dark transition-colors"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin text-4xl mb-4">🚂</div>
-            <p className="text-gray-500">Carregando passeios...</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-text-secondary">
+            <Loader2 className="size-8 animate-spin text-blue-accent" />
+            <p className="text-sm">Carregando passeios...</p>
+          </div>
+        )}
+
+        {/* Vazio */}
+        {!loading && Object.keys(feed).length === 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-border py-16 flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-blue-accent/10 flex items-center justify-center">
+              <SearchX className="size-7 text-blue-accent" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-semibold text-text-dark">Nenhum passeio disponível</h3>
+            <p className="text-sm text-text-secondary">Não há passeios com vagas para este período.</p>
           </div>
         )}
 
         {/* Feed por data */}
-        {!loading && Object.keys(feed).length === 0 && (
-          <div className="text-center py-12 bg-white rounded-2xl shadow">
-            <div className="text-5xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum passeio disponível</h3>
-            <p className="text-gray-500">Não há passeios com vagas para este período.</p>
-          </div>
-        )}
-
         {!loading && Object.entries(feed).map(([dataKey, items]) => (
-          <div key={dataKey} className="mb-8">
-            <h2 className="text-lg font-bold text-gray-700 mb-3 border-b pb-2">
-              {formatarData(dataKey)}
-            </h2>
-            <div className="space-y-3">
+          <div key={dataKey}>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+                {formatarData(dataKey)}
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <div className="flex flex-col gap-3">
               {items.map((item) => (
                 <div
                   key={item.instanciaId}
-                  className={`bg-white rounded-xl shadow-sm border ${
-                    item.jaPeguei ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:shadow-md'
-                  } transition-shadow`}
+                  className={`bg-white rounded-xl shadow-sm border transition-shadow hover:shadow-md ${
+                    item.jaPeguei ? 'border-green-timeline/40' : 'border-border'
+                  }`}
                 >
-                  <div className="p-4 flex items-center justify-between">
+                  <div className="p-4 flex items-center justify-between gap-4">
                     {/* Info do passeio */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-800">{item.slot.titulo}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="font-semibold text-text-dark">{item.slot.titulo}</h3>
                         {item.jaPeguei && (
-                          <span className="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                            ✅ Peguei
+                          <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-timeline border border-green-timeline/30 px-2 py-0.5 rounded-full font-medium">
+                            <CheckCircle2 className="size-3" />
+                            Atribuído
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">
-                        🕐 {item.slot.horario} · ⏱ {item.slot.duracao}min
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        🎫 {item.vagas.disponiveis}/{item.vagas.total} vagas
-                      </p>
-                      <p className="text-sm font-medium text-green-700">
-                        {formatarValor(item.slot.valor)}
-                      </p>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
+                        <span className="flex items-center gap-1">
+                          <Clock className="size-3.5 shrink-0" />
+                          {item.slot.horario} · {item.slot.duracao}min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="size-3.5 shrink-0" />
+                          {item.vagas.disponiveis}/{item.vagas.total} vagas
+                        </span>
+                        <span className="font-semibold text-green-alt">
+                          {formatarValor(item.slot.valor)}
+                        </span>
+                      </div>
+
                       {item.slot.descricao && (
-                        <p className="text-xs text-gray-400 mt-1 truncate max-w-md">
+                        <p className="text-xs text-text-secondary mt-1 truncate max-w-md">
                           {item.slot.descricao}
                         </p>
                       )}
                     </div>
 
                     {/* Botão pegar */}
-                    <div className="ml-4">
+                    <div className="shrink-0">
                       {item.jaPeguei ? (
-                        <span className="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
-                          ✅ Garantido
+                        <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-timeline border border-green-timeline/30 rounded-lg text-sm font-medium">
+                          <CheckCircle2 className="size-4" />
+                          Atribuído
                         </span>
                       ) : item.vagas.disponiveis <= 0 ? (
-                        <span className="inline-block px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-sm">
-                          Lotado
+                        <span className="inline-block px-4 py-2 bg-bg-light-3 text-text-secondary rounded-lg text-sm">
+                          Sem vagas
                         </span>
                       ) : (
                         <button
                           onClick={() => pegarPasseio(item.instanciaId)}
                           disabled={atribuindo === item.instanciaId}
-                          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                          className={`inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
                             atribuindo === item.instanciaId
-                              ? 'bg-gray-300 text-gray-500 cursor-wait'
-                              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-sm'
+                              ? 'bg-bg-light-3 text-text-secondary cursor-wait'
+                              : 'bg-blue-accent text-white hover:bg-blue active:scale-95 shadow-sm'
                           }`}
                         >
-                          {atribuindo === item.instanciaId ? '🐎 Pegando...' : '🚂 Pegar!'}
+                          {atribuindo === item.instanciaId ? (
+                            <><Loader2 className="size-4 animate-spin" /> Processando...</>
+                          ) : (
+                            <><CheckCircle2 className="size-4" /> Atribuir-me</>
+                          )}
                         </button>
                       )}
                     </div>

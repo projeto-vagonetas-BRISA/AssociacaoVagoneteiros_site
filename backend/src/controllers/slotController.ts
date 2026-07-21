@@ -13,6 +13,24 @@ function parseEnum<T extends Record<string, string>>(enumObj: T, value: string):
   return vals.includes(value as any) ? (value as T[keyof T]) : null;
 }
 
+/** Converte "HH:MM" para total de minutos */
+function horaParaMinutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + (m ?? 0);
+}
+
+/** Converte total de minutos para "HH:MM" */
+function minutosParaHora(minutos: number): string {
+  const h = Math.floor(minutos / 60) % 24;
+  const m = minutos % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/** Calcula a duração em minutos entre duas strings "HH:MM" */
+function calcularDuracao(horaInicio: string, horaFim: string): number {
+  return horaParaMinutos(horaFim) - horaParaMinutos(horaInicio);
+}
+
 // ─── CRUD ───────────────────────────────────────────────────────────
 
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -363,12 +381,4 @@ export async function listarDisponiveis(req: AuthenticatedRequest, res: Response
     console.error('Erro ao listar disponíveis:', error);
     res.status(500).json({ message: 'Erro ao listar slots disponíveis' });
   }
-}
-
-// ─── HELPERS ─────────────────────────────────────────────────────────
-
-function calcularDuracao(inicio: string, fim: string): number {
-  const [h1, m1] = inicio.split(':').map(Number);
-  const [h2, m2] = fim.split(':').map(Number);
-  return (h2 * 60 + m2) - (h1 * 60 + m1);
 }

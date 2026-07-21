@@ -108,7 +108,7 @@ export const Agendamento: React.FC = () => {
   const today = new Date();
   const { user, isAuthenticated } = useAuth();
 
-  //formulario — preenche com dados do usuário logado
+  // Formulário: preenche com dados do usuário logado
   const [isAgencia, setIsAgencia] = useState(false);
   const [nome, setNome] = useState(isAuthenticated && user ? user.name : "");
   const [telefone, setTelefone] = useState(isAuthenticated && user ? user.telefone : "");
@@ -131,12 +131,12 @@ export const Agendamento: React.FC = () => {
       .finally(() => setLoadingPasseios(false));
   }, []);
 
-  //calendário
+  // Calendário
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
-  //passeio selecionado
+  // Passeio Selecionado
   const [selectedPasseio, setSelectedPasseio] = useState<Passeio | null>(null);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
@@ -147,7 +147,7 @@ export const Agendamento: React.FC = () => {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [ciente, setCiente] = useState(false);
   
-  // dias do mês que possuem passeios disponíveis (para marcar no calendário)
+  // Dias do mês que possuem passeios disponíveis (para marcar no calendário)
   const daysWithPasseios = useMemo(() => {
     const set = new Set<number>();
     passeios.forEach((p) => {
@@ -159,7 +159,7 @@ export const Agendamento: React.FC = () => {
     return set;
   }, [currentMonth, currentYear, passeios]);
 
-  // passeios do dia selecionado
+  // Passeios do dia selecionado
   const passeiosDoDia = useMemo(() => {
     return passeios.filter((p) => {
       const d = new Date(p.data);
@@ -173,7 +173,7 @@ export const Agendamento: React.FC = () => {
     );
   }, [currentYear, currentMonth, selectedDay, passeios]);
 
-  // reset seleção de passeio ao mudar de dia
+  // Reset da seleção de passeio ao mudar de dia
   const handleSelectDay = (day: number) => {
     setSelectedDay(day);
     setSelectedPasseio(null);
@@ -197,16 +197,16 @@ export const Agendamento: React.FC = () => {
     setSelectedPasseio(null);
   };
 
-  // capacidade máxima do passeio selecionado
+  // Capacidade máxima do passeio selecionado
   const maxPassageiros = isAgencia ? 999 : (selectedPasseio?.vagasDisponiveis ?? 5);
   const precoUnitario = selectedPasseio ? Number(selectedPasseio.preco) : 0;
   const subtotal = precoUnitario * passageiros;
 
-  // data formatada para o resumo
+  // Data formatada para o resumo
   const selectedDate = new Date(currentYear, currentMonth, selectedDay);
   const dataFormatada = `${DIAS_SEMANA[selectedDate.getDay()]}, ${String(selectedDay).padStart(2, "0")} de ${MESES[currentMonth]} de ${currentYear}`;
 
-  // validação básica para habilitar "Finalizar"
+  // Validação básica para habilitar o botão Finalizar
   const podeFinalizarReserva =
     nome.trim() !== "" &&
     telefone.trim() !== "" &&

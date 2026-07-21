@@ -63,11 +63,11 @@ export const DashboardProvider: React.FC = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-text-secondary text-xs">Realizados</span>
-                  <span className="font-semibold text-green-600">{metricas.realizados}</span>
+                  <span className="font-semibold text-green-timeline">{metricas.realizados}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-text-secondary text-xs">Cancelados</span>
-                  <span className="font-semibold text-red-600">{metricas.cancelados}</span>
+                  <span className="font-semibold text-red">{metricas.cancelados}</span>
                 </div>
               </div>
             </div>
