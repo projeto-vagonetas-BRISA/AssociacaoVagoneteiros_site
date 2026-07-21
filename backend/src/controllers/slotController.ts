@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { PrismaClient, TipoSlot, DiaSemana, StatusSlot } from '@prisma/client';
 import { SlotFactory, SlotComponent } from '../services/agendamento.service';
-import { recorrenciaService } from '../services/recorrencia.service';
+import { recorrenciaService, horaParaMinutos, minutosParaHora } from '../services/recorrencia.service';
 
 const prisma = new PrismaClient();
 

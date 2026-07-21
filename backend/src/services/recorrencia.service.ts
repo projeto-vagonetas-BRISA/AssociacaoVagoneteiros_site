@@ -56,12 +56,12 @@ function inicioDoDia(date: Date): Date {
   return d;
 }
 
-function horaParaMinutos(hora: string): number {
+export function horaParaMinutos(hora: string): number {
   const [h, m] = hora.split(':').map(Number);
   return h * 60 + m;
 }
 
-function minutosParaHora(minutos: number): string {
+export function minutosParaHora(minutos: number): string {
   const h = Math.floor(minutos / 60);
   const m = minutos % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;

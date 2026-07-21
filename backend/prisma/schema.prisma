@@ -46,6 +46,7 @@ model Passeio {
   capacidade   Int
   data         DateTime
   horario      String        @default("08:00")
+  status       StatusPasseio @default(CONFIRMADO)
   ativo        Boolean       @default(true)
   agendamentos Agendamento[]
   avaliacoes   Avaliacao[]  
@@ -161,6 +162,12 @@ enum StatusSlot {
 enum StatusInstancia {
   AGENDADO
   EM_ANDAMENTO
+  REALIZADO
+  CANCELADO
+}
+
+enum StatusPasseio {
+  CONFIRMADO
   REALIZADO
   CANCELADO
 }

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
+import { StatusPasseio } from '@prisma/client';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -199,6 +200,45 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
   } catch (error) {
     console.error('Erro ao atualizar passeio:', error);
     res.status(500).json({ message: 'Erro ao atualizar passeio' });
+  }
+}
+
+export async function atualizarStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const { status } = req.body;
+    if (!status || ![StatusPasseio.CONFIRMADO, StatusPasseio.REALIZADO, StatusPasseio.CANCELADO].includes(status)) {
+      res.status(400).json({ message: 'Status inválido. Valores: CONFIRMADO, REALIZADO, CANCELADO' });
+      return;
+    }
+
+    const passeio = await prisma.passeio.findUnique({ where: { id } });
+    if (!passeio) {
+      res.status(404).json({ message: 'Passeio não encontrado' });
+      return;
+    }
+
+    // Só ADMIN/REDATOR ou o dono podem alterar status
+    if (req.user!.perfil === 'USUARIO' && passeio.usuarioId !== req.user!.id) {
+      res.status(403).json({ message: 'Você só pode alterar status dos seus próprios passeios' });
+      return;
+    }
+
+    const atualizado = await prisma.passeio.update({
+      where: { id },
+      data: { status },
+      include: { usuario: { select: { id: true, name: true } } },
+    });
+
+    res.json(atualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar status do passeio:', error);
+    res.status(500).json({ message: 'Erro ao atualizar status' });
   }
 }
 
