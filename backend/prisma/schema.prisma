@@ -107,7 +107,7 @@ model PushSubscription {
   id            Int                 @id @default(autoincrement())
   clienteId     Int
   cliente       Clientes            @relation(fields: [clienteId], references: [id])
-  token         String              @unique
+  token         String              
   userAgent     String?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt

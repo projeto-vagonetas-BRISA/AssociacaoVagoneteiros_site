@@ -4,14 +4,29 @@ import prisma from '../lib/prisma';
 import { calculateNotificationTimes } from '../utils/notificationUtils';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
-  return prisma.pushSubscription.upsert({
-    where: { token },
-    create: {
+  // Check if this client already has a push subscription (FCM token)
+  const existingSubscription = await prisma.pushSubscription.findFirst({
+    where: { clienteId },
+  });
+
+  if (existingSubscription) {
+    // If they already have a token, update it if the generated one is different than the one in the DB
+    if (existingSubscription.token !== token) {
+      return prisma.pushSubscription.update({
+        where: { id: existingSubscription.id },
+        data: {
+          token,
+          userAgent,
+        },
+      });
+    }
+    return existingSubscription;
+  }
+
+  // If the client does not have a token inside PushSubscription, create a new row
+  return prisma.pushSubscription.create({
+    data: {
       token,
-      clienteId,
-      userAgent,
-    },
-    update: {
       clienteId,
       userAgent,
     },
@@ -300,7 +315,7 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
         );
       } catch (upsertErr) {
         console.error('Erro ao upsert PushSubscription:', upsertErr);
-        res.status(500).json({ message: 'Erro ao salvar token de notificação' });
+        res.status(500).json({ message: 'Erro ao salvar token de notificação, desabilite a função de envio de notificações para prosseguir' });
         return;
       }
     }

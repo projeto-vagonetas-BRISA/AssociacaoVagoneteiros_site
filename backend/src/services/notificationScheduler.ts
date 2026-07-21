@@ -17,7 +17,16 @@ function isNotRegisteredError(error: unknown) {
 
   const code = 'code' in error ? (error as { code?: string }).code : undefined;
   const message = 'message' in error ? (error as { message?: string }).message : undefined;
-  return code === 'messaging/registration-token-not-registered' || message === 'NotRegistered';
+  
+  return (
+    code === 'messaging/registration-token-not-registered' ||
+    code === 'messaging/invalid-registration-token' ||
+    message === 'NotRegistered' ||
+    (typeof message === 'string' && (
+      message.includes('registration token is not a valid') ||
+      message.includes('Requested entity was not found')
+    ))
+  );
 }
 
 const INTERVALOS = [
@@ -82,17 +91,17 @@ function getMessageForType(tipo: Intervalo, passeioDate: Date) {
     case 'ONE_DAY':
       return buildMessage('Lembrete de passeio', `Seu passeio é amanhã em ${dataFormatada}.`);
     case 'TWELVE_HOURS':
-      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em 12 horas (${dataFormatada}).`);
+      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em torno de 12 horas (${dataFormatada}).`);
     case 'SIX_HOURS':
-      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em 6 horas (${dataFormatada}).`);
+      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em torno de 6 horas (${dataFormatada}).`);
     case 'THREE_HOURS':
-      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em 3 horas (${dataFormatada}).`);
+      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em torno de 3 horas (${dataFormatada}).`);
     case 'ONE_HOUR':
-      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em 1 hora (${dataFormatada}).`);
+      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em torno de 1 hora (${dataFormatada}).`);
     case 'THIRTY_MINUTES':
-      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em 30 minutos (${dataFormatada}).`);
+      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em torno de 30 minutos (${dataFormatada}).`);
     case 'TEN_MINUTES':
-      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em 10 minutos (${dataFormatada}).`);
+      return buildMessage('Lembrete de passeio', `Seu passeio ocorrerá em torno de 10 minutos (${dataFormatada}).`);
     default:
       return buildMessage('Lembrete de passeio', `Seu passeio está próximo: ${dataFormatada}.`);
   }
@@ -143,13 +152,20 @@ export async function processarNotificacoesAgendamento() {
     const payload = getMessageForType(notificacao.tipo as Intervalo, passeioDate);
 
     try {
-      await messaging.send({
+      console.log(`[FCM] Attempting to send notification ID=${notificacao.id} of type=${notificacao.tipo} to client ID=${notificacao.agendamento.clienteId} with token=${maskToken(subscription.token)}`);
+      
+      const response = await messaging.send({
         token: subscription.token,
         ...payload,
       });
+      
+      console.log(`[FCM] Notification ID=${notificacao.id} sent successfully. Message ID from Firebase: ${response}`);
+      
       // remove the notification row after successful delivery to simplify state
       await prisma.notificacaoAgendamento.delete({ where: { id: notificacao.id } });
+      console.log(`[FCM] Deleted notification ID=${notificacao.id} from database after successful delivery.`);
     } catch (error) {
+      console.error(`[FCM] Error sending notification ID=${notificacao.id}:`, error);
       if (isNotRegisteredError(error)) {
         logTokenFailure(subscription, error, 'token failed with NotRegistered; removing stale subscription');
         await prisma.notificacaoAgendamento.deleteMany({

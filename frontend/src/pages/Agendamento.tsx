@@ -220,7 +220,6 @@ export const Agendamento: React.FC = () => {
       setPassageiros(1);
     }, [isAgencia]);
 
-
   async function handleFinalizarReserva() {
     if (!podeFinalizarReserva || !selectedPasseio) return;
     setSubmitting(true);
