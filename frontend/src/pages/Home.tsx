@@ -4,7 +4,7 @@ import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { SectionHeader } from "../components/SectionHeader";
 import { TimelineCard } from "../components/TimelineCard";
-import { ReviewCard } from "../components/ReviewCard";
+
 import Logo from "../assets/logo.png";
 import conteudo from "../assets/conteudo.json";
 import { imagens } from "../assets/imagens";
@@ -202,21 +202,11 @@ export const Home: React.FC = () => {
               <h2 className="font-bold text-3xl md:text-4xl text-black text-center tracking-tight uppercase">
                 {conteudo.avaliacoes.titulo}
               </h2>
-              <Button text={conteudo.avaliacoes.botao.texto} variant="secondary" icon="star" to="/cadastro?tipo=usuario" />
+              <Button text={conteudo.avaliacoes.botao.texto} variant="secondary" icon="star" onClick={() => window.open('https://www.google.com/search?sca_esv=160fecc51e0f0354&sxsrf=APpeQnsw5C3VRPon4DYoUDLm5lqhN6xECA:1784676258941&si=APenkKm7iecQ4G6P-TsbSMFKIQtv3EFIqRAFw-i8uEbk55Z-_zYJXj1ba_IkP5Hhe_TE_i5B9O_uZfSbZ0e1v5ODwyF267foBqvRMlVFKD3JTS1PG7X2xlSCnoKePZB4ly45NojLQen9AWNV56Tzv3Ck5YCySqi9CXrt-Q28G7vaSSpKGLKIq28%3D&q=Vagonetas+dos+Molhes+da+Barra+Coment%C3%A1rios&sa=X&ved=2ahUKEwjE2s-T9eSVAxXPBrkGHc64C7wQ0bkNegQIHBAF&biw=1528&bih=732&dpr=1.25#lrd=0x951183d1b248dfb3:0xc051970bebca8884,3,,,,', '_blank')} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {conteudo.avaliacoes.comentarios.map((c, i) => (
-                <ReviewCard
-                  key={i}
-                  name={c.autor}
-                  location={c.local}
-                  comment={c.texto}
-                  rating={c.estrelas}
-                  avatarLetter={c.avatar_inicial}
-                  avatarColor={i === 0 ? "bg-blue-accent" : i === 1 ? "bg-red-dark" : "bg-green-timeline"}
-                />
-              ))}
+            <div className="w-full">
+              <div className="elfsight-app-073217d6-a999-4926-a942-fc7e62274ba7" data-elfsight-app-lazy></div>
             </div>
           </div>
         </div>
