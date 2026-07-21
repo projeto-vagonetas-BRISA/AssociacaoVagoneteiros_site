@@ -1,51 +1,22 @@
 import React, { useMemo, useState } from "react";
-import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, CheckCircle2, Download } from "lucide-react";
+import { jsPDF } from "jspdf";
+import { toPng } from "html-to-image";
+import { api } from "../services/api";
+import conteudo from "../assets/conteudo.json";
 
 type SituacaoAgendamento = "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REALIZADO";
 
-interface AgendamentoMock {
+interface AgendamentoResponse {
   id: number;
   cpf: string;
   situacao: SituacaoAgendamento;
   data: string;
   horario: string;
   vagas: number;
-    total: number;
-    cliente: string;
+  total: number;
+  cliente: string;
 }
-
-const AGENDAMENTOS_MOCK: AgendamentoMock[] = [
-  {
-    id: 4821,
-    cpf: "12345678900",
-    situacao: "CONFIRMADO",
-    data: "2026-07-20",
-    horario: "09:30",
-    vagas: 4,
-    total: 200.00,
-    cliente: "João da Silva",
-  },
-  {
-    id: 7394,
-    cpf: "98765432100",
-    situacao: "PENDENTE",
-    data: "2026-07-22",
-    horario: "14:00",
-    vagas: 2,
-    total: 100.00,
-    cliente: "Maria Oliveira",
-  },
-  {
-    id: 5508,
-    cpf: "11122233344",
-    situacao: "CANCELADO",
-    data: "2026-07-18",
-    horario: "10:15",
-    vagas: 0,
-    total: 0.00,
-    cliente: "Carlos Pereira",
-  },
-];
 
 const SITUACAO_LABEL: Record<SituacaoAgendamento, string> = {
   PENDENTE: "Pendente",
@@ -81,7 +52,8 @@ function formatarCpf(valor: string) {
 }
 
 function formatarData(data: string) {
-  return new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR", {
+  const datePart = data.split('T')[0];
+  return new Date(`${datePart}T12:00:00`).toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
     month: "long",
@@ -98,34 +70,59 @@ const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
 export const ConsultaAgendamento: React.FC = () => {
   const [id, setId] = useState("");
   const [cpf, setCpf] = useState("");
-  const [consulta, setConsulta] = useState<AgendamentoMock | null>(null);
+  const [consulta, setConsulta] = useState<AgendamentoResponse | null>(null);
   const [erro, setErro] = useState("");
 
   const podeConsultar = useMemo(() => id.trim() !== "" && normalizarCpf(cpf).length === 11, [id, cpf]);
+  const [loading, setLoading] = useState(false);
 
   function handleConsulta(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!podeConsultar) return;
+
+    setLoading(true);
+    setErro("");
+    setConsulta(null);
 
     const idNumero = Number(id);
     const cpfLimpo = normalizarCpf(cpf);
 
-    if (!idNumero || cpfLimpo.length !== 11) {
-      setConsulta(null);
-      setErro("Informe um ID válido e um CPF com 11 dígitos.");
-      return;
-    }
-
-    const encontrado = AGENDAMENTOS_MOCK.find((item) => item.id === idNumero && item.cpf === cpfLimpo) ?? null;
-
-    if (!encontrado) {
-      setConsulta(null);
-      setErro("Nenhum agendamento foi encontrado para o ID e CPF informados.");
-      return;
-    }
-
-    setErro("");
-    setConsulta(encontrado);
+    api.request<AgendamentoResponse>(`/agendamentos/consulta/${idNumero}/${cpfLimpo}`)
+      .then((data) => {
+        setConsulta(data);
+      })
+      .catch((err: any) => {
+        setErro(err.message || "Erro ao consultar agendamento");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }
+
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const gerarPDF = async () => {
+    const element = document.getElementById("resumo-pedido");
+    if (!element) return;
+
+    setIsDownloading(true);
+    try {
+      const dataUrl = await toPng(element, { cacheBust: true, quality: 1, pixelRatio: 2 });
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Resumo_Agendamento_${consulta?.id}.pdf`);
+    } catch (error: any) {
+      console.error("Erro ao gerar PDF:", error);
+      alert("Houve um erro ao gerar o PDF. Detalhes: " + error.message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
@@ -186,7 +183,7 @@ export const ConsultaAgendamento: React.FC = () => {
             </form>
           </div>
 
-          <div className="bg-white rounded-xl overflow-hidden shadow-lg sticky top-6">
+          <div id="resumo-pedido" className="bg-white rounded-xl overflow-hidden shadow-lg sticky top-6">
             <div className="px-6 py-5 border-b border-blue-accent/15 bg-blue-accent">
               <h2 className="font-bold text-lg text-white tracking-tight">
                 Agendamento {consulta ? `#${consulta.id}` : ""}
@@ -244,7 +241,7 @@ export const ConsultaAgendamento: React.FC = () => {
                         Endereço
                       </p>
                       <p className="font-semibold text-sm text-text-primary mt-0.5">
-                        Av. Rio Grande, s/n — Cassino, RS
+                        {conteudo.rodape_localizacao.endereco}
                       </p>
                     </div>
                   </div>
@@ -298,6 +295,24 @@ export const ConsultaAgendamento: React.FC = () => {
                       <span className="font-bold text-base text-text-primary">Total</span>
                       <span className="font-bold text-xl text-red-dark">R$ {consulta.total.toFixed(2)}</span>
                     </div>
+                  </div>
+                
+                  {/* Botão de Download PDF */}
+                  <div className="pt-2">
+                    <button
+                      onClick={gerarPDF}
+                      disabled={isDownloading}
+                      className="w-full flex items-center justify-center gap-2 h-11 bg-bg-light-2 hover:bg-border text-text-dark font-bold text-sm rounded-lg transition-colors border border-border disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isDownloading ? (
+                        <>Gerando PDF...</>
+                      ) : (
+                        <>
+                          <Download className="size-4" strokeWidth={2.5} />
+                          Baixar Resumo em PDF
+                        </>
+                      )}
+                    </button>
                   </div>
                 </>
               ) : erro ? (

@@ -211,6 +211,13 @@ export const PainelAdmin: React.FC = () => {
     carregarDados();
   }, []);
 
+  useEffect(() => {
+    const handler = () => gerarRelatorioGeral();
+    window.addEventListener('gerarRelatorioGeral', handler);
+    return () => window.removeEventListener('gerarRelatorioGeral', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingData]);
+
   // A tabela usa passeiosData paginado; o histórico usa todosPasseios (carregado com limit=100)
   const passeios = passeiosData?.data || [];
   const totalPaginasPasseio = passeiosData?.totalPages || 1;
@@ -300,13 +307,212 @@ export const PainelAdmin: React.FC = () => {
 
   const getClienteNome = (id: number) => clientes.find(c => c.id === id)?.nome || `Cliente #${id}`;
 
+  async function gerarRelatorioGeral() {
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF('portrait', 'mm', 'a4');
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const colRight = pw - margin;
+    let y = margin;
+
+    const addPageIfNeeded = (needed = 10) => {
+      if (y + needed > ph - margin) {
+        doc.addPage();
+        y = margin;
+      }
+    };
+
+    const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    // Cabeçalho do PDF
+    doc.setFillColor(15, 23, 43); // blue-dark
+    doc.rect(0, 0, pw, 22, 'F');
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('Relatório Geral — Vagoneteiros dos Molhes da Barra', margin, 14);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em ${hoje}`, colRight, 14, { align: 'right' });
+    y = 32;
+
+    // Estatísticas do PDF
+    doc.setTextColor(24, 28, 33);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Estatísticas Gerais', margin, y);
+    y += 6;
+    doc.setDrawColor(230, 232, 240);
+    doc.line(margin, y, colRight, y);
+    y += 5;
+
+    const stats = [
+      ['Total de Turistas', String(totalTuristas)],
+      ['Passeios Realizados', String(passeiosRealizados)],
+      ['Receita Estimada', `R$ ${receitaEstimada.toLocaleString('pt-BR')}`],
+      ['Avaliação Média', `${avaliacaoMedia} / 5`],
+    ];
+    doc.setFontSize(9);
+    const colW = (pw - margin * 2) / 2;
+    stats.forEach(([label, val], i) => {
+      const x = margin + (i % 2) * colW;
+      if (i % 2 === 0 && i > 0) y += 12;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      doc.text(label, x, y);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(24, 28, 33);
+      doc.text(val, x, y + 5);
+    });
+    y += 18;
+
+    // Tabela de Passeios no PDF
+    addPageIfNeeded(20);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(24, 28, 33);
+    doc.text('Passeios Cadastrados', margin, y);
+    y += 6;
+    doc.setDrawColor(230, 232, 240);
+    doc.line(margin, y, colRight, y);
+    y += 5;
+
+    const pHeaders = ['Data', 'Horário', 'Valor (R$)', 'Capacidade', 'Vagoneteiro'];
+    const pCols = [40, 22, 28, 26, 0]; // 0 = restante
+    const pTotalFixed = pCols.slice(0, -1).reduce((a, b) => a + b, 0);
+    pCols[pCols.length - 1] = colRight - margin - pTotalFixed;
+
+    // cabeçalho tabela
+    doc.setFillColor(242, 243, 251);
+    doc.rect(margin, y, colRight - margin, 7, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(107, 114, 128);
+    let x = margin + 2;
+    pHeaders.forEach((h, i) => { doc.text(h, x, y + 5); x += pCols[i]; });
+    y += 8;
+
+    doc.setFont('helvetica', 'normal');
+    todosPasseios.forEach((p, idx) => {
+      addPageIfNeeded(8);
+      if (idx % 2 === 0) { doc.setFillColor(248, 249, 255); doc.rect(margin, y, colRight - margin, 7, 'F'); }
+      doc.setTextColor(24, 28, 33);
+      x = margin + 2;
+      const row = [
+        formatData(p.data),
+        p.horario,
+        Number(p.preco).toFixed(2),
+        String(p.capacidade),
+        p.usuario?.name || '—',
+      ];
+      row.forEach((v, i) => { doc.text(String(v), x, y + 5); x += pCols[i]; });
+      y += 7;
+    });
+    y += 6;
+
+    // Tabela de Vagoneteiros no PDF
+    addPageIfNeeded(20);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(24, 28, 33);
+    doc.text('Vagoneteiros', margin, y);
+    y += 6;
+    doc.line(margin, y, colRight, y);
+    y += 5;
+
+    const allVag = vagoneteirosData?.data || [];
+    const vHeaders = ['Nome', 'CPF', 'Telefone', 'Status'];
+    const vCols = [60, 35, 35, 0];
+    const vTotalFixed = vCols.slice(0, -1).reduce((a, b) => a + b, 0);
+    vCols[vCols.length - 1] = colRight - margin - vTotalFixed;
+
+    doc.setFillColor(242, 243, 251);
+    doc.rect(margin, y, colRight - margin, 7, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(107, 114, 128);
+    x = margin + 2;
+    vHeaders.forEach((h, i) => { doc.text(h, x, y + 5); x += vCols[i]; });
+    y += 8;
+
+    doc.setFont('helvetica', 'normal');
+    allVag.forEach((v, idx) => {
+      addPageIfNeeded(8);
+      if (idx % 2 === 0) { doc.setFillColor(248, 249, 255); doc.rect(margin, y, colRight - margin, 7, 'F'); }
+      doc.setTextColor(24, 28, 33);
+      x = margin + 2;
+      [v.name, v.cpf || '—', v.telefone || '—', v.ativo ? 'Ativo' : 'Inativo'].forEach((val, i) => {
+        doc.text(String(val), x, y + 5);
+        x += vCols[i];
+      });
+      y += 7;
+    });
+    y += 6;
+
+    // Tabela de Agendamentos no PDF
+    addPageIfNeeded(20);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(24, 28, 33);
+    doc.text('Histórico de Agendamentos', margin, y);
+    y += 6;
+    doc.line(margin, y, colRight, y);
+    y += 5;
+
+    const aHeaders = ['Passeio', 'Data', 'Horário', 'Cliente', 'Acomp.', 'Status'];
+    const aCols = [16, 28, 20, 48, 16, 0];
+    const aTotalFixed = aCols.slice(0, -1).reduce((a, b) => a + b, 0);
+    aCols[aCols.length - 1] = colRight - margin - aTotalFixed;
+
+    doc.setFillColor(242, 243, 251);
+    doc.rect(margin, y, colRight - margin, 7, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(107, 114, 128);
+    x = margin + 2;
+    aHeaders.forEach((h, i) => { doc.text(h, x, y + 5); x += aCols[i]; });
+    y += 8;
+
+    doc.setFont('helvetica', 'normal');
+    agendamentos.forEach((a, idx) => {
+      addPageIfNeeded(8);
+      if (idx % 2 === 0) { doc.setFillColor(248, 249, 255); doc.rect(margin, y, colRight - margin, 7, 'F'); }
+      doc.setTextColor(24, 28, 33);
+      x = margin + 2;
+      [
+        `#${a.passeio.id}`,
+        formatData(a.passeio.data),
+        a.passeio.horario,
+        a.cliente?.nome || `#${a.cliente?.id}`,
+        String(a.acompanhantes || 0),
+        statusConfig[a.status]?.label || a.status,
+      ].forEach((val, i) => { doc.text(String(val), x, y + 5); x += aCols[i]; });
+      y += 7;
+    });
+
+    // rodapé
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let pg = 1; pg <= totalPages; pg++) {
+      doc.setPage(pg);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(180, 180, 180);
+      doc.text(`Página ${pg} de ${totalPages}`, pw / 2, ph - 6, { align: 'center' });
+    }
+
+    doc.save(`relatorio-geral_${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-8 py-10 flex flex-col gap-8">
 
         {/* Título */}
         <div className="flex items-center gap-3">
-          <Users className="text-text-dark" size={28} strokeWidth={1.8} />
+          <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
+            <Users className="size-4" strokeWidth={2} />
+          </div>
           <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
             Painel Administrativo
           </h1>
@@ -320,16 +526,10 @@ export const PainelAdmin: React.FC = () => {
             <Plus size={15} /> Cadastrar Vagoneteiro
           </Link>
           <Link
-            to="/cadastro?tipo=administrador"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-dark hover:bg-red-hover text-white text-sm font-semibold transition-colors cursor-pointer"
-          >
-            <Plus size={15} /> Cadastrar Administrador
-          </Link>
-          <Link
-            to="/cadastro-passeio"
+            to="/admin/slots"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer"
           >
-            <Plus size={15} /> Cadastrar Passeio
+            <Plus size={15} /> Gerenciar Horários
           </Link>
         </div>
 
@@ -363,7 +563,7 @@ export const PainelAdmin: React.FC = () => {
             {statCards.map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-border flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-[#7a8394] tracking-widest uppercase">{label}</p>
+                  <p className="text-xs font-semibold text-text-secondary tracking-widest uppercase">{label}</p>
                   <Icon size={16} className={`${color} opacity-60`} />
                 </div>
                 <p className={`font-bold text-2xl md:text-3xl tracking-tight ${color}`}>{value}</p>
@@ -380,7 +580,7 @@ export const PainelAdmin: React.FC = () => {
               <p className="text-sm text-[#7a8394] mt-0.5">Gerencie os horários e vagas disponíveis</p>
             </div>
             <button
-              onClick={() => navigate("/cadastro-passeio")}
+              onClick={() => navigate("/admin/slots")}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer shrink-0">
               <Plus size={15} /> Cadastrar Novo Horário
             </button>

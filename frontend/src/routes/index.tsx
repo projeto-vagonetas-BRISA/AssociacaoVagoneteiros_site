@@ -13,6 +13,7 @@ import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
 import { FeedVagoneteiro } from "../pages/FeedVagoneteiro";
 import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 import { MinhasAtribuicoes } from "../pages/MinhasAtribuicoes";
+import { AdminSlots } from "../pages/admin/AdminSlots";
 
 export const router = createBrowserRouter([
   {
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
       {
         path: "/minhas-atribuicoes",
         element: <MinhasAtribuicoes />
+      },
+      {
+        path: "/admin/slots",
+        element: <AdminSlots />
       }
     ]
   }

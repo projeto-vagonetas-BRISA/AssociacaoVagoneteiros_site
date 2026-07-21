@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera, UserCheck } from "lucide-react";
+import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera, UserCheck, AlertCircle, Loader2 } from "lucide-react";
 import { api } from "../../services/api";
 
 interface VagoneteiroDetalhe {
@@ -52,6 +52,8 @@ const experienciaOptions = [
   { value: "5 a 10 anos", label: "5 a 10 anos" },
   { value: "Mais de 10 anos", label: "Mais de 10 anos" },
 ];
+
+const inputClass = "text-sm font-medium text-text-dark bg-bg-light-2 border border-border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/30 focus:border-blue-accent transition placeholder:text-text-secondary";
 
 export const VagoneteiroPerfil: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -156,8 +158,9 @@ export const VagoneteiroPerfil: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-light-1 flex items-center justify-center">
-        <p className="text-text-primary">Carregando...</p>
+      <div className="min-h-screen bg-bg-light-1 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="size-8 text-blue-accent animate-spin" />
+        <p className="text-text-secondary text-sm font-medium">Carregando perfil...</p>
       </div>
     );
   }
@@ -172,32 +175,51 @@ export const VagoneteiroPerfil: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-bg-light-1 flex flex-col">
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-10">
-        {/* Topo */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-bg-light-1 flex flex-col items-start w-full">
+      {/* Topo / Cabeçalho */}
+      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/painel-admin')} className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+            <button onClick={() => navigate('/painel-admin')} className="p-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" aria-label="Voltar ao painel">
               <ArrowLeft size={20} className="text-text-dark" />
             </button>
-            <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
-              {editando ? "Editando Vagoneteiro" : "Perfil do Vagoneteiro"}
-            </h1>
+            <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
+              <User className="size-4" strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
+                {editando ? "Editando Vagoneteiro" : "Perfil do Vagoneteiro"}
+              </h1>
+              <p className="text-sm text-text-secondary mt-0.5">
+                Gerencie as informações do associado
+              </p>
+            </div>
           </div>
           {!editando && (
             <button
               onClick={entrarEdicao}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm active:scale-[0.98]"
             >
               <Pencil size={15} /> Editar
             </button>
           )}
         </div>
+      </div>
+
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 pb-16">
+        
+        {/* Erro */}
+        {erroSalvar && (
+          <div className="mb-5 flex items-center gap-3 px-4 py-3 rounded-xl bg-red/10 text-red border border-red/20 text-sm font-medium">
+            <AlertCircle className="size-4 shrink-0" />
+            {erroSalvar}
+          </div>
+        )}
 
         {/* Card principal */}
-        <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
           {/* Header com foto */}
-          <div className="bg-gradient-to-r from-blue-accent/10 to-blue-accent/5 px-8 py-8 flex items-center gap-6 relative">
+          <div className="bg-gradient-to-r from-blue-accent/10 to-blue-accent/5 px-8 py-8 flex items-center gap-6 relative border-b border-border">
             {/* Foto com hover para trocar (quando editando) */}
             <div className="relative shrink-0">
               {(editando && fotoAlterada && formFoto) ? (
@@ -213,7 +235,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-accent text-white flex items-center justify-center shadow-md hover:bg-blue-dark transition-colors cursor-pointer"
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-accent text-white flex items-center justify-center shadow-md hover:bg-blue transition-colors cursor-pointer"
                     title="Alterar foto"
                   >
                     <Camera size={14} />
@@ -229,20 +251,21 @@ export const VagoneteiroPerfil: React.FC = () => {
                   type="text"
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
-                  className="text-2xl font-bold text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/40"
+                  className="text-2xl font-bold text-text-dark bg-bg-light-2 border border-border rounded-lg px-3 py-1.5 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30 focus:border-blue-accent transition placeholder:text-text-secondary"
+                  placeholder="Nome Completo"
                 />
               ) : (
                 <h2 className="text-2xl font-bold text-text-dark truncate">{vagoneteiro.name}</h2>
               )}
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-2">
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                   vagoneteiro.ativo
                     ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
-                    : "bg-red-dark/10 text-red-dark border border-red-dark/20"
+                    : "bg-red/10 text-red border border-red/20"
                 }`}>
                   {vagoneteiro.ativo ? "Ativo" : "Inativo"}
                 </span>
-                <span className="text-xs uppercase tracking-wider text-[#7a8394] font-semibold">
+                <span className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                   {vagoneteiro.perfil}
                 </span>
               </div>
@@ -253,7 +276,7 @@ export const VagoneteiroPerfil: React.FC = () => {
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Coluna 1: Dados pessoais */}
             <div className="space-y-5">
-              <h3 className="font-bold text-sm text-[#7a8394] uppercase tracking-widest flex items-center gap-2">
+              <h3 className="font-bold text-sm text-text-secondary uppercase tracking-widest flex items-center gap-2">
                 <User size={14} /> Dados Pessoais
               </h3>
 
@@ -262,7 +285,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <User size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs text-[#7a8394]">CPF</p>
+                    <p className="text-xs text-text-secondary">CPF</p>
                     <p className="text-sm font-medium text-text-dark">{formatCpf(vagoneteiro.cpf)}</p>
                   </div>
                 </div>
@@ -271,13 +294,13 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <Phone size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-[#7a8394]">Telefone</p>
+                    <p className="text-xs text-text-secondary mb-1">Telefone</p>
                     {editando ? (
                       <input
                         type="tel"
                         value={formTel}
                         onChange={e => setFormTel(e.target.value)}
-                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40"
+                        className={inputClass}
                         placeholder="(53) 99999-0000"
                       />
                     ) : (
@@ -290,13 +313,13 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <Mail size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-[#7a8394]">E-mail</p>
+                    <p className="text-xs text-text-secondary mb-1">E-mail</p>
                     {editando ? (
                       <input
                         type="email"
                         value={formEmail}
                         onChange={e => setFormEmail(e.target.value)}
-                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40"
+                        className={inputClass}
                         placeholder="email@exemplo.com"
                       />
                     ) : (
@@ -309,19 +332,19 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <UserCheck size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-[#7a8394]">Perfil</p>
+                    <p className="text-xs text-text-secondary mb-1">Perfil</p>
                     {editando ? (
                       <select
                         value={formPerfil}
                         onChange={e => setFormPerfil(e.target.value)}
-                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40 cursor-pointer"
+                        className={`${inputClass} cursor-pointer`}
                       >
                         <option value="VAGONETEIRO">Vagoneteiro</option>
                         <option value="REDATOR">Redator</option>
                         <option value="ADMIN">Administrador</option>
                       </select>
                     ) : (
-                      <span className="text-xs uppercase tracking-wider text-[#7a8394] font-semibold">
+                      <span className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                         {vagoneteiro.perfil}
                       </span>
                     )}
@@ -332,7 +355,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <Calendar size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs text-[#7a8394]">Data de Associação</p>
+                    <p className="text-xs text-text-secondary">Data de Associação</p>
                     <p className="text-sm font-medium text-text-dark">{formatDataBr(vagoneteiro.data_associacao)}</p>
                   </div>
                 </div>
@@ -341,7 +364,7 @@ export const VagoneteiroPerfil: React.FC = () => {
 
             {/* Coluna 2: Profissional */}
             <div className="space-y-5">
-              <h3 className="font-bold text-sm text-[#7a8394] uppercase tracking-widest flex items-center gap-2">
+              <h3 className="font-bold text-sm text-text-secondary uppercase tracking-widest flex items-center gap-2">
                 <Briefcase size={14} /> Dados Profissionais
               </h3>
 
@@ -350,12 +373,12 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <Clock size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-[#7a8394]">Experiência</p>
+                    <p className="text-xs text-text-secondary mb-1">Experiência</p>
                     {editando ? (
                       <select
                         value={formExperiencia}
                         onChange={e => setFormExperiencia(e.target.value)}
-                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40 cursor-pointer"
+                        className={`${inputClass} cursor-pointer`}
                       >
                         {experienciaOptions.map(o => (
                           <option key={o.value} value={o.value}>{o.label}</option>
@@ -373,13 +396,13 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <MapPin size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-[#7a8394]">Histórico</p>
+                    <p className="text-xs text-text-secondary mb-1">Histórico</p>
                     {editando ? (
                       <textarea
                         value={formHistorico}
                         onChange={e => setFormHistorico(e.target.value)}
-                        className="text-sm font-medium text-text-dark bg-bg-light-1 border border-border rounded-lg px-3 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/40 resize-none"
-                        rows={3}
+                        className={`${inputClass} resize-none`}
+                        rows={4}
                       />
                     ) : (
                       <p className="text-sm font-medium text-text-dark">
@@ -393,7 +416,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <Star size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs text-[#7a8394]">Total de Passeios</p>
+                    <p className="text-xs text-text-secondary">Total de Passeios</p>
                     <p className="text-sm font-medium text-text-dark">
                       {(vagoneteiro.passeios || []).length} passeio{(vagoneteiro.passeios || []).length !== 1 ? "s" : ""}
                     </p>
@@ -406,23 +429,23 @@ export const VagoneteiroPerfil: React.FC = () => {
           {/* Passeios realizados */}
           {(vagoneteiro.passeios || []).length > 0 && (
             <div className="border-t border-border px-8 py-6">
-              <h3 className="font-bold text-sm text-[#7a8394] uppercase tracking-widest mb-4 flex items-center gap-2">
+              <h3 className="font-bold text-sm text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Calendar size={14} /> Passeios Realizados
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left">
-                      <th className="pb-2 pr-4 text-xs font-semibold text-[#7a8394]">Data</th>
-                      <th className="pb-2 pr-4 text-xs font-semibold text-[#7a8394]">Valor</th>
-                      <th className="pb-2 pr-4 text-xs font-semibold text-[#7a8394]">Capacidade</th>
+                      <th className="pb-2 pr-4 text-xs font-semibold text-text-secondary uppercase">Data</th>
+                      <th className="pb-2 pr-4 text-xs font-semibold text-text-secondary uppercase">Valor</th>
+                      <th className="pb-2 pr-4 text-xs font-semibold text-text-secondary uppercase">Capacidade</th>
                     </tr>
                   </thead>
                   <tbody>
                     {vagoneteiro.passeios.map(p => (
                       <tr key={p.id} className="border-b border-border/50 last:border-0">
-                        <td className="py-3 pr-4 text-text-dark">{formatDataBr(p.data)}</td>
-                        <td className="py-3 pr-4 text-green-timeline font-semibold">R$ {Number(p.preco).toFixed(2)}</td>
+                        <td className="py-3 pr-4 text-text-dark font-medium">{formatDataBr(p.data)}</td>
+                        <td className="py-3 pr-4 text-green-timeline font-bold">R$ {Number(p.preco).toFixed(2).replace('.', ',')}</td>
                         <td className="py-3 pr-4 text-text-primary">{p.capacidade} vagas</td>
                       </tr>
                     ))}
@@ -433,46 +456,30 @@ export const VagoneteiroPerfil: React.FC = () => {
           )}
         </div>
 
-        {/* Erro */}
-        {erroSalvar && (
-          <div className="mt-4 px-4 py-3 rounded-lg bg-red-dark/10 text-red-dark border border-red-dark/20 text-sm font-medium">
-            {erroSalvar}
+        {/* Ações Inferiores */}
+        {editando && (
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={salvar}
+              disabled={salvando}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-accent hover:bg-blue text-white text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] shadow-sm"
+            >
+              {salvando ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Check size={16} />
+              )}
+              {salvando ? "Salvando..." : "Salvar Alterações"}
+            </button>
+            <button
+              onClick={cancelarEdicao}
+              disabled={salvando}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <X size={16} /> Cancelar
+            </button>
           </div>
         )}
-
-        {/* Ações */}
-        <div className="mt-6 flex gap-3">
-          {editando ? (
-            <>
-              <button
-                onClick={salvar}
-                disabled={salvando}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-timeline hover:bg-green-700 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {salvando ? (
-                  <span className="block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Check size={15} />
-                )}
-                {salvando ? "Salvando..." : "Salvar"}
-              </button>
-              <button
-                onClick={cancelarEdicao}
-                disabled={salvando}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <X size={15} /> Cancelar
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/painel-admin"
-              className="px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors"
-            >
-              ← Voltar ao Painel
-            </Link>
-          )}
-        </div>
       </main>
     </div>
   );

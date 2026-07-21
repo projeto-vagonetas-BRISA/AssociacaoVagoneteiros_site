@@ -50,11 +50,16 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    // Verificar capacidade do slot
-    const vagasOcupadas = instancia.slotPasseio._count.atribuicoes;
-    const vagasRestantes = instancia.slotPasseio.capacidade - vagasOcupadas;
-    if (vagasRestantes <= 0) {
-      res.status(400).json({ message: 'Slot lotado — todas as vagas já foram preenchidas' });
+    // Verificar se a instância já tem um vagoneteiro
+    const totalAtribuicoesInstancia = await prisma.slotAtribuicao.count({
+      where: {
+        instanciaId: instancia.id,
+        status: { in: ['ATRIBUIDO', 'REALIZADO'] },
+      },
+    });
+
+    if (totalAtribuicoesInstancia >= 1) {
+      res.status(400).json({ message: 'Este passeio já foi pego por outro vagoneteiro' });
       return;
     }
 
@@ -106,25 +111,44 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
       },
     });
 
-    // Atualizar status da instância se atingir capacidade
-    const totalAtribuicoes = await prisma.slotAtribuicao.count({
-      where: {
-        instanciaId: instancia.id,
-        status: 'ATRIBUIDO',
-      },
+    // Atualizar status da instância pois já atingiu a capacidade de 1 vagoneteiro
+    await prisma.slotInstancia.update({
+      where: { id: instancia.id },
+      data: { status: 'AGENDADO' },
     });
 
-    if (totalAtribuicoes >= instancia.slotPasseio.capacidade) {
-      await prisma.slotInstancia.update({
-        where: { id: instancia.id },
-        data: { status: 'AGENDADO' }, // Mantém AGENDADO mesmo lotado, só impede novas atribuições
+    // Sincroniza a capacidade com o passeio público equivalente
+    const passeioExistente = await prisma.passeio.findFirst({
+      where: {
+        data: instancia.data,
+        horario: instancia.horaInicio,
+        ativo: true,
+        status: { not: 'CANCELADO' }
+      }
+    });
+
+    if (passeioExistente) {
+      await prisma.passeio.update({
+        where: { id: passeioExistente.id },
+        data: { capacidade: passeioExistente.capacidade + instancia.slotPasseio.capacidade }
       });
+    } else {
+      const passeioData: any = {
+        usuarioId: vagoneteiroId,
+        preco: instancia.slotPasseio.valor,
+        capacidade: instancia.slotPasseio.capacidade,
+        data: instancia.data,
+        horario: instancia.horaInicio,
+        ativo: true,
+        status: 'CONFIRMADO'
+      };
+      await prisma.passeio.create({ data: passeioData });
     }
 
     res.status(201).json({
       message: 'Atribuído com sucesso! 🚂',
       atribuicao,
-      vagasRestantes: instancia.slotPasseio.capacidade - totalAtribuicoes,
+      vagasRestantes: 0,
     });
   } catch (error) {
     console.error('Erro ao auto-atribuir:', error);
@@ -223,7 +247,7 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
     const atribuicao = await prisma.slotAtribuicao.findUnique({
       where: { id },
       include: {
-        instancia: { select: { data: true } },
+        instancia: { select: { data: true, horaInicio: true, slotPasseio: { select: { capacidade: true } } } },
       },
     });
 
@@ -266,6 +290,32 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
       },
     });
 
+    // Reduz a capacidade do passeio público equivalente
+    const passeioExistente = await prisma.passeio.findFirst({
+      where: {
+        data: atribuicao.instancia!.data,
+        horario: atribuicao.instancia!.horaInicio,
+        ativo: true,
+        status: { not: 'CANCELADO' }
+      }
+    });
+
+    if (passeioExistente && atribuicao.instancia) {
+      const capacidadeSlot = atribuicao.instancia.slotPasseio.capacidade;
+      const novaCapacidade = passeioExistente.capacidade - capacidadeSlot;
+      if (novaCapacidade <= 0) {
+        await prisma.passeio.update({
+          where: { id: passeioExistente.id },
+          data: { capacidade: 0, ativo: false, status: 'CANCELADO' }
+        });
+      } else {
+        await prisma.passeio.update({
+          where: { id: passeioExistente.id },
+          data: { capacidade: novaCapacidade }
+        });
+      }
+    }
+
     res.json({ message: 'Atribuição cancelada', atribuicao: atualizada });
   } catch (error) {
     console.error('Erro ao cancelar atribuição:', error);
@@ -288,6 +338,9 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
 
     const atribuicao = await prisma.slotAtribuicao.findUnique({
       where: { id },
+      include: {
+        instancia: { select: { data: true, horaInicio: true } }
+      }
     });
 
     if (!atribuicao) {
@@ -319,6 +372,34 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
           where: { id: atualizada.instanciaId },
           data: { status: 'REALIZADO' },
         });
+      }
+    }
+
+    // Marca o passeio público equivalente como REALIZADO se não houver pendentes
+    if (atualizada.instanciaId) {
+      const pendentes = await prisma.slotAtribuicao.count({
+        where: {
+          instanciaId: atualizada.instanciaId,
+          status: 'ATRIBUIDO',
+        },
+      });
+
+      if (pendentes === 0 && atribuicao.instancia) {
+        const passeioExistente = await prisma.passeio.findFirst({
+          where: {
+            data: atribuicao.instancia.data,
+            horario: atribuicao.instancia.horaInicio,
+            ativo: true,
+            status: { not: 'CANCELADO' }
+          }
+        });
+        
+        if (passeioExistente) {
+          await prisma.passeio.update({
+            where: { id: passeioExistente.id },
+            data: { status: 'REALIZADO' }
+          });
+        }
       }
     }
 
@@ -380,14 +461,15 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
     });
 
     // Processar: calcular vagas e verificar se o vagoneteiro já está atribuído
-    const feed = instancias.map((inst) => {
-      const vagasOcupadas = inst.atribuicoes.length;
-      const vagasDisponiveis = inst.slotPasseio.capacidade - vagasOcupadas;
-      const jaPeguei = vagoneteiroId
-        ? inst.atribuicoes.some((a) => a.vagoneteiroId === vagoneteiroId)
-        : false;
+    const feed = instancias.reduce((acc, inst) => {
+      const jaTemVagoneteiro = inst.atribuicoes.length > 0;
 
-      return {
+      // Se qualquer vagoneteiro já pegou, não aparece no feed para mais ninguém
+      if (jaTemVagoneteiro) {
+        return acc;
+      }
+
+      acc.push({
         instanciaId: inst.id,
         data: inst.data,
         diaSemana: inst.slotPasseio.diaSemana,
@@ -402,13 +484,15 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
         },
         vagas: {
           total: inst.slotPasseio.capacidade,
-          ocupadas: vagasOcupadas,
-          disponiveis: vagasDisponiveis,
+          ocupadas: 0,
+          disponiveis: inst.slotPasseio.capacidade,
         },
-        jaPeguei,
-        podePegar: vagasDisponiveis > 0 && !jaPeguei,
-      };
-    });
+        jaPeguei: false,
+        podePegar: true,
+      });
+
+      return acc;
+    }, [] as any[]);
 
     // Agrupar por data
     const agrupado: Record<string, typeof feed> = {};

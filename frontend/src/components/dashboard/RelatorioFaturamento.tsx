@@ -115,14 +115,14 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
         <button
           onClick={gerarPDF}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-dark hover:bg-red-hover text-white text-xs font-semibold transition-colors cursor-pointer">
-          🖨️ Imprimir PDF
+          Imprimir PDF
         </button>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-border bg-gray-50">
+            <tr className="border-b border-border bg-bg-light-1">
               <th className={thClass} onClick={() => toggleOrdenacao('nome')}>Vagoneteiro{seta('nome')}</th>
               <th className={thClass} onClick={() => toggleOrdenacao('qtd')}>Passeios{seta('qtd')}</th>
               <th className={`${thClass} text-right`} onClick={() => toggleOrdenacao('total')}>Valor Arrecadado{seta('total')}</th>
@@ -138,7 +138,7 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-border bg-gray-50">
+            <tr className="border-t-2 border-border bg-bg-light-1">
               <td className={`${tdClass} font-bold`}>Total Geral</td>
               <td className={tdClass}>{ordenados.reduce((s, v) => s + v.passeios.length, 0)}</td>
               <td className={`${tdClass} text-right font-bold text-blue-accent`}>R$ {totalGeral.toFixed(2)}</td>

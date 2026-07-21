@@ -1,0 +1,30 @@
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Secrets and service accounts
+secrets/
+serviceAccountKey.json
+backend/serviceAccountKey.json
+backend/gcp-service-account.json
+*.pem
+*.key
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

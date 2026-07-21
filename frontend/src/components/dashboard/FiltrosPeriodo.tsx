@@ -65,7 +65,7 @@ export const FiltrosPeriodo: React.FC<Props> = ({ onChange }) => {
           <span className="text-text-secondary text-sm">até</span>
           <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
             className="h-9 px-3 border border-border rounded-lg text-sm text-text-dark outline-none focus:border-blue-accent" />
-          <button className={`${baseBtn} bg-green-600 text-white hover:bg-green-700`}
+          <button className={`${baseBtn} bg-blue-accent text-white hover:bg-blue`}
             onClick={() => aplicar('personalizado', dataInicio, dataFim)}>Filtrar</button>
         </div>
       )}

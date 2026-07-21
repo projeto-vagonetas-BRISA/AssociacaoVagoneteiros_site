@@ -23,8 +23,11 @@ export interface LoteConfig {
   capacidade: number;
   valor: number;
   usuarioId?: number;
-  /** Lista de datas específicas para o lote */
-  datas: Date[];
+  /** Lista de datas específicas para o lote (modo tradicional) */
+  datas?: Date[];
+  /** Intervalo + grid (novo modo) */
+  dataInicio?: Date;
+  dataFim?: Date;
 }
 
 export interface ExpandirResultado {
@@ -51,6 +54,17 @@ function inicioDoDia(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+export function horaParaMinutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+}
+
+export function minutosParaHora(minutos: number): string {
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 function criarDataComHora(data: Date, hora: string): Date {
@@ -156,39 +170,119 @@ export class RecorrenciaService {
   /**
    * Gera um lote de slots INDIVIDUAL a partir de uma configuração
    */
+  /**
+   * Gera um lote de slots.
+   *
+   * Modo datas: percorre array de datas e cria 1 slot individual para cada.
+   * Modo intervalo + grid: para cada dia em [dataInicio, dataFim], gera slots
+   * a cada duracaoMinutos entre horaInicio e horaFim.
+   */
   async gerarLote(config: LoteConfig): Promise<SlotPasseio[]> {
+    // Modo datas específicas (tradicional)
+    if (config.datas && config.datas.length > 0) {
+      return this.gerarLotePorDatas(config);
+    }
+
+    // Modo intervalo + grid (novo)
+    if (config.dataInicio && config.dataFim) {
+      return this.gerarLotePorIntervalo(config);
+    }
+
+    throw new Error('Informe datas ou dataInicio+dataFim para gerar o lote');
+  }
+
+  private async gerarLotePorDatas(config: LoteConfig): Promise<SlotPasseio[]> {
     const slotsCriados: SlotPasseio[] = [];
 
-    for (const data of config.datas) {
-      const slot = await prisma.slotPasseio.create({
-        data: {
-          tipo: 'INDIVIDUAL',
-          titulo: config.titulo,
-          descricao: config.descricao,
-          horaInicio: config.horaInicio,
-          horaFim: config.horaFim,
-          duracaoMinutos: config.duracaoMinutos,
-          capacidade: config.capacidade,
-          valor: config.valor,
-          usuarioId: config.usuarioId,
-          loteId: crypto.randomUUID(),
-        },
-      });
-
-      // Criar instância única para este slot avulso
-      await prisma.slotInstancia.create({
-        data: {
-          slotPasseioId: slot.id,
-          data,
-          horaInicio: config.horaInicio,
-          horaFim: config.horaFim,
-        },
-      });
-
+    for (const data of config.datas!) {
+      const slot = await this.criarSlotIndividual(config, data);
       slotsCriados.push(slot);
     }
 
     return slotsCriados;
+  }
+
+  private async gerarLotePorIntervalo(config: LoteConfig): Promise<SlotPasseio[]> {
+    const slotsCriados: SlotPasseio[] = [];
+    const inicio = new Date(config.dataInicio!);
+    const fim = new Date(config.dataFim!);
+    const horaInicioMin = horaParaMinutos(config.horaInicio);
+    const horaFimMin = horaParaMinutos(config.horaFim);
+    const duracao = config.duracaoMinutos;
+    const loteId = crypto.randomUUID();
+
+    // Para cada dia no intervalo
+    const dataAtual = new Date(inicio);
+    while (dataAtual <= fim) {
+      const dataStr = new Date(dataAtual);
+
+      // Gera slots a cada duracao minutos dentro do horário
+      for (let min = horaInicioMin; min + duracao <= horaFimMin; min += duracao) {
+        const hInicio = minutosParaHora(min);
+        const hFim = minutosParaHora(min + duracao);
+
+        const slot = await prisma.slotPasseio.create({
+          data: {
+            tipo: 'INDIVIDUAL',
+            titulo: config.titulo,
+            descricao: config.descricao,
+            horaInicio: hInicio,
+            horaFim: hFim,
+            duracaoMinutos: duracao,
+            capacidade: config.capacidade,
+            valor: config.valor,
+            usuarioId: config.usuarioId,
+            loteId,
+          },
+        });
+
+        await prisma.slotInstancia.create({
+          data: {
+            slotPasseioId: slot.id,
+            data: dataStr,
+            horaInicio: hInicio,
+            horaFim: hFim,
+          },
+        });
+
+        slotsCriados.push(slot);
+      }
+
+      dataAtual.setDate(dataAtual.getDate() + 1);
+    }
+
+    return slotsCriados;
+  }
+
+  private async criarSlotIndividual(
+    config: LoteConfig,
+    data: Date
+  ): Promise<SlotPasseio> {
+    const slot = await prisma.slotPasseio.create({
+      data: {
+        tipo: 'INDIVIDUAL',
+        titulo: config.titulo,
+        descricao: config.descricao,
+        horaInicio: config.horaInicio,
+        horaFim: config.horaFim,
+        duracaoMinutos: config.duracaoMinutos,
+        capacidade: config.capacidade,
+        valor: config.valor,
+        usuarioId: config.usuarioId,
+        loteId: crypto.randomUUID(),
+      },
+    });
+
+    await prisma.slotInstancia.create({
+      data: {
+        slotPasseioId: slot.id,
+        data,
+        horaInicio: config.horaInicio,
+        horaFim: config.horaFim,
+      },
+    });
+
+    return slot;
   }
 
   /**

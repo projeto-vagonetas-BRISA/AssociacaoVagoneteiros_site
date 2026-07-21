@@ -20,10 +20,10 @@ export const PicosDemandaChart: React.FC<Props> = ({ porDiaSemana = [], porHorar
         <h3 className="font-semibold text-text-dark">Picos de Demanda</h3>
         <div className="flex gap-1">
           <button
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${aba === 'dia' ? 'bg-blue-accent text-white' : 'bg-gray-100 text-text-secondary hover:bg-gray-200'}`}
+            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${aba === 'dia' ? 'bg-blue-accent text-white' : 'bg-bg-light-1 text-text-secondary border border-border hover:bg-bg-light-3'}`}
             onClick={() => setAba('dia')}>Dia Semana</button>
           <button
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${aba === 'horario' ? 'bg-blue-accent text-white' : 'bg-gray-100 text-text-secondary hover:bg-gray-200'}`}
+            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${aba === 'horario' ? 'bg-blue-accent text-white' : 'bg-bg-light-1 text-text-secondary border border-border hover:bg-bg-light-3'}`}
             onClick={() => setAba('horario')}>Horário</button>
         </div>
       </div>
@@ -44,7 +44,7 @@ export const PicosDemandaChart: React.FC<Props> = ({ porDiaSemana = [], porHorar
               contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}
               formatter={(value: number) => [`${value} passageiros`, 'Total']}
             />
-            <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="var(--color-blue-accent)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

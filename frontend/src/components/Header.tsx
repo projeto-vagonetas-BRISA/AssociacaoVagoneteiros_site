@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Train } from "lucide-react";
 import { LoginPopUp } from "../components/LoginPopUp";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -73,8 +74,9 @@ export const Header: React.FC = () => {
                             {isVagoneteiro && (
                                 <button
                                     onClick={() => navigate("/feed-vagoneteiro")}
-                                    className="hidden sm:inline-flex items-center justify-center px-4 h-9 rounded bg-green-600 hover:bg-green-700 text-white text-xs font-semibold tracking-wide transition-colors cursor-pointer">
-                                    🚂 Pegar Passeio
+                                    className="hidden sm:inline-flex items-center gap-1.5 justify-center px-4 h-9 rounded bg-blue-accent hover:bg-blue/80 text-white text-xs font-semibold tracking-wide transition-colors cursor-pointer">
+                                    <Train size={14} />
+                                    Feed do Vagoneteiro
                                 </button>
                             )}
                             <button
@@ -130,8 +132,9 @@ export const Header: React.FC = () => {
                         <Link
                             to="/feed-vagoneteiro"
                             onClick={() => setMenuOpen(false)}
-                            className="text-sm font-medium text-green-400 hover:text-white transition-colors cursor-pointer">
-                            🚂 Pegar Passeio
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-accent hover:text-white transition-colors cursor-pointer">
+                            <Train size={14} />
+                            Feed do Vagoneteiro
                         </Link>
                     )}
                     <div className="flex gap-3 pt-2">

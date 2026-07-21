@@ -16,6 +16,7 @@ export function Registration_Vagoneteiro() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [experience, setExperience] = useState("Menos de 1 ano");
     const [joinDate, setJoinDate] = useState("");
+    const [perfil, setPerfil] = useState("VAGONETEIRO");
     const [history, setHistory] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +58,7 @@ export function Registration_Vagoneteiro() {
                 cpf: rawCpf,
                 telefone: rawTel,
                 senha: passwordField.password,
+                perfil,
                 historico: history || undefined,
                 experiencia: experience,
                 data_associacao: joinDate ? new Date(joinDate + 'T12:00:00-03:00').toISOString() : undefined,
@@ -136,6 +138,14 @@ export function Registration_Vagoneteiro() {
                                             <option>3 a 5 anos</option>
                                             <option>5 a 10 anos</option>
                                             <option>Mais de 10 anos</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perfil</label>
+                                        <select value={perfil} onChange={(e) => setPerfil(e.target.value)} className={fieldBase}>
+                                            <option value="VAGONETEIRO">Vagoneteiro</option>
+                                            <option value="REDATOR">Redator</option>
+                                            <option value="ADMIN">Administrador</option>
                                         </select>
                                     </div>
                                     <div>

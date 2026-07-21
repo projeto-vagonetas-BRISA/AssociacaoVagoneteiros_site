@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listar, buscarPorId, criar, atualizar, deletar } from '../controllers/passeioController';
+import { listar, buscarPorId, criar, atualizar, deletar, atualizarStatus } from '../controllers/passeioController';
 import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
@@ -12,5 +12,7 @@ router.get('/:id', buscarPorId);
 router.post('/', authMiddleware, criar);
 router.put('/:id', authMiddleware, atualizar);
 router.delete('/:id', authMiddleware, deletar);
+router.patch('/:id/status', authMiddleware, atualizarStatus);
 
 export default router;
+

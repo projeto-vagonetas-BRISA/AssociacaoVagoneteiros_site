@@ -17,7 +17,7 @@ function isValidEmail(email: string): boolean {
 
 export async function cadastro(req: Request, res: Response): Promise<void> {
   try {
-    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto } = req.body;
+    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto, perfil } = req.body;
 
     // Validar campos obrigatórios
     if (!name || !cpf || !senha || !telefone) {
@@ -101,7 +101,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
         experiencia: experiencia || null,
         data_associacao: parsedDataAssociacao,
         foto: fotoBuffer,
-        perfil: 'VAGONETEIRO', // Cadastro padrão como vagoneteiro
+        perfil: perfil || 'VAGONETEIRO',
       },
     });
 

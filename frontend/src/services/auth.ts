@@ -68,6 +68,7 @@ export const authService = {
     experiencia?: string;
     data_associacao?: string;
     foto?: string;
+    perfil?: string;
   }): Promise<User> {
     const result = await api.request<CreateOnlyResponse>('/auth/register', {
       method: 'POST',
