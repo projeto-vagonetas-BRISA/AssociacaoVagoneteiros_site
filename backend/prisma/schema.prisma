@@ -133,6 +133,7 @@ enum StatusAgendamento {
   CONFIRMADO
   CANCELADO
   REMARCADO
+  REALIZADO
 }
 
 // ─── NOVOS MODELOS: Sistema de Agendamento (Composite Pattern) ─────

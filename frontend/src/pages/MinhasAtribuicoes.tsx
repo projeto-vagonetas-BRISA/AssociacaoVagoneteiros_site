@@ -138,9 +138,11 @@ export const MinhasAtribuicoes: React.FC = () => {
   // Helpers locais de formatação
 
   const formatarData = (dataStr: string): string => {
+    if (!dataStr) return '';
     const datePart = dataStr.split('T')[0];
-    const d = new Date(datePart + 'T12:00:00');
-    return d.toLocaleDateString('pt-BR', {
+    const [y, m, d] = datePart.split('-').map(Number);
+    const date = new Date(y, m - 1, d, 12, 0, 0);
+    return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -231,19 +233,11 @@ export const MinhasAtribuicoes: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-blue-accent flex items-center justify-center text-xs font-bold text-white shrink-0">
+          <div className="hidden sm:flex items-center gap-3 border-l border-border pl-4">
+            <span className="w-9 h-9 rounded-full bg-blue-accent flex items-center justify-center text-sm font-bold text-white shrink-0">
               {user?.name?.charAt(0).toUpperCase()}
             </span>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-text-dark leading-tight">{user?.name}</p>
-              <button
-                onClick={logout}
-                className="text-xs text-red hover:text-red-dark transition-colors"
-              >
-                Sair
-              </button>
-            </div>
+            <p className="text-base font-bold text-text-dark leading-tight">{user?.name}</p>
           </div>
         </div>
       </div>

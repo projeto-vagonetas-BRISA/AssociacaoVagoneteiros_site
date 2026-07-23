@@ -124,7 +124,7 @@ interface Cliente {
 
 interface Agendamento {
   id: number;
-  status: "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REMARCADO";
+  status: "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REMARCADO" | "REALIZADO";
   createdAt: string;
   acompanhantes: number;
   cliente: { id: number; nome: string; cpf: string };
@@ -147,7 +147,9 @@ interface Avaliacao {
 }
 
 const formatData = (iso: string) => {
-  const d = new Date(iso);
+  // Usa T12:00:00 (sem Z = local) para evitar off-by-one por timezone
+  const datePart = iso.split('T')[0];
+  const d = new Date(`${datePart}T12:00:00`);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 };
 
@@ -157,6 +159,7 @@ const statusConfig: Record<string, { label: string; pill: string; dot: string }>
   CONFIRMADO: { label: "Confirmado", pill: "bg-blue-accent/10 text-blue-accent border border-blue-accent/25", dot: "bg-blue-accent" },
   CONFIRMADA: { label: "Confirmado", pill: "bg-blue-accent/10 text-blue-accent border border-blue-accent/25", dot: "bg-blue-accent" },
   COMPLETO: { label: "Completo", pill: "bg-green-timeline/10 text-green-timeline border border-green-timeline/25", dot: "bg-green-timeline" },
+  REALIZADO: { label: "Realizado", pill: "bg-green-timeline/10 text-green-timeline border border-green-timeline/25", dot: "bg-green-timeline" },
   CANCELADO: { label: "Cancelado", pill: "bg-red-dark/10 text-red-dark border border-red-dark/25", dot: "bg-red-dark" },
   CANCELADA: { label: "Cancelado", pill: "bg-red-dark/10 text-red-dark border border-red-dark/25", dot: "bg-red-dark" },
   PENDENTE: { label: "Pendente", pill: "bg-amber-500/10 text-amber-500 border border-amber-500/25", dot: "bg-amber-500" },
@@ -272,11 +275,17 @@ export const PainelAdmin: React.FC = () => {
 
   // Estatísticas
   const agendamentosNaoCancelados = agendamentos.filter(a => a.status !== "CANCELADO");
-  const passeiosRealizados = agendamentos.filter(a =>
-    a.status === "CONFIRMADO"
-  ).length;
+  const idsPasseiosRealizados = new Set([
+    ...todosPasseios.filter(p => (p as any).status === "REALIZADO").map(p => p.id),
+    ...agendamentos.filter(a => a.status === "REALIZADO").map(a => a.passeio.id)
+  ]);
+  const passeiosRealizados = idsPasseiosRealizados.size;
   const totalTuristas = agendamentosNaoCancelados.reduce((sum, a) => sum + 1 + (a.acompanhantes || 0), 0);
-  const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => s + Number(a.passeio.preco || 0), 0);
+  const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => {
+    const passageiros = 1 + (a.acompanhantes || 0);
+    const preco = Number(a.passeio?.preco || 0);
+    return s + (preco * passageiros);
+  }, 0);
   const avaliacaoMedia = avaliacoes.length > 0
     ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / avaliacoes.length).toFixed(1)
     : "0.0";
@@ -288,17 +297,25 @@ export const PainelAdmin: React.FC = () => {
     { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
   ];
 
-  // Filtro de agenda — todos os passeios, cada um com seus agendamentos filtrados
-  const grupos = todosPasseios.map(p => {
-    const registros = filtroStatus === 'TODOS'
-      ? agendamentos.filter(a => a.passeio.id === p.id)
-      : agendamentos.filter(a => {
-          if (a.passeio.id !== p.id) return false;
-          if (filtroStatus === 'ANDAMENTO') return a.status === 'CONFIRMADO' || a.status === 'PENDENTE';
-          return a.status === filtroStatus;
-        });
-    return { id_passeio: p.id, passeio: p, registros };
-  });
+  // Histórico de Agenda: exibe TODOS os passeios (incluindo REALIZADOS)
+  const grupos = todosPasseios
+    .map(p => {
+      const registros = filtroStatus === 'TODOS'
+        ? agendamentos.filter(a => a.passeio.id === p.id)
+        : agendamentos.filter(a => {
+            if (a.passeio.id !== p.id) return false;
+            if (filtroStatus === 'ANDAMENTO') return a.status === 'CONFIRMADO' || a.status === 'PENDENTE';
+            return a.status === filtroStatus;
+          });
+      return { id_passeio: p.id, passeio: p, registros };
+    })
+    .filter(g => {
+      if (filtroStatus === 'TODOS') return true;
+      if (filtroStatus === 'REALIZADO') {
+        return (g.passeio as any).status === 'REALIZADO' || g.registros.some(r => r.status === 'REALIZADO');
+      }
+      return g.registros.length > 0 || (g.passeio as any).status === filtroStatus;
+    });
   const totalPaginas = Math.ceil(grupos.length / CARDS_POR_PAGINA);
   const gruposPaginados = grupos.slice((pagina - 1) * CARDS_POR_PAGINA, pagina * CARDS_POR_PAGINA);
 
@@ -745,10 +762,10 @@ export const PainelAdmin: React.FC = () => {
                   onChange={e => { setFiltroStatus(e.target.value); setPagina(1); }}
                   className="text-xs font-semibold text-text-primary bg-bg-light-1 border border-border rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none">
                   <option value="TODOS">Todos</option>
+                  <option value="REALIZADO">Realizado</option>
                   <option value="CONFIRMADO">Confirmado</option>
                   <option value="PENDENTE">Pendente</option>
                   <option value="CANCELADO">Cancelado</option>
-                  <option value="COMPLETO">Completo</option>
                 </select>
               </div>
             </div>
@@ -775,7 +792,14 @@ export const PainelAdmin: React.FC = () => {
                     <div className="flex items-center gap-3 mb-3 pb-3 border-b border-border/50">
                       <Ticket size={16} className="text-blue-accent shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-text-dark">Passeio #{id_passeio}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-text-dark">Passeio #{id_passeio}</p>
+                          {(passeio as any)?.status === 'REALIZADO' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-timeline/10 text-green-timeline border border-green-timeline/25">
+                              Realizado
+                            </span>
+                          )}
+                        </div>
                         {passeio && (
                           <p className="text-xs text-[#7a8394] mt-0.5">
                             Data: {formatData(passeio.data)} às {passeio.horario} — Profissional: {passeio.usuario?.name}

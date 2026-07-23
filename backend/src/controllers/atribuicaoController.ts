@@ -375,35 +375,46 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
       }
     }
 
-    // Marca o passeio público equivalente como REALIZADO se não houver pendentes
-    if (atualizada.instanciaId) {
-      const pendentes = await prisma.slotAtribuicao.count({
+    // Marca o passeio público equivalente e seus agendamentos como REALIZADO
+    let passeioExistente = null;
+    if (atribuicao.instancia) {
+      passeioExistente = await prisma.passeio.findFirst({
         where: {
-          instanciaId: atualizada.instanciaId,
-          status: 'ATRIBUIDO',
-        },
-      });
-
-      if (pendentes === 0 && atribuicao.instancia) {
-        const passeioExistente = await prisma.passeio.findFirst({
-          where: {
-            data: atribuicao.instancia.data,
-            horario: atribuicao.instancia.horaInicio,
-            ativo: true,
-            status: { not: 'CANCELADO' }
-          }
-        });
-        
-        if (passeioExistente) {
-          await prisma.passeio.update({
-            where: { id: passeioExistente.id },
-            data: { status: 'REALIZADO' }
-          });
+          data: atribuicao.instancia.data,
+          horario: atribuicao.instancia.horaInicio,
+          ativo: true,
+          status: { not: 'CANCELADO' }
         }
-      }
+      });
     }
 
-    res.json({ message: 'Atribuição marcada como realizada ✅', atribuicao: atualizada });
+    if (!passeioExistente) {
+      passeioExistente = await prisma.passeio.findFirst({
+        where: {
+          usuarioId: atribuicao.vagoneteiroId,
+          ativo: true,
+          status: { not: 'CANCELADO' }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    }
+
+    if (passeioExistente) {
+      await prisma.passeio.update({
+        where: { id: passeioExistente.id },
+        data: { status: 'REALIZADO' }
+      });
+
+      await prisma.agendamento.updateMany({
+        where: {
+          passeioId: passeioExistente.id,
+          status: { not: 'CANCELADO' }
+        },
+        data: { status: 'REALIZADO' as any }
+      });
+    }
+
+    res.json({ message: 'Atribuição e passeio marcados como realizados ✅', atribuicao: atualizada });
   } catch (error) {
     console.error('Erro ao realizar atribuição:', error);
     res.status(500).json({ message: 'Erro ao marcar atribuição como realizada' });

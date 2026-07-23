@@ -31,39 +31,48 @@ export const Header: React.FC = () => {
                     Vagoneteiros dos Molhes da Barra
                 </Link>
 
-                <ul className="hidden md:flex items-center gap-8">
-                    {navLinks.map(({ label, path }) => {
-                        const active = location.pathname === path;
-                        return (
-                            <li key={label}>
-                                <Link
-                                    to={path}
-                                    className={`relative text-sm font-medium tracking-wide transition-colors cursor-pointer ${
-                                        active ? "text-white" : "text-white/60 hover:text-white"
-                                    }`}>
-                                    {label}
-                                    {active && (
-                                        <span className="absolute -bottom-5.5 left-0 right-0 h-0.75 bg-red-dark rounded-t-sm" />
-                                    )}
-                                </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
+                {/* Links de navegação: ocultos quando vagoneteiro está logado */}
+                {!isVagoneteiro && (
+                    <ul className="hidden md:flex items-center gap-8">
+                        {navLinks.map(({ label, path }) => {
+                            const active = location.pathname === path;
+                            return (
+                                <li key={label}>
+                                    <Link
+                                        to={path}
+                                        className={`relative text-sm font-medium tracking-wide transition-colors cursor-pointer ${
+                                            active ? "text-white" : "text-white/60 hover:text-white"
+                                        }`}>
+                                        {label}
+                                        {active && (
+                                            <span className="absolute -bottom-5.5 left-0 right-0 h-0.75 bg-red-dark rounded-t-sm" />
+                                        )}
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
 
                 <div className="flex items-center gap-3 shrink-0">
-                    <Link to="/agendamento" className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-blue-accent hover:bg-blue-accent/80 text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
-                        Agendar
-                    </Link>
+                    {/* Botão Agendar: oculto quando vagoneteiro está logado */}
+                    {!isVagoneteiro && (
+                        <Link to="/agendamento" className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded bg-blue-accent hover:bg-blue-accent/80 text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
+                            Agendar
+                        </Link>
+                    )}
 
                     {isAuthenticated ? (
                         <>
-                            <div className="hidden sm:flex items-center gap-2 text-sm text-white/70">
-                                <span className="w-7 h-7 rounded-full bg-blue-accent flex items-center justify-center text-xs font-bold text-white">
-                                    {user?.name.charAt(0).toUpperCase()}
-                                </span>
-                                <span className="text-white/80">{user?.name.split(' ')[0]}</span>
-                            </div>
+                            {/* Avatar: oculto para vagoneteiro */}
+                            {!isVagoneteiro && (
+                                <div className="hidden sm:flex items-center gap-2 text-sm text-white/70">
+                                    <span className="w-7 h-7 rounded-full bg-blue-accent flex items-center justify-center text-xs font-bold text-white">
+                                        {user?.name.charAt(0).toUpperCase()}
+                                    </span>
+                                    <span className="text-white/80">{user?.name.split(' ')[0]}</span>
+                                </div>
+                            )}
                             {isAdmin && (
                                 <button
                                     onClick={() => navigate("/painel-admin")}
@@ -74,7 +83,7 @@ export const Header: React.FC = () => {
                             {isVagoneteiro && (
                                 <button
                                     onClick={() => navigate("/feed-vagoneteiro")}
-                                    className="hidden sm:inline-flex items-center gap-1.5 justify-center px-4 h-9 rounded bg-blue-accent hover:bg-blue/80 text-white text-xs font-semibold tracking-wide transition-colors cursor-pointer">
+                                    className="hidden sm:inline-flex items-center gap-1.5 justify-center px-4 h-9 rounded bg-blue-accent hover:bg-blue-accent/80 text-white text-xs font-semibold tracking-wide transition-colors cursor-pointer">
                                     <Train size={14} />
                                     Feed do Vagoneteiro
                                 </button>
@@ -111,53 +120,63 @@ export const Header: React.FC = () => {
 
             {menuOpen && (
                 <div className="md:hidden bg-blue-dark border-t border-white/10 px-4 py-4 flex flex-col gap-4">
-                    {navLinks.map(({ label, path }) => (
-                        <Link
-                            key={label}
-                            to={path}
-                            onClick={() => setMenuOpen(false)}
-                            className="text-sm font-medium text-white/70 hover:text-white transition-colors cursor-pointer">
-                            {label}
-                        </Link>
-                    ))}
-                    {isAdmin && (
-                        <Link
-                            to="/painel-admin"
-                            onClick={() => setMenuOpen(false)}
-                            className="text-sm font-medium text-blue-accent hover:text-white transition-colors cursor-pointer">
-                            Painel Administrativo
-                        </Link>
-                    )}
-                    {isVagoneteiro && (
-                        <Link
-                            to="/feed-vagoneteiro"
-                            onClick={() => setMenuOpen(false)}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-accent hover:text-white transition-colors cursor-pointer">
-                            <Train size={14} />
-                            Feed do Vagoneteiro
-                        </Link>
-                    )}
-                    <div className="flex gap-3 pt-2">
-                        <Link to="/agendamento" className="flex-1 text-center px-4 h-9 rounded bg-blue-accent text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
-                            Agendar
-                        </Link>
-                        <Link to="/consulta-agendamento" onClick={() => setMenuOpen(false)} className="flex-1 text-center px-4 h-9 rounded bg-white/10 border border-white/10 text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
-                            Consultar
-                        </Link>
-                        {isAuthenticated ? (
+                    {/* Menu mobile: simplificado para vagoneteiro */}
+                    {isVagoneteiro ? (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { navigate("/feed-vagoneteiro"); setMenuOpen(false); }}
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 h-9 rounded bg-blue-accent text-white text-sm font-semibold cursor-pointer">
+                                <Train size={14} />
+                                Feed do Vagoneteiro
+                            </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); logout(); navigate("/"); setMenuOpen(false); }}
                                 className="flex-1 text-center px-4 h-9 rounded bg-red-dark text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
                                 Sair
                             </button>
-                        ) : (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); toggleLoginOpen(); setMenuOpen(false); }}
-                                className="flex-1 text-center px-4 h-9 rounded bg-red-dark text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
-                                Entrar
-                            </button>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <>
+                            {navLinks.map(({ label, path }) => (
+                                <Link
+                                    key={label}
+                                    to={path}
+                                    onClick={() => setMenuOpen(false)}
+                                    className="text-sm font-medium text-white/70 hover:text-white transition-colors cursor-pointer">
+                                    {label}
+                                </Link>
+                            ))}
+                            {isAdmin && (
+                                <Link
+                                    to="/painel-admin"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="text-sm font-medium text-blue-accent hover:text-white transition-colors cursor-pointer">
+                                    Painel Administrativo
+                                </Link>
+                            )}
+                            <div className="flex gap-3 pt-2">
+                                <Link to="/agendamento" className="flex-1 text-center px-4 h-9 rounded bg-blue-accent text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
+                                    Agendar
+                                </Link>
+                                <Link to="/consulta-agendamento" onClick={() => setMenuOpen(false)} className="flex-1 text-center px-4 h-9 rounded bg-white/10 border border-white/10 text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
+                                    Consultar
+                                </Link>
+                                {isAuthenticated ? (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); logout(); navigate("/"); setMenuOpen(false); }}
+                                        className="flex-1 text-center px-4 h-9 rounded bg-red-dark text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
+                                        Sair
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); toggleLoginOpen(); setMenuOpen(false); }}
+                                        className="flex-1 text-center px-4 h-9 rounded bg-red-dark text-white text-sm font-semibold flex items-center justify-center cursor-pointer">
+                                        Entrar
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 

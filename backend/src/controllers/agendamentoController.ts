@@ -414,6 +414,7 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
     const passeios = await prisma.passeio.findMany({
       where: {
         ativo: true,
+        status: 'CONFIRMADO',
         data: { gte: hoje },
       },
       include: {
@@ -456,7 +457,7 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
     }
 
     const { status } = req.body;
-    const statusValidos = ['PENDENTE', 'CONFIRMADO', 'CANCELADO', 'REMARCADO'];
+    const statusValidos = ['PENDENTE', 'CONFIRMADO', 'CANCELADO', 'REMARCADO', 'REALIZADO'];
 
     if (!status || !statusValidos.includes(status)) {
       res.status(400).json({
@@ -476,7 +477,7 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
       data: { status },
       include: {
         cliente: { select: { id: true, nome: true } },
-        passeio: { select: { id: true, data: true, valor: true } },
+        passeio: { select: { id: true, data: true, preco: true } },
       },
     });
 

@@ -78,7 +78,9 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 
     const parsedPreco = parseFloat(preco);
     const parsedCapacidade = parseInt(capacidade, 10);
-    const parsedData = new Date(data);
+    // Força parse sem conversão de timezone: interpreta a data como UTC noon
+    // para evitar off-by-one quando o servidor está em fuso negativo (ex: UTC-3)
+    const parsedData = new Date(`${String(data).split('T')[0]}T12:00:00.000Z`);
     const parsedHorario = horario || "08:00";
 
     if (isNaN(parsedPreco) || parsedPreco <= 0) {
@@ -170,7 +172,8 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
       dataAtualizada.capacidade = parsed;
     }
     if (data !== undefined) {
-      const parsed = new Date(data);
+      // Força parse sem conversão de timezone (UTC noon) para evitar off-by-one
+      const parsed = new Date(`${String(data).split('T')[0]}T12:00:00.000Z`);
       if (isNaN(parsed.getTime())) {
         res.status(400).json({ message: 'Data inválida' });
         return;
@@ -234,6 +237,13 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
       data: { status },
       include: { usuario: { select: { id: true, name: true } } },
     });
+
+    if (status === 'REALIZADO' || status === 'CANCELADO') {
+      await prisma.agendamento.updateMany({
+        where: { passeioId: id, status: { not: 'CANCELADO' } },
+        data: { status: status as any },
+      });
+    }
 
     res.json(atualizado);
   } catch (error) {

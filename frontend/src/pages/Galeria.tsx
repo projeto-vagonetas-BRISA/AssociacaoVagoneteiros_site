@@ -20,8 +20,9 @@ const fallbackPhotos: GalleryPhoto[] = [
   { id: "fallback-6", name: "Foto 6", src: "https://placehold.co/800x600/b61722/white?text=Foto+6", alt: "Vagoneteiros foto 6" },
   { id: "fallback-7", name: "Foto 7", src: "https://placehold.co/800x600/1878c1/white?text=Foto+7", alt: "Vagoneteiros foto 7" },
   { id: "fallback-8", name: "Foto 8", src: "https://placehold.co/800x600/1878c1/white?text=Foto+8", alt: "Vagoneteiros foto 8" },
-
 ];
+
+const PHOTOS_PER_PAGE = 14;
 
 const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
   <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
@@ -34,6 +35,7 @@ export const Galeria: React.FC = () => {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -82,7 +84,34 @@ export const Galeria: React.FC = () => {
 
   const displayPhotos = photos.length > 0 ? photos : fallbackPhotos;
 
-  const openLightbox = (i: number) => setLightbox(i);
+  // Paginação
+  const totalPages = Math.ceil(displayPhotos.length / PHOTOS_PER_PAGE);
+  const pageStart = (currentPage - 1) * PHOTOS_PER_PAGE;
+  const pageEnd = pageStart + PHOTOS_PER_PAGE;
+  const pagePhotos = displayPhotos.slice(pageStart, pageEnd);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    // Rola suavemente até o topo da galeria
+    document.getElementById("galeria-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Gera array de páginas com reticências para muitas páginas
+  const getPageNumbers = (): (number | "...")[] => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "...")[] = [];
+    if (currentPage <= 4) {
+      pages.push(1, 2, 3, 4, 5, "...", totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+    }
+    return pages;
+  };
+
+  // Lightbox usa índice global dentro de displayPhotos
+  const openLightbox = (globalIndex: number) => setLightbox(globalIndex);
   const closeLightbox = () => setLightbox(null);
   const prev = () => setLightbox((i) => (i !== null && i > 0 ? i - 1 : displayPhotos.length - 1));
   const next = () => setLightbox((i) => (i !== null && i < displayPhotos.length - 1 ? i + 1 : 0));
@@ -96,7 +125,7 @@ export const Galeria: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-          <SectionIcon icon={<GalleryThumbnailsIcon className="size-4" strokeWidth={2} />} />
+              <SectionIcon icon={<GalleryThumbnailsIcon className="size-4" strokeWidth={2} />} />
               <h1 className="font-bold text-3xl md:text-5xl text-black tracking-tighter">
                 {galeria?.titulo ?? "Galeria de Fotos"}
               </h1>
@@ -109,7 +138,7 @@ export const Galeria: React.FC = () => {
       </section>
 
       {/* grid de fotos */}
-      <section className="bg-bg-light-1 py-8 md:py-16 w-full">
+      <section id="galeria-grid" className="bg-bg-light-1 py-8 md:py-16 w-full scroll-mt-4">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
 
           {errorMessage && (
@@ -128,12 +157,13 @@ export const Galeria: React.FC = () => {
             </div>
           ) : (
             <>
+              {/* Mobile: lista vertical */}
               <div className="flex flex-col gap-4 md:hidden">
-                {displayPhotos.map((photo, i) => (
+                {pagePhotos.map((photo, i) => (
                   <div
                     key={photo.id}
                     className="rounded-2xl overflow-hidden shadow-md cursor-pointer active:scale-[0.98] transition-transform duration-200"
-                    onClick={() => openLightbox(i)}
+                    onClick={() => openLightbox(pageStart + i)}
                   >
                     <img
                       src={photo.src}
@@ -145,42 +175,97 @@ export const Galeria: React.FC = () => {
                 ))}
               </div>
 
+              {/* Desktop: grid 3 colunas */}
               <div className="hidden md:grid grid-cols-3 gap-4">
-                {displayPhotos.length > 0 && (
+                {pagePhotos.length > 0 && (
                   <div
                     className="col-span-1 row-span-2 rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-                    onClick={() => openLightbox(0)}
+                    onClick={() => openLightbox(pageStart + 0)}
                   >
                     <img
-                      src={displayPhotos[0].src}
-                      alt={displayPhotos[0].alt}
-                      className="w-full h-full object-cover"
-                      style={{ minHeight: "420px" }}
+                      src={pagePhotos[0].src}
+                      alt={pagePhotos[0].alt}
+                      className="w-full object-cover"
+                      style={{ height: "420px" }}
                     />
                   </div>
                 )}
 
-                {displayPhotos.slice(1).map((photo, i) => (
+                {pagePhotos.slice(1).map((photo, i) => (
                   <div
                     key={photo.id}
                     className="rounded-2xl overflow-hidden shadow-md cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-                    onClick={() => openLightbox(i + 1)}
+                    onClick={() => openLightbox(pageStart + i + 1)}
                   >
                     <img
                       src={photo.src}
                       alt={photo.alt}
-                      className="w-full h-full object-cover"
-                      style={{ minHeight: "200px" }}
+                      className="w-full object-cover"
+                      style={{ height: "200px" }}
                     />
                   </div>
                 ))}
               </div>
+
+              {/* Controles de paginação */}
+              {totalPages > 1 && (
+                <div className="mt-10 flex flex-col items-center gap-4">
+                  {/* Indicador */}
+                  <p className="text-sm text-text-primary">
+                    Mostrando{" "}
+                    <span className="font-semibold text-black">{pageStart + 1}–{Math.min(pageEnd, displayPhotos.length)}</span>
+                    {" "}de{" "}
+                    <span className="font-semibold text-black">{displayPhotos.length}</span>{" "}fotos
+                  </p>
+
+                  {/* Botões de página */}
+                  <div className="flex items-center gap-1.5">
+                    {/* Anterior */}
+                    <button
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium border border-[#dde2ea] bg-white text-text-primary hover:bg-blue-accent hover:text-white hover:border-blue-accent transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-text-primary disabled:hover:border-[#dde2ea]"
+                    >
+                      ‹ Anterior
+                    </button>
+
+                    {/* Números */}
+                    {getPageNumbers().map((page, idx) =>
+                      page === "..." ? (
+                        <span key={`ellipsis-${idx}`} className="px-2 py-2 text-sm text-text-primary select-none">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => goToPage(page)}
+                          className={`w-9 h-9 rounded-xl text-sm font-medium border transition-all duration-200 ${currentPage === page
+                            ? "bg-blue-accent text-white border-blue-accent shadow-sm"
+                            : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
+                            }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+
+                    {/* Próximo */}
+                    <button
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium border border-[#dde2ea] bg-white text-text-primary hover:bg-blue-accent hover:text-white hover:border-blue-accent transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-text-primary disabled:hover:border-[#dde2ea]"
+                    >
+                      Próximo ›
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </section>
 
-      {/* ver foto */}
+      {/* ver foto (lightbox — navegação pelo conjunto completo) */}
       {lightbox !== null && displayPhotos[lightbox] && (
         <div
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"

@@ -40,8 +40,11 @@ const formatTel = (tel: string) => {
 const unformatTel = (tel: string) => (tel || '').replace(/\D/g, '');
 
 const formatDataBr = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  if (!iso) return '';
+  const datePart = iso.split('T')[0];
+  const [y, m, d] = datePart.split('-').map(Number);
+  const date = new Date(y, m - 1, d, 12, 0, 0);
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
 const experienciaOptions = [

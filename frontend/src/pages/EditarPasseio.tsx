@@ -51,8 +51,9 @@ export const EditarPasseio: React.FC = () => {
         setVagSelecionado(p.usuarioId);
 
         // Formatar data para o input date (YYYY-MM-DD)
-        const d = new Date(p.data);
-        setData(d.toISOString().split("T")[0]);
+        if (p.data) {
+          setData(String(p.data).split("T")[0]);
+        }
       } catch {
         setApiError("Erro ao carregar dados do passeio");
       }
@@ -75,7 +76,7 @@ export const EditarPasseio: React.FC = () => {
         body: JSON.stringify({
           preco: parseFloat(preco),
           capacidade: parseInt(capacidade, 10),
-          data: new Date(data + "T" + horario + ":00-03:00").toISOString(),
+          data: data,  // envia YYYY-MM-DD puro; o backend normaliza para UTC noon
           horario,
           usuarioId: vagSelecionado,
         }),

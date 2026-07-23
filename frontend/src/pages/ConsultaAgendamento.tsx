@@ -52,8 +52,10 @@ function formatarCpf(valor: string) {
 }
 
 function formatarData(data: string) {
+  if (!data) return "";
   const datePart = data.split('T')[0];
-  return new Date(`${datePart}T12:00:00`).toLocaleDateString("pt-BR", {
+  const [y, m, d] = datePart.split('-').map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0).toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
     month: "long",

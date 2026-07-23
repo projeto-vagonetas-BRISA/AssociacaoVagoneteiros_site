@@ -123,12 +123,14 @@ export const FeedVagoneteiro: React.FC = () => {
   const diasSemanaPt = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
   const formatarData = (dataStr: string): string => {
+    if (!dataStr) return '';
     const datePart = dataStr.split('T')[0];
-    const d = new Date(datePart + 'T12:00:00');
-    const dia = String(d.getDate()).padStart(2, '0');
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const ano = d.getFullYear();
-    const diaSemana = diasSemana[d.getDay()];
+    const [y, m, d] = datePart.split('-').map(Number);
+    const date = new Date(y, m - 1, d, 12, 0, 0);
+    const dia = String(date.getDate()).padStart(2, '0');
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
+    const ano = date.getFullYear();
+    const diaSemana = diasSemana[date.getDay()];
     const idx = diasSemana.indexOf(diaSemana);
     const diaSemanaNome = diasSemanaPt[idx] || diaSemana;
     
@@ -199,19 +201,11 @@ export const FeedVagoneteiro: React.FC = () => {
               <ClipboardList className="size-4" />
               Minhas Atribuições
             </button>
-            <div className="hidden sm:flex items-center gap-2 border-l border-border pl-3">
-              <span className="w-7 h-7 rounded-full bg-blue-accent flex items-center justify-center text-xs font-bold text-white shrink-0">
+            <div className="hidden sm:flex items-center gap-3 border-l border-border pl-4">
+              <span className="w-9 h-9 rounded-full bg-blue-accent flex items-center justify-center text-sm font-bold text-white shrink-0">
                 {user?.name?.charAt(0).toUpperCase()}
               </span>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-text-dark leading-tight">{user?.name}</p>
-                <button
-                  onClick={logout}
-                  className="text-xs text-red hover:text-red-dark transition-colors"
-                >
-                  Sair
-                </button>
-              </div>
+              <p className="text-base font-bold text-text-dark leading-tight">{user?.name}</p>
             </div>
           </div>
         </div>

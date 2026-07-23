@@ -64,19 +64,16 @@ function getFirstDayOfMonth(year: number, month: number) {
   return new Date(year, month, 1).getDay();
 }
 function toLocalDate(isoString: string) {
-  const [datePart, timePart] = isoString.split("T");
+  if (!isoString) return new Date();
+  const datePart = isoString.split("T")[0];
   const [y, m, d] = datePart.split("-").map(Number);
-  if (timePart) {
-    const [hh, mm] = timePart.split(":").map(Number);
-    return new Date(y, m - 1, d, hh, mm || 0);
-  }
-  return new Date(y, m - 1, d);
+  return new Date(y, m - 1, d, 12, 0, 0);
 }
 
 // Converte data ISO (data + horario separados) para Date
 function passeioToDate(passeio: { data: string; horario: string }): Date {
-  const d = new Date(passeio.data);
-  const [hh, mm] = passeio.horario.split(":").map(Number);
+  const d = toLocalDate(passeio.data);
+  const [hh, mm] = (passeio.horario || "08:00").split(":").map(Number);
   d.setHours(hh || 0, mm || 0, 0, 0);
   return d;
 }
@@ -93,7 +90,9 @@ function formatHoraPasseio(passeio: { data: string; horario: string }): string {
 }
 
 function formatDataResumo(data: string): string {
-  const d = new Date(data);
+  // Usa T12:00:00 (sem Z = local) para evitar off-by-one por timezone
+  const datePart = data.split('T')[0];
+  const d = new Date(`${datePart}T12:00:00`);
   return d.toLocaleDateString('pt-BR', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
@@ -152,7 +151,7 @@ export const Agendamento: React.FC = () => {
   const daysWithPasseios = useMemo(() => {
     const set = new Set<number>();
     passeios.forEach((p) => {
-      const d = new Date(p.data);
+      const d = toLocalDate(p.data);
       if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
         set.add(d.getDate());
       }
@@ -163,14 +162,14 @@ export const Agendamento: React.FC = () => {
   // Passeios do dia selecionado
   const passeiosDoDia = useMemo(() => {
     return passeios.filter((p) => {
-      const d = new Date(p.data);
+      const d = toLocalDate(p.data);
       return (
         d.getFullYear() === currentYear &&
         d.getMonth() === currentMonth &&
         d.getDate() === selectedDay
       );
     }).sort(
-      (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime(),
+      (a, b) => toLocalDate(a.data).getTime() - toLocalDate(b.data).getTime(),
     );
   }, [currentYear, currentMonth, selectedDay, passeios]);
 
