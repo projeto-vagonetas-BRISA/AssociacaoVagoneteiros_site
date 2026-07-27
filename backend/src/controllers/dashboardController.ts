@@ -11,9 +11,13 @@ function extrairPeriodo(req: Request): FiltroPeriodo {
   const agora = new Date();
 
   if (inicio && fim) {
+    const dataFim = new Date(fim as string);
+    // Ajusta para o final do dia (23:59:59.999) no fuso local
+    dataFim.setDate(dataFim.getDate() + 1);
+    dataFim.setHours(0, 0, 0, 0);
     return {
       inicio: new Date(inicio as string),
-      fim: new Date(fim as string),
+      fim: dataFim,
     };
   }
 

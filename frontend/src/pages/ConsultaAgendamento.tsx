@@ -3,6 +3,7 @@ import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, Check
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
 import { api } from "../services/api";
+import { formatBRL } from "../utils/format";
 import conteudo from "../assets/conteudo.json";
 
 type SituacaoAgendamento = "PENDENTE" | "CONFIRMADO" | "CANCELADO" | "REALIZADO";
@@ -295,7 +296,7 @@ export const ConsultaAgendamento: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-base text-text-primary">Total</span>
-                      <span className="font-bold text-xl text-red-dark">R$ {consulta.total.toFixed(2)}</span>
+                      <span className="font-bold text-xl text-red-dark">{formatBRL(consulta.total)}</span>
                     </div>
                   </div>
                 

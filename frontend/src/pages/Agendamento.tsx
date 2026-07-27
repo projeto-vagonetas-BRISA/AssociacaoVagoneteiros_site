@@ -673,11 +673,11 @@ export const Agendamento: React.FC = () => {
                 {selectedPasseio && (
                   <div className="flex justify-between items-center">
                     <span className="font-normal text-xs text-[#7a8392]">
-                      R$ {precoUnitario.toFixed(2).replace('.', ',')} × {passageiros}{" "}
+                      {formatBRL(precoUnitario)} × {passageiros}{" "}
                       {passageiros === 1 ? "pessoa" : "pessoas"}
                     </span>
                     <span className="font-semibold text-sm text-text-primary">
-                      R$ {subtotal.toFixed(2).replace(".", ",")}
+                      {formatBRL(subtotal)}
                     </span>
                   </div>
                 )}
@@ -685,7 +685,7 @@ export const Agendamento: React.FC = () => {
                   <span className="font-bold text-base text-text-primary">Total</span>
                   <span className="font-bold text-xl text-red-dark">
                     {selectedPasseio
-                      ? `R$ ${subtotal.toFixed(2).replace(".", ",")}`
+                      ? formatBRL(subtotal)
                       : "—"}
                   </span>
                 </div>

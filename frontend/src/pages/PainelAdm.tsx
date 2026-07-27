@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
+import { formatBRL } from "../utils/format";
 
 const MAX_PAG_VISIVEIS = 20;
 
@@ -293,7 +294,7 @@ export const PainelAdmin: React.FC = () => {
   const statCards = [
     { label: "Total de Turistas", value: totalTuristas, icon: Users, color: "text-blue-accent" },
     { label: "Passeios Realizados", value: String(passeiosRealizados), icon: CheckCircle, color: "text-green-timeline" },
-    { label: "Receita Estimada", value: `R$ ${receitaEstimada.toLocaleString("pt-BR")}`, icon: DollarSign, color: "text-[#b61722]" },
+    { label: "Receita Estimada", value: formatBRL(receitaEstimada), icon: DollarSign, color: "text-[#b61722]" },
     { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
   ];
 
@@ -367,7 +368,7 @@ export const PainelAdmin: React.FC = () => {
     const stats = [
       ['Total de Turistas', String(totalTuristas)],
       ['Passeios Realizados', String(passeiosRealizados)],
-      ['Receita Estimada', `R$ ${receitaEstimada.toLocaleString('pt-BR')}`],
+      ['Receita Estimada', formatBRL(receitaEstimada)],
       ['Avaliação Média', `${avaliacaoMedia} / 5`],
     ];
     doc.setFontSize(9);
@@ -624,7 +625,7 @@ export const PainelAdmin: React.FC = () => {
                         {p.horario}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold text-green-timeline">R$ {Number(p.preco).toFixed(2).replace('.', ',')}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-green-timeline">{formatBRL(Number(p.preco))}</td>
                     <td className="px-6 py-4 text-sm text-text-primary">
                       <span className="font-bold">{String(p.capacidade).padStart(2, "0")}</span>
                       <span className="text-[#7a8394]"> vagas</span>

@@ -1,4 +1,5 @@
 import React from "react";
+import { formatBRL } from "../utils/format";
 
 // Atualizado para a interface real do backend
 interface Passeio {
@@ -93,7 +94,7 @@ export const HorariosDia: React.FC<Props> = ({
                     isSelected ? "text-white" : "text-text-dark"
                   }`}
                 >
-                  R$ {Number(p.preco).toFixed(2).replace('.', ',')}
+                  {formatBRL(Number(p.preco))}
                 </span>
 
                 {isSelected && (

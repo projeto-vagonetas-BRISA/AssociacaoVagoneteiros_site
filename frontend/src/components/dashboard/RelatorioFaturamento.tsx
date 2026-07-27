@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatBRL } from '../../utils/format';
 
 interface PasseioItem {
   titulo: string;
@@ -90,7 +91,7 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
       x += colW[0];
       doc.text(String(v.passeios.length), x + colW[1] / 2, y, { align: 'center' });
       x += colW[1];
-      doc.text(`R$ ${v.total.toFixed(2)}`, x + colW[2] / 2, y, { align: 'center' });
+      doc.text(formatBRL(v.total), x + colW[2] / 2, y, { align: 'center' });
       y += 7;
     });
 
@@ -100,7 +101,7 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
     y += 5;
     doc.setFont('helvetica', 'bold');
     x = 14 + colW[0] + colW[1];
-    doc.text(`Total Geral: R$ ${totalGeral.toFixed(2)}`, x + colW[2] / 2, y, { align: 'center' });
+    doc.text(`Total Geral: ${formatBRL(totalGeral)}`, x + colW[2] / 2, y, { align: 'center' });
 
     doc.save(`faturamento_${periodo.inicio.slice(0, 10)}_${periodo.fim.slice(0, 10)}.pdf`);
   }
@@ -133,7 +134,7 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
               <tr key={v.id} className="hover:bg-gray-50 transition-colors">
                 <td className={tdClass}>{v.nome}</td>
                 <td className={tdClass}>{v.passeios.length}</td>
-                <td className={`${tdClass} text-right font-medium`}>R$ {v.total.toFixed(2)}</td>
+                <td className={`${tdClass} text-right font-medium`}>{formatBRL(v.total)}</td>
               </tr>
             ))}
           </tbody>
@@ -141,7 +142,7 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
             <tr className="border-t-2 border-border bg-bg-light-1">
               <td className={`${tdClass} font-bold`}>Total Geral</td>
               <td className={tdClass}>{ordenados.reduce((s, v) => s + v.passeios.length, 0)}</td>
-              <td className={`${tdClass} text-right font-bold text-blue-accent`}>R$ {totalGeral.toFixed(2)}</td>
+              <td className={`${tdClass} text-right font-bold text-blue-accent`}>{formatBRL(totalGeral)}</td>
             </tr>
           </tfoot>
         </table>

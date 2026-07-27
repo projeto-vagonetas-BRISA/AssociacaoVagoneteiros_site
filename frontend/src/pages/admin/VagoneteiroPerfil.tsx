@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera, UserCheck, AlertCircle, Loader2 } from "lucide-react";
 import { api } from "../../services/api";
+import { formatBRL } from "../../utils/format";
 
 interface VagoneteiroDetalhe {
   id: number;
@@ -448,7 +449,7 @@ export const VagoneteiroPerfil: React.FC = () => {
                     {vagoneteiro.passeios.map(p => (
                       <tr key={p.id} className="border-b border-border/50 last:border-0">
                         <td className="py-3 pr-4 text-text-dark font-medium">{formatDataBr(p.data)}</td>
-                        <td className="py-3 pr-4 text-green-timeline font-bold">R$ {Number(p.preco).toFixed(2).replace('.', ',')}</td>
+                        <td className="py-3 pr-4 text-green-timeline font-bold">{formatBRL(Number(p.preco))}</td>
                         <td className="py-3 pr-4 text-text-primary">{p.capacidade} vagas</td>
                       </tr>
                     ))}

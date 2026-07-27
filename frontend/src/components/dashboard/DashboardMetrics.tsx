@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, LayoutGrid, Percent } from 'lucide-react';
+import { formatBRL } from '../../utils/format';
 
 interface Metricas {
   taxaOcupacao: number;
@@ -30,7 +31,7 @@ export const DashboardMetrics: React.FC<Props> = ({ metricas }) => {
     },
     {
       titulo: 'Receita Gerada',
-      valor: `R$ ${metricas.receita.toFixed(2)}`,
+      valor: formatBRL(metricas.receita),
       sub: `${metricas.totalPasseios} passeios ativos`,
       icon: TrendingUp,
       cor: 'text-green-timeline',
