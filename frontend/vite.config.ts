@@ -23,6 +23,7 @@ export default defineConfig({
       '/slots': { target: 'http://localhost:3000', changeOrigin: true },
       '/dashboard': { target: 'http://localhost:3000', changeOrigin: true },
       '/galeria': { target: 'http://localhost:3000', changeOrigin: true },
+      '/painel': { target: 'http://localhost:3000', changeOrigin: true },
     },
   },
 })
