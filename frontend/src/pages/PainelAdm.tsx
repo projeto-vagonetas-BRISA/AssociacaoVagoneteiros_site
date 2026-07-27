@@ -210,6 +210,7 @@ export const PainelAdmin: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [resumoPainel, setResumoPainel] = useState<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number } | null>(null);
+  const [avaliacaoCache, setAvaliacaoCache] = useState<{ avaliacaoMedia: number; totalAvaliacoes: number; atualizadaEm: string | null } | null>(null);
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -238,20 +239,28 @@ export const PainelAdmin: React.FC = () => {
   async function carregarDados() {
     setLoadingData(true);
     try {
-      const [p, t, a, av, c, r] = await Promise.all([
+      const [p, t, a, av, c] = await Promise.all([
         api.request<PasseiosResponse>("/passeios?page=1&limit=5"),
         api.request<PasseiosResponse>('/passeios?limit=100'),
         api.request<Agendamento[]>("/agendamentos"),
         api.request<Avaliacao[]>("/avaliacoes"),
         api.request<Cliente[]>("/clientes"),
-        api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>("/painel/resumo"),
       ]);
       setPasseiosData(p);
       setTodosPasseios(t.data);
       setAgendamentos(a);
       setAvaliacoes(av);
       setClientes(c);
-      setResumoPainel(r);
+
+      // Resumo do painel é opcional — não trava o carregamento principal
+      api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>("/painel/resumo")
+        .then(r => setResumoPainel(r))
+        .catch(() => {});
+
+      // Avaliação em cache
+      api.request<{ avaliacaoMedia: number; totalAvaliacoes: number; atualizadaEm: string | null }>("/painel/avaliacao")
+        .then(r => setAvaliacaoCache(r))
+        .catch(() => {});
     } catch {
       // api.request já trata erro
     }
@@ -281,15 +290,17 @@ export const PainelAdmin: React.FC = () => {
   const totalTuristas = resumoPainel?.totalTuristas ?? 0;
   const passeiosRealizados = resumoPainel?.passeiosRealizados ?? 0;
   const receitaEstimada = resumoPainel?.receitaEstimada ?? 0;
-  const avaliacaoMedia = avaliacoes.length > 0
-    ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / avaliacoes.length).toFixed(1)
-    : "0.0";
+  const notaCache = avaliacaoCache?.avaliacaoMedia ?? 0;
+  const avaliacaoMedia = notaCache > 0 ? notaCache.toFixed(1) : "0.0";
+  const dataAvaliacao = avaliacaoCache?.atualizadaEm
+    ? new Date(avaliacaoCache.atualizadaEm + 'T12:00:00').toLocaleDateString('pt-BR')
+    : null;
 
   const statCards = [
     { label: "Total de Turistas", value: totalTuristas.toLocaleString("pt-BR"), icon: Users, color: "text-blue-accent" },
     { label: "Passeios Realizados", value: String(passeiosRealizados), icon: CheckCircle, color: "text-green-timeline" },
     { label: "Receita Estimada", value: formatBRL(receitaEstimada), icon: DollarSign, color: "text-[#b61722]" },
-    { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
+    { label: "Avaliação Média", value: `${avaliacaoMedia}${dataAvaliacao ? ` · ${dataAvaliacao}` : ''}`, icon: Star, color: "text-amber-500" },
   ];
 
   // Histórico de Agenda: exibe TODOS os passeios (incluindo REALIZADOS)

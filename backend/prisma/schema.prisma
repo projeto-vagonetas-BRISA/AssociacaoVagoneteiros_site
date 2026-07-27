@@ -249,3 +249,13 @@ model SlotAtribuicao {
 
   @@unique([slotPasseioId, instanciaId, vagoneteiroId])
 }
+
+model AvaliacaoCache {
+  id Int @id @default(autoincrement())
+  avaliacaoMedia Decimal @map("avaliacaoMedia")
+  totalAvaliacoes Int @map("totalAvaliacoes")
+  atualizadaEm DateTime @map("atualizadaEm") @default(now())
+  criadaEm DateTime @map("criadaEm") @default(now())
+
+  @@map("AvaliacaoCache")
+}

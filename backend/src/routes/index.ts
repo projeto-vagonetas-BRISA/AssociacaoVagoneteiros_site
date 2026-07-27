@@ -39,7 +39,7 @@ router.get('/painel/resumo', async (req: Request, res: Response) => {
   try {
     const [totalAgendamentos, totalClientes, totalAvaliacoes, realizadosSlot] = await Promise.all([
       prisma.agendamento.count(),
-      prisma.cliente.count(),
+      prisma.clientes.count(),
       prisma.avaliacao.count(),
       prisma.slotAtribuicao.count({ where: { status: 'REALIZADO' } }),
     ]);
@@ -64,6 +64,51 @@ router.get('/painel/resumo', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Erro ao buscar resumo do painel:', error);
     res.status(500).json({ message: 'Erro ao buscar resumo do painel' });
+  }
+});
+
+// Painel — avaliação em cache
+router.get('/painel/avaliacao', async (req: Request, res: Response) => {
+  try {
+    const cache = await prisma.avaliacaoCache.findFirst({
+      orderBy: { id: 'desc' },
+    });
+    res.json({
+      avaliacaoMedia: Number(cache?.avaliacaoMedia ?? 0),
+      totalAvaliacoes: cache?.totalAvaliacoes ?? 0,
+      atualizadaEm: cache?.atualizadaEm ?? null,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar avaliação:', error);
+    res.status(500).json({ message: 'Erro ao buscar avaliação' });
+  }
+});
+
+// Painel — atualizar avaliação manualmente (admin)
+router.post('/painel/avaliacao/atualizar', async (req: Request, res: Response) => {
+  try {
+    const { avaliacaoMedia, totalAvaliacoes } = req.body;
+    if (avaliacaoMedia === undefined || totalAvaliacoes === undefined) {
+      res.status(400).json({ message: 'avaliacaoMedia e totalAvaliacoes são obrigatórios' });
+      return;
+    }
+
+    const cache = await prisma.avaliacaoCache.create({
+      data: {
+        avaliacaoMedia: Number(avaliacaoMedia),
+        totalAvaliacoes: Number(totalAvaliacoes),
+        atualizadaEm: new Date(),
+      },
+    });
+
+    res.json({
+      avaliacaoMedia: Number(cache.avaliacaoMedia),
+      totalAvaliacoes: cache.totalAvaliacoes,
+      atualizadaEm: cache.atualizadaEm,
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar avaliação:', error);
+    res.status(500).json({ message: 'Erro ao atualizar avaliação' });
   }
 });
 
