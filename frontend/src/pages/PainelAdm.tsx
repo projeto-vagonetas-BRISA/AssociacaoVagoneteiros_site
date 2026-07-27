@@ -209,6 +209,7 @@ export const PainelAdmin: React.FC = () => {
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [resumoPainel, setResumoPainel] = useState<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number } | null>(null);
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -237,18 +238,20 @@ export const PainelAdmin: React.FC = () => {
   async function carregarDados() {
     setLoadingData(true);
     try {
-      const [p, t, a, av, c] = await Promise.all([
+      const [p, t, a, av, c, r] = await Promise.all([
         api.request<PasseiosResponse>("/passeios?page=1&limit=5"),
         api.request<PasseiosResponse>('/passeios?limit=100'),
         api.request<Agendamento[]>("/agendamentos"),
         api.request<Avaliacao[]>("/avaliacoes"),
         api.request<Cliente[]>("/clientes"),
+        api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>("/painel/resumo"),
       ]);
       setPasseiosData(p);
       setTodosPasseios(t.data);
       setAgendamentos(a);
       setAvaliacoes(av);
       setClientes(c);
+      setResumoPainel(r);
     } catch {
       // api.request já trata erro
     }
@@ -274,25 +277,16 @@ export const PainelAdmin: React.FC = () => {
     setTogglingId(null);
   }
 
-  // Estatísticas
-  const agendamentosNaoCancelados = agendamentos.filter(a => a.status !== "CANCELADO");
-  const idsPasseiosRealizados = new Set([
-    ...todosPasseios.filter(p => (p as any).status === "REALIZADO").map(p => p.id),
-    ...agendamentos.filter(a => a.status === "REALIZADO").map(a => a.passeio.id)
-  ]);
-  const passeiosRealizados = idsPasseiosRealizados.size;
-  const totalTuristas = agendamentosNaoCancelados.reduce((sum, a) => sum + 1 + (a.acompanhantes || 0), 0);
-  const receitaEstimada = agendamentosNaoCancelados.reduce((s, a) => {
-    const passageiros = 1 + (a.acompanhantes || 0);
-    const preco = Number(a.passeio?.preco || 0);
-    return s + (preco * passageiros);
-  }, 0);
+  // Estatísticas — usa resumo unificado do backend (sistema de slots)
+  const totalTuristas = resumoPainel?.totalTuristas ?? 0;
+  const passeiosRealizados = resumoPainel?.passeiosRealizados ?? 0;
+  const receitaEstimada = resumoPainel?.receitaEstimada ?? 0;
   const avaliacaoMedia = avaliacoes.length > 0
     ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / avaliacoes.length).toFixed(1)
     : "0.0";
 
   const statCards = [
-    { label: "Total de Turistas", value: totalTuristas, icon: Users, color: "text-blue-accent" },
+    { label: "Total de Turistas", value: totalTuristas.toLocaleString("pt-BR"), icon: Users, color: "text-blue-accent" },
     { label: "Passeios Realizados", value: String(passeiosRealizados), icon: CheckCircle, color: "text-green-timeline" },
     { label: "Receita Estimada", value: formatBRL(receitaEstimada), icon: DollarSign, color: "text-[#b61722]" },
     { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
