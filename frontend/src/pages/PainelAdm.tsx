@@ -293,7 +293,7 @@ export const PainelAdmin: React.FC = () => {
   const notaCache = avaliacaoCache?.avaliacaoMedia ?? 0;
   const avaliacaoMedia = notaCache > 0 ? notaCache.toFixed(1) : "0.0";
   const dataAvaliacao = avaliacaoCache?.atualizadaEm
-    ? new Date(avaliacaoCache.atualizadaEm + 'T12:00:00').toLocaleDateString('pt-BR')
+    ? new Date(avaliacaoCache.atualizadaEm).toLocaleDateString('pt-BR')
     : null;
 
   const statCards = [
