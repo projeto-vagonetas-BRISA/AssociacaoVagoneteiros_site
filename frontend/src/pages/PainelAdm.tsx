@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
-  ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff
+  ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff,
+  RefreshCw
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
@@ -211,6 +212,10 @@ export const PainelAdmin: React.FC = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [resumoPainel, setResumoPainel] = useState<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number } | null>(null);
   const [avaliacaoCache, setAvaliacaoCache] = useState<{ avaliacaoMedia: number; totalAvaliacoes: number; atualizadaEm: string | null } | null>(null);
+  const [modalAvaliacao, setModalAvaliacao] = useState(false);
+  const [editNota, setEditNota] = useState('');
+  const [editTotal, setEditTotal] = useState('');
+  const [salvandoAvaliacao, setSalvandoAvaliacao] = useState(false);
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -592,8 +597,22 @@ export const PainelAdmin: React.FC = () => {
                     <Icon size={16} className={`${color} opacity-60`} />
                   </div>
                   <p className={`font-bold text-2xl md:text-3xl tracking-tight ${color}`}>{value}</p>
-                  {isAvaliacao && dataAvaliacao && (
-                    <span className="text-[10px] text-text-secondary -mt-1">Atualizada em {dataAvaliacao}</span>
+                  {isAvaliacao && (
+                    <>
+                      {dataAvaliacao && (
+                        <span className="text-[10px] text-text-secondary -mt-1">Atualizada em {dataAvaliacao}</span>
+                      )}
+                      <button
+                        onClick={() => {
+                          setEditNota(String(avaliacaoCache?.avaliacaoMedia ?? ''));
+                          setEditTotal(String(avaliacaoCache?.totalAvaliacoes ?? ''));
+                          setModalAvaliacao(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-accent hover:text-blue-dark transition-colors cursor-pointer -mt-0.5"
+                      >
+                        <RefreshCw size={12} /> Atualizar
+                      </button>
+                    </>
                   )}
                 </div>
               );
@@ -876,6 +895,70 @@ export const PainelAdmin: React.FC = () => {
 
         </div>
       </main>
+
+      {/* Modal de atualizar avaliação */}
+      {modalAvaliacao && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalAvaliacao(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-lg text-text-dark mb-4">Atualizar Avaliação</h3>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Nota média</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={editNota}
+                  onChange={e => setEditNota(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+                  placeholder="Ex: 4.6"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Total de avaliações</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editTotal}
+                  onChange={e => setEditTotal(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+                  placeholder="Ex: 123"
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => setModalAvaliacao(false)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-primary hover:bg-bg-light-1 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={salvandoAvaliacao || !editNota}
+                  onClick={async () => {
+                    setSalvandoAvaliacao(true);
+                    try {
+                      const r = await api.request<{ avaliacaoMedia: number; totalAvaliacoes: number; atualizadaEm: string }>('/painel/avaliacao/atualizar', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                          avaliacaoMedia: Number(editNota.replace(',', '.')),
+                          totalAvaliacoes: Number(editTotal) || 0,
+                        }),
+                      });
+                      setAvaliacaoCache(r);
+                      setModalAvaliacao(false);
+                    } catch {}
+                    setSalvandoAvaliacao(false);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-blue-accent text-white text-sm font-semibold hover:bg-blue-dark transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {salvandoAvaliacao ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
