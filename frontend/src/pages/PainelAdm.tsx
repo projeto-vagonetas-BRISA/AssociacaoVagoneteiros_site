@@ -300,7 +300,7 @@ export const PainelAdmin: React.FC = () => {
     { label: "Total de Turistas", value: totalTuristas.toLocaleString("pt-BR"), icon: Users, color: "text-blue-accent" },
     { label: "Passeios Realizados", value: String(passeiosRealizados), icon: CheckCircle, color: "text-green-timeline" },
     { label: "Receita Estimada", value: formatBRL(receitaEstimada), icon: DollarSign, color: "text-[#b61722]" },
-    { label: "Avaliação Média", value: `${avaliacaoMedia}${dataAvaliacao ? ` · ${dataAvaliacao}` : ''}`, icon: Star, color: "text-amber-500" },
+    { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
   ];
 
   // Histórico de Agenda: exibe TODOS os passeios (incluindo REALIZADOS)
@@ -583,15 +583,21 @@ export const PainelAdmin: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {statCards.map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-border flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-text-secondary tracking-widest uppercase">{label}</p>
-                  <Icon size={16} className={`${color} opacity-60`} />
+            {statCards.map(({ label, value, icon: Icon, color }) => {
+              const isAvaliacao = label === 'Avaliação Média';
+              return (
+                <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-border flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-text-secondary tracking-widest uppercase">{label}</p>
+                    <Icon size={16} className={`${color} opacity-60`} />
+                  </div>
+                  <p className={`font-bold text-2xl md:text-3xl tracking-tight ${color}`}>{value}</p>
+                  {isAvaliacao && dataAvaliacao && (
+                    <span className="text-[10px] text-text-secondary -mt-1">Atualizada em {dataAvaliacao}</span>
+                  )}
                 </div>
-                <p className={`font-bold text-2xl md:text-3xl tracking-tight ${color}`}>{value}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
