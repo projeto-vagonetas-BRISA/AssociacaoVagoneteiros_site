@@ -31,7 +31,7 @@ export const FiltrosPeriodo: React.FC<Props> = ({ onChange }) => {
       }
       case 'mes':
         i = fmt(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
-        f = fmt(hoje);
+        f = fmt(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)); // último dia do mês
         break;
       case 'personalizado':
         i = inicio || dataInicio;
