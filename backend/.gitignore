@@ -11,4 +11,7 @@ serviceAccountKey.json
 
 /src/generated/prisma
 
-secrets
+secretsbackend/google-service-account.json
+
+# Google service account
+google-service-account.json
