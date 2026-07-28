@@ -290,27 +290,7 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             className="flex w-full cursor-pointer justify-center rounded-lg bg-red-dark px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue disabled:opacity-60 disabled:cursor-not-allowed">
                             {isSubmitting ? "Entrando..." : "Login"}
                         </button>
-                          </>)
-
-                        {/* <div className="pt-4 border-t border-white/10 space-y-3">
-                            <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                                Não tem conta?
-                            </p>
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                <button
-                                    type="button"
-                                    onClick={() => { onClose(); navigate("/cadastro?tipo=usuario"); }}
-                                    className="inline-flex w-full items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors cursor-pointer text-center whitespace-normal break-words">
-                                    Cadastrar usuário
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => { onClose(); navigate("/cadastro?tipo=empresa"); }}
-                                    className="inline-flex w-full items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors cursor-pointer text-center whitespace-normal break-words">
-                                    Cadastrar empresa
-                                </button>
-                            </div>
-                        </div> */}
+                          </>)}
                     </form>
                 </div>
             </div>
