@@ -344,7 +344,7 @@ export const PainelAdmin: React.FC = () => {
       api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>(
         inicio && fim ? `/painel/resumo?inicio=${inicio}&fim=${fim}` : '/painel/resumo'
       ),
-      api.request<any>('/passeios?limit=200'),
+      api.request<any>(inicio && fim ? `/passeios?limit=200&inicio=${inicio}&fim=${fim}` : '/passeios?limit=200'),
       api.request<any>('/usuarios/vagoneteiros?limit=200'),
       api.request<any[]>(
         inicio && fim ? `/agendamentos?inicio=${inicio}&fim=${fim}` : '/agendamentos'

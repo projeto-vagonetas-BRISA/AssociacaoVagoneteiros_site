@@ -1,15 +1,22 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
+import { parseFiltroData } from '../utils/filtroData';
 import { StatusPasseio } from '@prisma/client';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 10));
     const skip = (page - 1) * limit;
 
-    const where = { ativo: true };
+    const { inicio, fim } = req.query;
+
+    const where: any = { ativo: true };
+    const filtroDate = parseFiltroData(inicio as string, fim as string);
+    if (filtroDate) {
+      where.data = filtroDate;
+    }
 
     const [passeios, total] = await Promise.all([
       prisma.passeio.findMany({

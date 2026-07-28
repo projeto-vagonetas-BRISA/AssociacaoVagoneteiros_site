@@ -34,15 +34,15 @@ router.get('/dashboard/faturamento', faturamento);
 router.get('/galeria/fotos', listarFotosGaleria);
 router.get('/galeria/imagem/:fileId', servirImagemGaleria);
 
+import { parseFiltroData } from '../utils/filtroData';
+
 // Painel admin — resumo unificado (com filtro de período opcional)
 router.get('/painel/resumo', async (req: Request, res: Response) => {
   try {
     const { inicio, fim } = req.query;
 
-    // Filtro de data opcional: aplica nos agendamentos via passeio.data
-    const filtroData = inicio && fim
-      ? { passeio: { data: { gte: new Date(inicio as string), lte: new Date(fim as string) } } }
-      : {};
+    const filtroDate = parseFiltroData(inicio as string, fim as string);
+    const filtroData = filtroDate ? { passeio: { data: filtroDate } } : {};
 
     const filterAgendamentos = Object.keys(filtroData).length > 0 ? filtroData : {};
 
@@ -52,11 +52,11 @@ router.get('/painel/resumo', async (req: Request, res: Response) => {
       prisma.slotAtribuicao.count({
         where: {
           status: 'REALIZADO',
-          ...(inicio && fim ? {
+          ...(filtroDate ? {
             slotPasseio: {
               instancias: {
                 some: {
-                  data: { gte: new Date(inicio as string), lte: new Date(fim as string) },
+                  data: filtroDate,
                 },
               },
             },

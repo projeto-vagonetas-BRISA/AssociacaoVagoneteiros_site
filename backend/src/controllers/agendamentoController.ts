@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
+import { parseFiltroData } from '../utils/filtroData';
 import { calculateNotificationTimes } from '../utils/notificationUtils';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
@@ -37,9 +38,8 @@ export async function listar(req: AuthenticatedRequest, res: Response): Promise<
   try {
     const { inicio, fim } = req.query;
 
-    const filtroData = inicio && fim
-      ? { passeio: { data: { gte: new Date(inicio as string), lte: new Date(fim as string) } } }
-      : {};
+    const filtroDate = parseFiltroData(inicio as string, fim as string);
+    const filtroData = filtroDate ? { passeio: { data: filtroDate } } : {};
 
     const agendamentos = await prisma.agendamento.findMany({
       where: Object.keys(filtroData).length > 0 ? filtroData : undefined,
