@@ -255,7 +255,7 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                                   if (!emailReset) { setErroReset('Informe seu e-mail.'); return; }
                                   setEnviandoReset(true);
                                   try {
-                                    const res = await fetch('/api/auth/esqueci-senha', {
+                                    const res = await fetch('/auth/esqueci-senha', {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify({ email: emailReset }),
