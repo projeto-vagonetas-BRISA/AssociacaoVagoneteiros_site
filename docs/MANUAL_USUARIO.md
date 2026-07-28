@@ -1,7 +1,7 @@
 # 🚂 Vagoneteiros dos Molhes da Barra — Manual do Usuário
 
 > **Versão:** 1.1
-> **Última atualização:** 27/07/2026
+> **Última atualização:** 28/07/2026
 > **Baseado na branch:** `release/v1.1`
 
 ---
@@ -342,7 +342,15 @@ Lembretes automáticos enviados para o navegador do cliente sobre agendamentos f
 
 ### 7.1 Esqueci minha senha. Como recuperar?
 
-Atualmente o sistema não possui recuperação automática. Procure o administrador.
+**Agora sim!** (v1.1) O sistema possui recuperação automática por e-mail:
+
+1. Clique em **"Entrar"** e depois em **"Esqueceu sua senha?"** (link abaixo do campo de senha)
+2. Digite seu **e-mail cadastrado**
+3. Você receberá um e-mail do **vagoneteiros@gmail.com** com um link
+4. O link expira em **1 hora** e é de uso único
+5. Clique no link e crie uma nova senha (mínimo 6 caracteres)
+
+> 🔐 Se você não receber o e-mail, verifique a caixa de spam. Se ainda assim não encontrar, confirme com o administrador se seu e-mail está correto na base.
 
 ### 7.2 Posso agendar sem fazer cadastro?
 
@@ -352,6 +360,17 @@ Atualmente o sistema não possui recuperação automática. Procure o administra
 
 1. **Pelo Administrador** no painel
 2. **Convertendo seu perfil** — o admin altera de USUARIO para VAGONETEIRO
+
+### 7.3 Posso receber confirmação por e-mail?
+
+**Sim!** (v1.1) Ao fazer um agendamento informando seu e-mail, o sistema envia automaticamente um **e-mail de confirmação** com:
+
+- **Código do agendamento** (#número) — apresente no dia do passeio
+- **Data e horário** do passeio
+- **Nome do passeio** e valor
+- Informação sobre lembretes (se autorizou notificações)
+
+O e-mail tem o mesmo layout visual do sistema (fundo escuro, cores Vagoneteiros).
 
 ### 7.4 Posso cancelar um agendamento?
 
@@ -386,7 +405,7 @@ Sim! O sistema é **responsivo** e funciona em smartphones, tablets e desktops.
 
 No painel admin, o card **Avaliação Média** tem um botão "Atualizar". Clique, digite a nova nota e o total de avaliações, e salve. A mudança reflete na Home automaticamente.
 
-### 7.12 O relatório em PDF mostra dados corretos?
+### 7.13 O relatório em PDF mostra dados corretos?
 
 Sim! O relatório busca dados **frescos** do backend no momento da geração, e o filtro de período é aplicado em todas as seções (estatísticas, passeios, agendamentos). Não depende do estado da página.
 
