@@ -935,10 +935,12 @@ export const PainelAdmin: React.FC = () => {
                 { label: '📅 Hoje', preset: 'hoje', get: () => { const d = new Date(); return { inicio: d.toISOString().slice(0,10), fim: d.toISOString().slice(0,10) }; } },
                 { label: '📆 Esta Semana', preset: 'semana', get: () => {
                   const hoje = new Date();
-                  const dia = hoje.getDay();
-                  const diff = hoje.getDate() - dia + (dia === 0 ? -6 : 1);
-                  const seg = new Date(hoje.setDate(diff));
-                  const dom = new Date(hoje.setDate(seg.getDate() + 6));
+                  const diaSemana = hoje.getDay();
+                  // diff para segunda-feira (0 = domingo, 1 = segunda...)
+                  const diffSeg = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
+                  const seg = new Date(hoje.getFullYear(), hoje.getMonth(), diffSeg);
+                  const dom = new Date(seg);
+                  dom.setDate(seg.getDate() + 6);
                   return { inicio: seg.toISOString().slice(0,10), fim: dom.toISOString().slice(0,10) };
                 } },
                 { label: '📊 Este Mês', preset: 'mensal', get: () => {
