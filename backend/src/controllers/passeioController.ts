@@ -278,10 +278,16 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
       return;
     }
 
-    await prisma.passeio.update({ where: { id }, data: { ativo: false } });
-    res.json({ message: 'Passeio desativado com sucesso' });
+    await prisma.passeio.update({ where: { id }, data: { status: 'CANCELADO' } });
+
+    await prisma.agendamento.updateMany({
+      where: { passeioId: id, status: { not: 'CANCELADO' } },
+      data: { status: 'CANCELADO' as any },
+    });
+
+    res.json({ message: 'Passeio cancelado com sucesso' });
   } catch (error: any) {
-    console.error('Erro ao desativar passeio:', error);
-    res.status(500).json({ message: 'Erro ao desativar passeio' });
+    console.error('Erro ao cancelar passeio:', error);
+    res.status(500).json({ message: 'Erro ao cancelar passeio' });
   }
 }

@@ -101,9 +101,11 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
         try {
             const loggedUser = await login(rawIdentifier, senha);
             onClose();
-            // se for admin ou redator, vai para painel; senão para home
+            // se for admin ou redator, vai para painel; vagoneteiro para o feed; senão para home
             if (loggedUser.perfil === 'ADMIN' || loggedUser.perfil === 'REDATOR') {
                 navigate("/painel-admin");
+            } else if (loggedUser.perfil === 'VAGONETEIRO') {
+                navigate("/feed-vagoneteiro");
             } else {
                 navigate("/");
             }

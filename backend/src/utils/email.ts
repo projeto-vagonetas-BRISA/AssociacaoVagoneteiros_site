@@ -35,9 +35,9 @@ function sendMail(
     to: destino,
     subject: assunto,
     html,
-  }).then(r => {
+  }).then((r: nodemailer.SentMessageInfo) => {
     console.log(`[EMAIL] Enviado para ${destino} | ID: ${r.messageId}`);
-  }).catch(err => {
+  }).catch((err: Error) => {
     console.error(`[EMAIL] Falha ao enviar para ${destino}:`, err.message);
   });
 }

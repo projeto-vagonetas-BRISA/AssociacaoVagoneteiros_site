@@ -113,8 +113,8 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       perfil: novoUsuario.perfil,
     });
 
-    // Retornar usuário sem a senha
-    const { senha: _, ...usuarioSemSenha } = novoUsuario;
+    // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
+    const { senha: _, foto: _foto, ...usuarioSemSenha } = novoUsuario;
 
     res.status(201).json({
       message: 'Usuário cadastrado com sucesso',
@@ -173,8 +173,8 @@ export async function login(req: Request, res: Response): Promise<void> {
       perfil: usuario.perfil,
     });
 
-    // Retornar usuário sem a senha
-    const { senha: _, ...usuarioSemSenha } = usuario;
+    // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
+    const { senha: _, foto: _foto, ...usuarioSemSenha } = usuario;
 
     res.status(200).json({
       message: 'Login realizado com sucesso',
@@ -237,7 +237,7 @@ export async function cadastroAdmin(req: AuthenticatedRequest, res: Response): P
       },
     });
 
-    const { senha: _, ...adminSemSenha } = admin;
+    const { senha: _, foto: _foto, ...adminSemSenha } = admin;
 
     res.status(201).json({
       message: 'Administrador cadastrado com sucesso',

@@ -12,6 +12,7 @@ import {
   Loader2,
   FileX2,
   Train,
+  Users,
 } from 'lucide-react';
 
 // Tipos
@@ -325,6 +326,10 @@ export const MinhasAtribuicoes: React.FC = () => {
                   <span className="flex items-center gap-1">
                     <Clock className="size-3.5 shrink-0" />
                     {attr.instancia.horaInicio} – {attr.instancia.horaFim}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="size-3.5 shrink-0" />
+                    {attr.vagasOcupadas} / {attr.slotPasseio.capacidade} turistas
                   </span>
                 </div>
                 <p className="text-xs text-text-secondary mt-1.5">

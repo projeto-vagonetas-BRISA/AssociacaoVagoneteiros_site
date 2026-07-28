@@ -57,7 +57,7 @@ async function main() {
       email: 'vagoneteiro@vagoneteiros.com',
       telefone: '(53) 99999-0002',
       senha: await bcrypt.hash('vaga123', saltRounds),
-      perfil: 'USUARIO',
+      perfil: 'VAGONETEIRO',
     },
   });
 
@@ -81,6 +81,67 @@ async function main() {
   });
 
   console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco} (${dataFutura.toLocaleDateString('pt-BR')})`);
+
+  // Criar SlotPasseio + SlotInstancia + SlotAtribuicao para o vagoneteiro de teste
+  // (necessário para que apareça em "Minhas Atribuições")
+  const slotExistente = await prisma.slotPasseio.findFirst({
+    where: { titulo: 'Passeio Molhes - Turno Manhã (Seed)' },
+  });
+
+  const slot = slotExistente ?? await prisma.slotPasseio.create({
+    data: {
+      tipo: 'INDIVIDUAL',
+      titulo: 'Passeio Molhes - Turno Manhã (Seed)',
+      descricao: 'Passeio de exemplo criado pelo seed',
+      horaInicio: '09:00',
+      horaFim: '10:30',
+      duracaoMinutos: 90,
+      capacidade: 20,
+      valor: 30.00,
+      usuarioId: usuario.id,
+      status: 'DISPONIVEL',
+    },
+  });
+
+  console.log(`✅ SlotPasseio: ${slot.id} - ${slot.titulo}`);
+
+  // Data da instância: mesma do passeio (7 dias no futuro)
+  const dataInstancia = new Date(dataFutura);
+  dataInstancia.setHours(0, 0, 0, 0);
+
+  const instanciaExistente = await prisma.slotInstancia.findFirst({
+    where: { slotPasseioId: slot.id, data: dataInstancia, horaInicio: '09:00' },
+  });
+
+  const instancia = instanciaExistente ?? await prisma.slotInstancia.create({
+    data: {
+      slotPasseioId: slot.id,
+      data: dataInstancia,
+      horaInicio: '09:00',
+      horaFim: '10:30',
+      status: 'AGENDADO',
+    },
+  });
+
+  console.log(`✅ SlotInstancia: ${instancia.id} - ${dataInstancia.toLocaleDateString('pt-BR')}`);
+
+  const atribuicaoExistente = await prisma.slotAtribuicao.findFirst({
+    where: { slotPasseioId: slot.id, instanciaId: instancia.id, vagoneteiroId: usuario.id },
+  });
+
+  if (!atribuicaoExistente) {
+    await prisma.slotAtribuicao.create({
+      data: {
+        slotPasseioId: slot.id,
+        instanciaId: instancia.id,
+        vagoneteiroId: usuario.id,
+        status: 'ATRIBUIDO',
+      },
+    });
+    console.log(`✅ SlotAtribuicao criada para ${usuario.name}`);
+  } else {
+    console.log(`ℹ️  SlotAtribuicao já existe para ${usuario.name}`);
+  }
 
   console.log('🎉 Seed completo!');
 }

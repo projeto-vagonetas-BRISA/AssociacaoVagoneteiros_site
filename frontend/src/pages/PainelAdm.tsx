@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
   ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff,
-  RefreshCw
+  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
@@ -105,6 +105,7 @@ interface Passeio {
   capacidade: number;
   data: string;
   horario: string;
+  status?: string;
   usuario: { id: number; name: string };
 }
 
@@ -199,6 +200,7 @@ export const PainelAdmin: React.FC = () => {
   const [vagoneteirosData, setVagoneteirosData] = useState<VagoneteirosResponse | null>(null);
   const [vagLoading, setVagLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [tipoUsuario, setTipoUsuario] = useState<'VAGONETEIRO' | 'ADMIN'>('VAGONETEIRO');
 
   const [passeiosData, setPasseiosData] = useState<PasseiosResponse | null>(null);
   const [paginaPasseio, setPaginaPasseio] = useState(1);
@@ -227,7 +229,7 @@ export const PainelAdmin: React.FC = () => {
     const handler = () => setModalRelatorio(prev => ({ ...prev, open: true }));
     window.addEventListener('gerarRelatorioGeral', handler);
     return () => window.removeEventListener('gerarRelatorioGeral', handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // A tabela usa passeiosData paginado; o histórico usa todosPasseios (carregado com limit=100)
@@ -261,22 +263,23 @@ export const PainelAdmin: React.FC = () => {
       // Resumo do painel é opcional — não trava o carregamento principal
       api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>("/painel/resumo")
         .then(r => setResumoPainel(r))
-        .catch(() => {});
+        .catch(() => { });
 
       // Avaliação em cache
       api.request<{ avaliacaoMedia: number; totalAvaliacoes: number; atualizadaEm: string | null }>("/painel/avaliacao")
         .then(r => setAvaliacaoCache(r))
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       // api.request já trata erro
     }
     setLoadingData(false);
   }
 
-  async function carregarVagoneteiros(page: number) {
+  async function carregarVagoneteiros(page: number, tipo?: 'VAGONETEIRO' | 'ADMIN') {
     setVagLoading(true);
+    const t = tipo ?? tipoUsuario;
     try {
-      const data = await api.request<VagoneteirosResponse>(`/usuarios/vagoneteiros?page=${page}&limit=${VAG_POR_PAGINA}`);
+      const data = await api.request<VagoneteirosResponse>(`/usuarios/vagoneteiros?page=${page}&limit=${VAG_POR_PAGINA}&perfil=${t}`);
       setVagoneteirosData(data);
       setPaginaVag(page);
     } catch { /* api.request já trata erro */ }
@@ -315,10 +318,10 @@ export const PainelAdmin: React.FC = () => {
       const registros = filtroStatus === 'TODOS'
         ? agendamentos.filter(a => a.passeio.id === p.id)
         : agendamentos.filter(a => {
-            if (a.passeio.id !== p.id) return false;
-            if (filtroStatus === 'ANDAMENTO') return a.status === 'CONFIRMADO' || a.status === 'PENDENTE';
-            return a.status === filtroStatus;
-          });
+          if (a.passeio.id !== p.id) return false;
+          if (filtroStatus === 'ANDAMENTO') return a.status === 'CONFIRMADO' || a.status === 'PENDENTE';
+          return a.status === filtroStatus;
+        });
       return { id_passeio: p.id, passeio: p, registros };
     })
     .filter(g => {
@@ -607,7 +610,7 @@ export const PainelAdmin: React.FC = () => {
         {/* Stat Cards */}
         {loadingData ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => (
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-border animate-pulse">
                 <div className="h-3 w-20 bg-gray-200 rounded mb-3" />
                 <div className="h-7 w-16 bg-gray-200 rounded" />
@@ -676,12 +679,23 @@ export const PainelAdmin: React.FC = () => {
                 ) : passeios.length === 0 ? (
                   <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-[#7a8394]">Nenhum passeio cadastrado</td></tr>
                 ) : passeios.map((p) => (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-bg-light-2 transition-colors">
+                  <tr key={p.id} className={`border-b border-border last:border-0 transition-colors ${
+                    p.status === 'REALIZADO' ? 'bg-green-timeline/5 hover:bg-green-timeline/10' :
+                    p.status === 'CANCELADO' ? 'bg-red-dark/5 hover:bg-red-dark/10' :
+                    'hover:bg-bg-light-2'
+                  }`}>
                     <td className="px-6 py-4 text-sm font-medium text-text-dark whitespace-nowrap">{formatData(p.data)}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-block bg-blue-accent/10 text-blue-accent border border-blue-accent/20 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
-                        {p.horario}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block bg-blue-accent/10 text-blue-accent border border-blue-accent/20 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+                          {p.horario}
+                        </span>
+                        {p.status === 'REALIZADO' && (
+                          <span className="inline-block bg-green-timeline/10 text-green-timeline border border-green-timeline/20 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                            Realizado
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-green-timeline">{formatBRL(Number(p.preco))}</td>
                     <td className="px-6 py-4 text-sm text-text-primary">
@@ -693,21 +707,24 @@ export const PainelAdmin: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => navigate(`/editar-passeio/${p.id}`)}
-                          className="text-[#7a8394] hover:text-blue-accent transition-colors cursor-pointer"
-                          title="Editar passeio"
+                          className={`transition-colors ${p.status === 'REALIZADO' ? 'text-gray-300 cursor-not-allowed' : 'text-[#7a8394] hover:text-blue-accent cursor-pointer'}`}
+                          title={p.status === 'REALIZADO' ? "Passeio já realizado" : "Editar passeio"}
+                          disabled={p.status === 'REALIZADO'}
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           onClick={async () => {
-                            if (!confirm(`Tem certeza que deseja desativar o passeio #${p.id}?`)) return;
+                            if (p.status === 'REALIZADO') return;
+                            if (!confirm(`Tem certeza que deseja cancelar o passeio #${p.id}?`)) return;
                             try {
                               await api.request(`/passeios/${p.id}`, { method: 'DELETE' });
                               await carregarPasseios(paginaPasseio);
                             } catch { /* api.request já trata erro */ }
                           }}
-                          className="text-[#7a8394] hover:text-red-dark transition-colors cursor-pointer"
-                          title="Desativar passeio"
+                          className={`transition-colors ${p.status === 'REALIZADO' ? 'text-gray-300 cursor-not-allowed' : 'text-[#7a8394] hover:text-red-dark cursor-pointer'}`}
+                          title={p.status === 'REALIZADO' ? "Passeio já realizado" : "Cancelar passeio"}
+                          disabled={p.status === 'REALIZADO'}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -723,26 +740,42 @@ export const PainelAdmin: React.FC = () => {
             <p className="text-xs text-[#7a8394]">
               Página {paginaPasseio} de {totalPaginasPasseio} — {passeiosData?.total || 0} passeio{(passeiosData?.total || 0) !== 1 ? "s" : ""}
             </p>
-                <div className="flex items-center gap-1">
-                <button
-                  onClick={() => carregarPasseios(Math.max(1, paginaPasseio - 1))}
-                  disabled={paginaPasseio === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                {renderPaginacao(paginaPasseio, totalPaginasPasseio, carregarPasseios)}
-              </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => carregarPasseios(Math.max(1, paginaPasseio - 1))}
+                disabled={paginaPasseio === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              {renderPaginacao(paginaPasseio, totalPaginasPasseio, carregarPasseios)}
+            </div>
           </div>
         </div>
 
         {/* Vagoneteiros + Histórico */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
 
-          {/* Vagoneteiros */}
+          {/* Vagoneteiros / Admins */}
           <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-              <h2 className="font-bold text-base text-text-dark">Vagoneteiros</h2>
+              <div className="flex items-center gap-2">
+                {/* <h2 className="font-bold text-base text-text-dark">
+                  {tipoUsuario === 'VAGONETEIRO' ? 'Vagoneteiros' : 'Administradores'}
+                </h2> */}
+                <select
+                  value={tipoUsuario}
+                  onChange={e => {
+                    const t = e.target.value as 'VAGONETEIRO' | 'ADMIN';
+                    setTipoUsuario(t);
+                    carregarVagoneteiros(1, t);
+                  }}
+                  className="text-sm font-bold text-base text-text-dark bg-bg-light-1 border border-border rounded-lg px-2 py-1 cursor-pointer focus:outline-none"
+                >
+                  <option value="VAGONETEIRO">Vagoneteiros</option>
+                  <option value="ADMIN">Admins</option>
+                </select>
+              </div>
               <Link
                 to="/cadastro?tipo=vagoneteiro"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-xs font-semibold transition-colors cursor-pointer"
@@ -754,7 +787,9 @@ export const PainelAdmin: React.FC = () => {
               {vagLoading ? (
                 <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Carregando...</div>
               ) : vagPaginados.length === 0 ? (
-                <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Nenhum vagoneteiro cadastrado</div>
+                <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">
+                  {tipoUsuario === 'VAGONETEIRO' ? 'Nenhum vagoneteiro cadastrado' : 'Nenhum administrador cadastrado'}
+                </div>
               ) : vagPaginados.map((v, i) => (
                 <div key={`${v.id}-${i}`} className="flex items-center gap-2 px-3 py-3 hover:bg-bg-light-2 transition-colors">
                   <Link to={`/admin/vagoneteiros/${v.id}`} className="shrink-0">
@@ -770,21 +805,19 @@ export const PainelAdmin: React.FC = () => {
                     <p className="text-sm font-semibold text-text-dark truncate">{v.name}</p>
                     <p className="text-xs text-[#7a8394] truncate">{v.telefone}</p>
                   </Link>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                    v.ativo
-                      ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
-                      : "bg-red-dark/10 text-red-dark border border-red-dark/20"
-                  }`}>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${v.ativo
+                    ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
+                    : "bg-red-dark/10 text-red-dark border border-red-dark/20"
+                    }`}>
                     {v.ativo ? "Ativo" : "Inativo"}
                   </span>
                   <button
                     onClick={() => toggleAtivo(v.id)}
                     disabled={togglingId === v.id}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
-                      v.ativo
-                        ? "text-green-timeline hover:bg-green-timeline/10"
-                        : "text-[#7a8394] hover:bg-red-dark/10 hover:text-red-dark"
-                    } disabled:opacity-40`}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${v.ativo
+                      ? "text-green-timeline hover:bg-green-timeline/10"
+                      : "text-[#7a8394] hover:bg-red-dark/10 hover:text-red-dark"
+                      } disabled:opacity-40`}
                     title={v.ativo ? "Desativar" : "Ativar"}
                   >
                     {togglingId === v.id ? (
@@ -892,6 +925,9 @@ export const PainelAdmin: React.FC = () => {
                               <span className="truncate text-text-primary">
                                 {a.cliente?.nome || `Cliente #${a.cliente?.id || "?"}`}
                               </span>
+                              <span className="text-xs font-bold text-green-timeline ml-1 shrink-0">
+                                {formatBRL(Number(passeio?.preco || 0) * totalVagas)}
+                              </span>
                             </div>
                             <span className="text-xs text-[#7a8394] shrink-0">
                               {numAcomp > 0 ? `1 + ${numAcomp} acompanhante${numAcomp > 1 ? 's' : ''}` : `${totalVagas} vaga${totalVagas > 1 ? 's' : ''}`}
@@ -932,25 +968,38 @@ export const PainelAdmin: React.FC = () => {
             <p className="text-sm text-text-secondary mb-4">Selecione o período do relatório:</p>
             <div className="flex flex-col gap-2">
               {[
-                { label: '📅 Hoje', preset: 'hoje', get: () => { const d = new Date(); return { inicio: d.toISOString().slice(0,10), fim: d.toISOString().slice(0,10) }; } },
-                { label: '📆 Esta Semana', preset: 'semana', get: () => {
-                  const hoje = new Date();
-                  const diaSemana = hoje.getDay();
-                  // diff para segunda-feira (0 = domingo, 1 = segunda...)
-                  const diffSeg = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
-                  const seg = new Date(hoje.getFullYear(), hoje.getMonth(), diffSeg);
-                  const dom = new Date(seg);
-                  dom.setDate(seg.getDate() + 6);
-                  return { inicio: seg.toISOString().slice(0,10), fim: dom.toISOString().slice(0,10) };
-                } },
-                { label: '📊 Este Mês', preset: 'mensal', get: () => {
-                  const d = new Date();
-                  const inicio = new Date(d.getFullYear(), d.getMonth(), 1);
-                  const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-                  return { inicio: inicio.toISOString().slice(0,10), fim: fim.toISOString().slice(0,10) };
-                } },
+                { 
+                  label: <><Calendar className="size-4" /> Hoje</>, 
+                  preset: 'hoje', 
+                  get: () => { const d = new Date(); return { inicio: d.toISOString().slice(0, 10), fim: d.toISOString().slice(0, 10) }; } 
+                },
                 {
-                  label: '📈 Personalizado', preset: 'custom', get: () => ({ inicio: modalRelatorio.inicio, fim: modalRelatorio.fim }),
+                  label: <><CalendarDays className="size-4" /> Esta Semana</>, 
+                  preset: 'semana', 
+                  get: () => {
+                    const hoje = new Date();
+                    const diaSemana = hoje.getDay();
+                    const diffSeg = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
+                    const seg = new Date(hoje.getFullYear(), hoje.getMonth(), diffSeg);
+                    const dom = new Date(seg);
+                    dom.setDate(seg.getDate() + 6);
+                    return { inicio: seg.toISOString().slice(0, 10), fim: dom.toISOString().slice(0, 10) };
+                  }
+                },
+                {
+                  label: <><LineChart className="size-4" /> Este Mês</>, 
+                  preset: 'mensal', 
+                  get: () => {
+                    const d = new Date();
+                    const inicio = new Date(d.getFullYear(), d.getMonth(), 1);
+                    const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                    return { inicio: inicio.toISOString().slice(0, 10), fim: fim.toISOString().slice(0, 10) };
+                  }
+                },
+                {
+                  label: <><SlidersHorizontal className="size-4" /> Personalizado</>, 
+                  preset: 'custom', 
+                  get: () => ({ inicio: modalRelatorio.inicio, fim: modalRelatorio.fim }),
                   onClick: () => setModalRelatorio(m => ({ ...m, preset: 'custom' })),
                 },
               ].map(({ label, preset, get, onClick }) => (
@@ -1048,7 +1097,7 @@ export const PainelAdmin: React.FC = () => {
                       });
                       setAvaliacaoCache(r);
                       setModalAvaliacao(false);
-                    } catch {}
+                    } catch { }
                     setSalvandoAvaliacao(false);
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-blue-accent text-white text-sm font-semibold hover:bg-blue-dark transition-colors disabled:opacity-50 cursor-pointer"

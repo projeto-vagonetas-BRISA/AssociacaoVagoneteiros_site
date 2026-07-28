@@ -35,7 +35,18 @@ export async function listarVagoneteiros(req: AuthenticatedRequest, res: Respons
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 9));
     const skip = (page - 1) * limit;
 
-    const where = { perfil: { in: ['USUARIO', 'VAGONETEIRO'] as any } };
+    const perfilFiltro = req.query.perfil as string | undefined;
+
+    let perfilWhere: any[];
+    if (perfilFiltro === 'ADMIN') {
+      perfilWhere = ['ADMIN'];
+    } else if (perfilFiltro === 'VAGONETEIRO') {
+      perfilWhere = ['VAGONETEIRO'];
+    } else {
+      perfilWhere = ['USUARIO', 'VAGONETEIRO'];
+    }
+
+    const where = { perfil: { in: perfilWhere as any } };
 
     const [vagoneteiros, total] = await Promise.all([
       prisma.usuario.findMany({

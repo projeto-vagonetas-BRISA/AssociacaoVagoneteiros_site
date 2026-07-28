@@ -204,12 +204,26 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
     // Calcular vagas ocupadas por instância
     const atribuicoesCompletas = await Promise.all(
       atribuicoes.map(async (attr) => {
-        const totalVagas = await prisma.slotAtribuicao.count({
-          where: {
-            instanciaId: attr.instanciaId,
-            status: 'ATRIBUIDO',
+        const passeio = await prisma.passeio.findFirst({
+          where: { 
+            data: attr.instancia?.data,
+            horario: attr.instancia?.horaInicio,
+            ativo: true,
+            status: { not: 'CANCELADO' }
           },
+          include: {
+            agendamentos: {
+              where: {
+                status: { notIn: ['CANCELADO'] }
+              }
+            }
+          }
         });
+
+        const totalVagas = passeio 
+          ? passeio.agendamentos.reduce((acc, a) => acc + 1 + (a.acompanhantes || 0), 0)
+          : 0;
+
         return {
           ...attr,
           vagasOcupadas: totalVagas,
@@ -306,7 +320,11 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
       if (novaCapacidade <= 0) {
         await prisma.passeio.update({
           where: { id: passeioExistente.id },
-          data: { capacidade: 0, ativo: false, status: 'CANCELADO' }
+          data: { capacidade: 0, status: 'CANCELADO' }
+        });
+        await prisma.agendamento.updateMany({
+          where: { passeioId: passeioExistente.id, status: { not: 'CANCELADO' } },
+          data: { status: 'CANCELADO' as any },
         });
       } else {
         await prisma.passeio.update({
@@ -472,15 +490,29 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
     });
 
     // Processar: calcular vagas e verificar se o vagoneteiro já está atribuído
-    const feed = instancias.reduce((acc, inst) => {
-      const jaTemVagoneteiro = inst.atribuicoes.length > 0;
+    const instanciasSemVagoneteiro = instancias.filter(inst => inst.atribuicoes.length === 0);
 
-      // Se qualquer vagoneteiro já pegou, não aparece no feed para mais ninguém
-      if (jaTemVagoneteiro) {
-        return acc;
-      }
+    const feed = await Promise.all(instanciasSemVagoneteiro.map(async (inst) => {
+      // Buscar passeio público equivalente para contar turistas já agendados
+      const passeio = await prisma.passeio.findFirst({
+        where: {
+          data: inst.data,
+          horario: inst.slotPasseio.horaInicio,
+          ativo: true,
+          status: { not: 'CANCELADO' }
+        },
+        include: {
+          agendamentos: {
+            where: { status: { notIn: ['CANCELADO'] } }
+          }
+        }
+      });
 
-      acc.push({
+      const vagasOcupadas = passeio 
+        ? passeio.agendamentos.reduce((acc, a) => acc + 1 + (a.acompanhantes || 0), 0)
+        : 0;
+
+      return {
         instanciaId: inst.id,
         data: inst.data,
         diaSemana: inst.slotPasseio.diaSemana,
@@ -495,15 +527,13 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
         },
         vagas: {
           total: inst.slotPasseio.capacidade,
-          ocupadas: 0,
-          disponiveis: inst.slotPasseio.capacidade,
+          ocupadas: vagasOcupadas,
+          disponiveis: Math.max(0, inst.slotPasseio.capacidade - vagasOcupadas),
         },
         jaPeguei: false,
         podePegar: true,
-      });
-
-      return acc;
-    }, [] as any[]);
+      };
+    }));
 
     // Agrupar por data
     const agrupado: Record<string, typeof feed> = {};

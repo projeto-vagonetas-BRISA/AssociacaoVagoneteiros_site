@@ -26,8 +26,8 @@ export const Header: React.FC = () => {
     return (
         <header className="w-full bg-blue-dark border-b border-white/10 sticky top-0 z-50">
 
-            <nav className="relative max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-16 gap-8">
-                <Link to="/" className="font-bold text-lg text-white tracking-tight shrink-0">
+            <nav className="relative max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-16 gap-4 md:gap-8">
+                <Link to="/" className="font-bold text-lg text-white tracking-tight shrink-0 truncate max-w-[55vw] md:max-w-none">
                     Vagoneteiros dos Molhes da Barra
                 </Link>
 

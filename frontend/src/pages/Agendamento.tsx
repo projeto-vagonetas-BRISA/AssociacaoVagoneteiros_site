@@ -128,7 +128,7 @@ export const Agendamento: React.FC = () => {
     setLoadingPasseios(true);
     api.request<{ data: Passeio[] }>('/agendamentos/vagas-disponiveis')
       .then(res => setPasseios(res.data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingPasseios(false));
   }, []);
 
@@ -142,12 +142,12 @@ export const Agendamento: React.FC = () => {
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-  
+
   const [consentimento, setConsentimento] = useState(false);
   const [consentimentoNotificacao, setConsentimentoNotificacao] = useState(false);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [ciente, setCiente] = useState(false);
-  
+
   // Dias do mês que possuem passeios disponíveis (para marcar no calendário)
   const daysWithPasseios = useMemo(() => {
     const set = new Set<number>();
@@ -217,9 +217,9 @@ export const Agendamento: React.FC = () => {
     ciente &&
     !submitting;
 
-    useEffect(() => {
-      setPassageiros(1);
-    }, [isAgencia]);
+  useEffect(() => {
+    setPassageiros(1);
+  }, [isAgencia]);
 
   async function handleFinalizarReserva() {
     if (!podeFinalizarReserva || !selectedPasseio) return;
@@ -372,11 +372,10 @@ export const Agendamento: React.FC = () => {
                     <button
                       onClick={prevMonth}
                       disabled={isCurrentMonth}
-                      className={`p-1 rounded-lg transition-colors ${
-                        isCurrentMonth
+                      className={`p-1 rounded-lg transition-colors ${isCurrentMonth
                           ? 'opacity-30 cursor-not-allowed'
                           : 'hover:bg-bg-light-1'
-                      }`}
+                        }`}
                     >
                       <ChevronLeft
                         className="size-4 text-text-primary"
@@ -422,14 +421,13 @@ export const Agendamento: React.FC = () => {
                           key={day}
                           onClick={() => !isPast && handleSelectDay(day)}
                           className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-sm font-medium transition-colors
-                            ${
-                              isSelected
-                                ? "bg-blue-accent text-white"
-                                : isPast
-                                  ? "text-[#e5e7eb] cursor-not-allowed"
-                                  : hasPasseio
-                                    ? "text-text-dark hover:bg-bg-light-1"
-                                    : "text-[#c4c8d4] cursor-default"
+                            ${isSelected
+                              ? "bg-blue-accent text-white"
+                              : isPast
+                                ? "text-[#e5e7eb] cursor-not-allowed"
+                                : hasPasseio
+                                  ? "text-text-dark hover:bg-bg-light-1"
+                                  : "text-[#c4c8d4] cursor-default"
                             }`}
                         >
                           {day}
@@ -501,7 +499,7 @@ export const Agendamento: React.FC = () => {
                     </p>
                     <p className="font-normal text-xs text-text-secondary">
                       {selectedPasseio
-                        ? `${isAgencia ? "Selecione o número total de passageiros para o passeio" : `Máximo ${selectedPasseio.vagasDisponiveis} passageiros para este horário` }`
+                        ? `${isAgencia ? "Selecione o número total de passageiros para o passeio" : `Máximo ${selectedPasseio.vagasDisponiveis} passageiros para este horário`}`
                         : "Selecione um horário"}
                     </p>
                   </div>

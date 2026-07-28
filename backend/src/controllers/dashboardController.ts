@@ -53,7 +53,7 @@ export async function metricas(req: Request, res: Response): Promise<void> {
         passeioId: { in: idsPasseios },
         status: { not: 'CANCELADO' },
       },
-      select: { acompanhantes: true, status: true, passeioId: true, passeio: { select: { preco: true } } },
+      select: { acompanhantes: true, status: true, passeioId: true, passeio: { select: { preco: true, status: true } } },
     });
 
     // Vagas preenchidas
@@ -95,10 +95,10 @@ export async function metricas(req: Request, res: Response): Promise<void> {
       ? Math.round((realizados / totalFinal) * 100)
       : 0;
 
-    // Receita gerada (soma dos preços dos passeios com agendamentos não-cancelados)
+    // Receita gerada (soma dos preços dos passeios realizados multiplicada pelas vagas de agendamentos não-cancelados)
     const receita = agendamentos
-      .filter(a => a.status !== 'CANCELADO')
-      .reduce((s, a) => s + Number(a.passeio.preco), 0);
+      .filter(a => a.status !== 'CANCELADO' && a.passeio.status === 'REALIZADO')
+      .reduce((s, a) => s + (Number(a.passeio.preco) * (1 + (a.acompanhantes || 0))), 0);
 
     res.json({
       periodo: { inicio, fim },
@@ -177,23 +177,20 @@ export async function faturamento(req: Request, res: Response): Promise<void> {
     const { inicio, fim } = extrairPeriodo(req);
     const { ordenar } = req.query;
 
-    const atribuicoes = await prisma.slotAtribuicao.findMany({
+    const passeios = await prisma.passeio.findMany({
       where: {
         status: 'REALIZADO',
-        slotPasseio: {
-          instancias: {
-            some: {
-              data: { gte: inicio, lte: fim },
-            },
-          },
-        },
+        data: { gte: inicio, lte: fim },
+        ativo: true,
       },
       include: {
-        vagoneteiro: { select: { id: true, name: true } },
-        slotPasseio: { select: { titulo: true, valor: true } },
-        instancia: { select: { data: true, horaInicio: true } },
+        usuario: { select: { id: true, name: true } },
+        agendamentos: {
+          where: { status: { not: 'CANCELADO' } },
+          select: { acompanhantes: true },
+        },
       },
-      orderBy: { atribuidoEm: 'desc' },
+      orderBy: { data: 'desc' },
     });
 
     // Agrupar por vagoneteiro
@@ -204,20 +201,24 @@ export async function faturamento(req: Request, res: Response): Promise<void> {
       total: number;
     }> = {};
 
-    for (const attr of atribuicoes) {
-      const vid = attr.vagoneteiro.id;
+    for (const p of passeios) {
+      if (!p.usuario) continue;
+      const vid = p.usuario.id;
       if (!porVagoneteiro[vid]) {
         porVagoneteiro[vid] = {
           id: vid,
-          nome: attr.vagoneteiro.name,
+          nome: p.usuario.name,
           passeios: [],
           total: 0,
         };
       }
-      const valor = Number(attr.slotPasseio.valor);
+      
+      const qtdVagas = p.agendamentos.reduce((acc, a) => acc + 1 + (a.acompanhantes || 0), 0);
+      const valor = Number(p.preco) * qtdVagas;
+
       porVagoneteiro[vid].passeios.push({
-        titulo: attr.slotPasseio.titulo,
-        data: attr.instancia?.data?.toISOString().slice(0, 10) || '',
+        titulo: `Passeio #${p.id} - ${p.horario}`,
+        data: p.data.toISOString().slice(0, 10),
         valor,
       });
       porVagoneteiro[vid].total += valor;
