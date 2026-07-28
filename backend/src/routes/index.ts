@@ -34,24 +34,49 @@ router.get('/dashboard/faturamento', faturamento);
 router.get('/galeria/fotos', listarFotosGaleria);
 router.get('/galeria/imagem/:fileId', servirImagemGaleria);
 
-// Painel admin — resumo unificado
+// Painel admin — resumo unificado (com filtro de período opcional)
 router.get('/painel/resumo', async (req: Request, res: Response) => {
   try {
-    const [totalAgendamentos, totalClientes, totalAvaliacoes, realizadosSlot] = await Promise.all([
-      prisma.agendamento.count(),
+    const { inicio, fim } = req.query;
+
+    // Filtro de data opcional: aplica nos agendamentos via passeio.data
+    const filtroData = inicio && fim
+      ? { passeio: { data: { gte: new Date(inicio as string), lte: new Date(fim as string) } } }
+      : {};
+
+    const filterAgendamentos = Object.keys(filtroData).length > 0 ? filtroData : {};
+
+    const [totalAgendamentos, totalClientes, realizadosSlot] = await Promise.all([
+      prisma.agendamento.count({ where: filterAgendamentos }),
       prisma.clientes.count(),
-      prisma.avaliacao.count(),
-      prisma.slotAtribuicao.count({ where: { status: 'REALIZADO' } }),
+      prisma.slotAtribuicao.count({
+        where: {
+          status: 'REALIZADO',
+          ...(inicio && fim ? {
+            slotPasseio: {
+              instancias: {
+                some: {
+                  data: { gte: new Date(inicio as string), lte: new Date(fim as string) },
+                },
+              },
+            },
+          } : {}),
+        },
+      }),
     ]);
 
     const totalTuristas = await prisma.agendamento.aggregate({
+      where: filterAgendamentos,
       _sum: { acompanhantes: true },
     });
     const totalAgendamentosCount = totalAgendamentos + (totalTuristas._sum.acompanhantes || 0);
 
     const receita = await prisma.agendamento.findMany({
-      where: { status: { not: 'CANCELADO' } },
-      select: { passeio: { select: { preco: true } }, acompanhantes: true },
+      where: { status: { not: 'CANCELADO' }, ...filterAgendamentos },
+      select: {
+        passeio: { select: { preco: true } },
+        acompanhantes: true,
+      },
     });
     const receitaEstimada = receita.reduce((s, a) => s + Number(a.passeio.preco) * (1 + (a.acompanhantes || 0)), 0);
 

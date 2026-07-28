@@ -35,7 +35,14 @@ async function upsertPushSubscription(clienteId: number, token: string, userAgen
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    const { inicio, fim } = req.query;
+
+    const filtroData = inicio && fim
+      ? { passeio: { data: { gte: new Date(inicio as string), lte: new Date(fim as string) } } }
+      : {};
+
     const agendamentos = await prisma.agendamento.findMany({
+      where: Object.keys(filtroData).length > 0 ? filtroData : undefined,
       include: {
         cliente: { select: { id: true, nome: true, cpf: true } },
         passeio: {
