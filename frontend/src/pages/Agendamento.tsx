@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { InformacoesPessoais } from "../components/InformacoesPessoaisForm";
 import { HorariosDia } from "../components/HorariosDias";
+import { formatBRL } from "../utils/format";
 import { useAuth } from "../contexts/AuthContext";
 import conteudo from "../assets/conteudo.json";
 import { api } from "../services/api";
