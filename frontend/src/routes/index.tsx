@@ -3,6 +3,7 @@ import { Home } from "../pages/Home";
 import { Layout } from "../components/Layout";
 import { Galeria } from "../pages/Galeria";
 import { Cadastro } from "../pages/Cadastro";
+import { RedefinirSenha } from "../pages/RedefinirSenha";
 import { Agendamento } from "../pages/Agendamento";
 import { Historia } from "../pages/Historia";
 import { PainelAdmin } from "../pages/PainelAdm";
@@ -55,6 +56,10 @@ export const router = createBrowserRouter([
       {
         path: "/editar-passeio/:id",
         element: <EditarPasseio />
+      },
+      {
+        path: "/redefinir-senha",
+        element: <RedefinirSenha />
       },
       {
         path: "/consulta-agendamento",

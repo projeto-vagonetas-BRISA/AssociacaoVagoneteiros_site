@@ -14,6 +14,11 @@ function looksLikeCpf(value: string): boolean {
 }
 
 export function LoginPopUp({ onClose }: LoginPopUpProps) {
+  const [esqueciSenha, setEsqueciSenha] = useState(false);
+  const [emailReset, setEmailReset] = useState('');
+  const [mensagemReset, setMensagemReset] = useState<string | null>(null);
+  const [erroReset, setErroReset] = useState<string | null>(null);
+  const [enviandoReset, setEnviandoReset] = useState(false);
 
     const popUpRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640); // 640px = Tailwind's `sm`
@@ -196,9 +201,12 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                                     className="block text-sm font-medium text-slate-400">
                                     Senha
                                 </label>
-                                <a href="#" className="text-xs font-medium text-red-dark hover:text-red transition-colors">
+                                <button
+                                  type="button"
+                                  onClick={() => setEsqueciSenha(true)}
+                                  className="text-xs font-medium text-red-dark hover:text-red transition-colors cursor-pointer bg-none border-none">
                                     Esqueceu sua senha?
-                                </a>
+                                </button>
                             </div>
                             <div className="mt-1.5">
                                 <input
@@ -212,18 +220,77 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             </div>
                         </div>
 
-                        {error && (
-                            <div className="rounded-lg bg-red-dark/20 border border-red-dark/40 px-4 py-3">
-                                <p className="text-sm text-red-300 text-center">{error}</p>
+                        {esqueciSenha ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-slate-300 text-center">
+                              Digite seu e-mail cadastrado e enviaremos um link para redefinir sua senha.
+                            </p>
+                            <input
+                              type="email"
+                              value={emailReset}
+                              onChange={e => setEmailReset(e.target.value)}
+                              placeholder="seu@email.com"
+                              className="block w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 bg-[#0d1117] border border-white/10 focus:outline-none focus:ring-1 focus:border-blue focus:ring-blue transition-colors"
+                            />
+                            {erroReset && (
+                              <p className="text-sm text-red-300 text-center">{erroReset}</p>
+                            )}
+                            {mensagemReset && (
+                              <p className="text-sm text-green-300 text-center">{mensagemReset}</p>
+                            )}
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => { setEsqueciSenha(false); setMensagemReset(null); setErroReset(null); }}
+                                className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors cursor-pointer"
+                              >
+                                Voltar
+                              </button>
+                              <button
+                                type="button"
+                                disabled={enviandoReset || !emailReset}
+                                onClick={async () => {
+                                  setErroReset(null);
+                                  setMensagemReset(null);
+                                  if (!emailReset) { setErroReset('Informe seu e-mail.'); return; }
+                                  setEnviandoReset(true);
+                                  try {
+                                    const res = await fetch('/api/auth/esqueci-senha', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ email: emailReset }),
+                                    });
+                                    const data = await res.json();
+                                    if (!res.ok) {
+                                      setErroReset(data.message || 'Erro ao enviar email');
+                                    } else {
+                                      setMensagemReset(data.message);
+                                    }
+                                  } catch {
+                                    setErroReset('Erro de conexão. Tente novamente.');
+                                  }
+                                  setEnviandoReset(false);
+                                }}
+                                className="flex-1 rounded-lg bg-red-dark px-3 py-2.5 text-sm font-semibold text-white hover:bg-red transition-colors disabled:opacity-60 cursor-pointer"
+                              >
+                                {enviandoReset ? 'Enviando...' : 'Enviar'}
+                              </button>
                             </div>
-                        )}
-
-                        <button
+                          </div>
+                        ) : (
+                          <>
+                            {error && (
+                              <div className="rounded-lg bg-red-dark/20 border border-red-dark/40 px-4 py-3">
+                                <p className="text-sm text-red-300 text-center">{error}</p>
+                              </div>
+                            )}
+                            <button
                             type="submit"
                             disabled={isSubmitting}
                             className="flex w-full cursor-pointer justify-center rounded-lg bg-red-dark px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue disabled:opacity-60 disabled:cursor-not-allowed">
                             {isSubmitting ? "Entrando..." : "Login"}
                         </button>
+                          </>)
 
                         {/* <div className="pt-4 border-t border-white/10 space-y-3">
                             <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">

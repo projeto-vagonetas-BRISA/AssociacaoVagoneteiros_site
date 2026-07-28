@@ -259,3 +259,14 @@ model AvaliacaoCache {
 
   @@map("AvaliacaoCache")
 }
+
+model ResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  usado     Boolean  @default(false)
+  expiraEm  DateTime
+  criadoEm  DateTime @default(now())
+
+  @@map("ResetToken")
+}
