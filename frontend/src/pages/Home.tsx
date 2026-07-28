@@ -1,15 +1,23 @@
-import React from "react";
-import { MapPin, Clock } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { MapPin, Clock, Star } from "lucide-react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { SectionHeader } from "../components/SectionHeader";
 import { TimelineCard } from "../components/TimelineCard";
+import { api } from "../services/api";
 
 import Logo from "../assets/logo.png";
 import conteudo from "../assets/conteudo.json";
 import { imagens } from "../assets/imagens";
 
 export const Home: React.FC = () => {
+  const [avaliacao, setAvaliacao] = useState<{ avaliacaoMedia: number; totalAvaliacoes: number } | null>(null);
+
+  useEffect(() => {
+    api.request<{ avaliacaoMedia: number; totalAvaliacoes: number }>("/painel/avaliacao")
+      .then(r => setAvaliacao(r))
+      .catch(() => {});
+  }, []);
   return (
     <div className="flex flex-col items-start w-full">
 
@@ -199,9 +207,20 @@ export const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-12 md:gap-16">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <h2 className="font-bold text-3xl md:text-4xl text-black text-center tracking-tight uppercase">
-                {conteudo.avaliacoes.titulo}
-              </h2>
+              <div className="flex items-center gap-4">
+                <h2 className="font-bold text-3xl md:text-4xl text-black tracking-tight uppercase">
+                  {conteudo.avaliacoes.titulo}
+                </h2>
+                {avaliacao && avaliacao.avaliacaoMedia > 0 && (
+                  <span className="flex items-center gap-1.5 text-xl md:text-2xl font-bold text-amber-500 shrink-0">
+                    <Star className="size-5 md:size-6 fill-amber-500" strokeWidth={1.5} />
+                    {avaliacao.avaliacaoMedia.toFixed(1)}
+                    <span className="text-base md:text-lg font-semibold text-text-secondary">
+                      ({avaliacao.totalAvaliacoes})
+                    </span>
+                  </span>
+                )}
+              </div>
               <Button text={conteudo.avaliacoes.botao.texto} variant="secondary" icon="star" onClick={() => window.open('https://www.google.com/search?sca_esv=160fecc51e0f0354&sxsrf=APpeQnsw5C3VRPon4DYoUDLm5lqhN6xECA:1784676258941&si=APenkKm7iecQ4G6P-TsbSMFKIQtv3EFIqRAFw-i8uEbk55Z-_zYJXj1ba_IkP5Hhe_TE_i5B9O_uZfSbZ0e1v5ODwyF267foBqvRMlVFKD3JTS1PG7X2xlSCnoKePZB4ly45NojLQen9AWNV56Tzv3Ck5YCySqi9CXrt-Q28G7vaSSpKGLKIq28%3D&q=Vagonetas+dos+Molhes+da+Barra+Coment%C3%A1rios&sa=X&ved=2ahUKEwjE2s-T9eSVAxXPBrkGHc64C7wQ0bkNegQIHBAF&biw=1528&bih=732&dpr=1.25#lrd=0x951183d1b248dfb3:0xc051970bebca8884,3,,,,', '_blank')} />
             </div>
 
