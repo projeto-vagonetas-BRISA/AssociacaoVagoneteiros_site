@@ -165,6 +165,8 @@ Suas informações ficam disponíveis no sistema:
 
 ### 4.2 Login
 
+![Login](screenshots/03-login.png)
+
 - Login via **popup modal**
 - CPF (com ou sem formatação) ou email
 - Senha verificada com bcrypt
@@ -238,6 +240,8 @@ Exibe informações sobre preços e valores dos passeios para turistas.
 > **NOVO na v1.1!** O Dashboard traz uma visão analítica completa do negócio.
 
 ### 5.1 Acessando o Dashboard
+
+![Dashboard](screenshots/09-dashboard.png)
 
 1. Faça login como **ADMIN** ou **REDATOR**
 2. No painel administrativo, clique em **"Dashboard"**
