@@ -949,14 +949,15 @@ export const PainelAdmin: React.FC = () => {
                   const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
                   return { inicio: inicio.toISOString().slice(0,10), fim: fim.toISOString().slice(0,10) };
                 } },
-                { label: '📈 Personalizado', preset: 'custom', get: () => ({ inicio: modalRelatorio.inicio, fim: modalRelatorio.fim }) },
-              ].map(({ label, preset, get }) => (
+                {
+                  label: '📈 Personalizado', preset: 'custom', get: () => ({ inicio: modalRelatorio.inicio, fim: modalRelatorio.fim }),
+                  onClick: () => setModalRelatorio(m => ({ ...m, preset: 'custom' })),
+                },
+              ].map(({ label, preset, get, onClick }) => (
                 <button
                   key={preset}
                   onClick={async () => {
-                    if (preset === 'custom') {
-                      if (!modalRelatorio.inicio || !modalRelatorio.fim) return;
-                    }
+                    if (onClick) { onClick(); return; }
                     const { inicio, fim } = get();
                     setModalRelatorio({ ...modalRelatorio, open: false });
                     await gerarRelatorioGeral(inicio, fim);
