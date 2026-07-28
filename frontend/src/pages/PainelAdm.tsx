@@ -216,6 +216,7 @@ export const PainelAdmin: React.FC = () => {
   const [editNota, setEditNota] = useState('');
   const [editTotal, setEditTotal] = useState('');
   const [salvandoAvaliacao, setSalvandoAvaliacao] = useState(false);
+  const [modalRelatorio, setModalRelatorio] = useState<{ open: boolean; inicio: string; fim: string; preset: string }>({ open: false, inicio: '', fim: '', preset: 'mensal' });
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -223,11 +224,11 @@ export const PainelAdmin: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handler = () => gerarRelatorioGeral();
+    const handler = () => setModalRelatorio(prev => ({ ...prev, open: true }));
     window.addEventListener('gerarRelatorioGeral', handler);
     return () => window.removeEventListener('gerarRelatorioGeral', handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadingData]);
+  }, []);
 
   // A tabela usa passeiosData paginado; o histórico usa todosPasseios (carregado com limit=100)
   const passeios = passeiosData?.data || [];
@@ -335,8 +336,30 @@ export const PainelAdmin: React.FC = () => {
 
   const getClienteNome = (id: number) => clientes.find(c => c.id === id)?.nome || `Cliente #${id}`;
 
-  async function gerarRelatorioGeral() {
+  async function gerarRelatorioGeral(inicio?: string, fim?: string) {
     const { default: jsPDF } = await import('jspdf');
+
+    // Buscar dados frescos do backend para o período
+    const [resumo, passeiosList, vagoneteirosList, agendamentosList, avaliacaoResult] = await Promise.all([
+      api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>(
+        inicio && fim ? `/painel/resumo?inicio=${inicio}&fim=${fim}` : '/painel/resumo'
+      ),
+      api.request<any>('/passeios?limit=200'),
+      api.request<any>('/usuarios/vagoneteiros?limit=200'),
+      api.request<any[]>(
+        inicio && fim ? `/agendamentos?inicio=${inicio}&fim=${fim}` : '/agendamentos'
+      ),
+      api.request<{ avaliacaoMedia: number }>('/painel/avaliacao'),
+    ]);
+
+    const totalTuristasRel = resumo?.totalTuristas ?? 0;
+    const passeiosRealizadosRel = resumo?.passeiosRealizados ?? 0;
+    const receitaEstimadaRel = resumo?.receitaEstimada ?? 0;
+    const avaliacaoMediaRel = (avaliacaoResult?.avaliacaoMedia ?? 0).toFixed(1);
+    const todosPasseiosRel = passeiosList?.data ?? [];
+    const allVagRel = vagoneteirosList?.data ?? [];
+    const agendamentosRel = agendamentosList ?? [];
+
     const doc = new jsPDF('portrait', 'mm', 'a4');
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
@@ -352,20 +375,27 @@ export const PainelAdmin: React.FC = () => {
     };
 
     const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const periodoLabel = inicio && fim
+      ? `${new Date(inicio + 'T12:00:00').toLocaleDateString('pt-BR')} — ${new Date(fim + 'T12:00:00').toLocaleDateString('pt-BR')}`
+      : 'Geral (todo período)';
 
     // Cabeçalho do PDF
-    doc.setFillColor(15, 23, 43); // blue-dark
+    doc.setFillColor(15, 23, 43);
     doc.rect(0, 0, pw, 22, 'F');
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('Relatório Geral — Vagoneteiros dos Molhes da Barra', margin, 14);
+    doc.text('Relatório — Vagoneteiros dos Molhes da Barra', margin, 14);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em ${hoje}`, colRight, 14, { align: 'right' });
+    y = 25;
+    doc.setFontSize(7);
+    doc.setTextColor(200, 200, 200);
+    doc.text(periodoLabel, margin, y);
     y = 32;
 
-    // Estatísticas do PDF
+    // Estatísticas
     doc.setTextColor(24, 28, 33);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -376,10 +406,10 @@ export const PainelAdmin: React.FC = () => {
     y += 5;
 
     const stats = [
-      ['Total de Turistas', String(totalTuristas)],
-      ['Passeios Realizados', String(passeiosRealizados)],
-      ['Receita Estimada', formatBRL(receitaEstimada)],
-      ['Avaliação Média', `${avaliacaoMedia} / 5`],
+      ['Total de Turistas', String(totalTuristasRel)],
+      ['Passeios Realizados', String(passeiosRealizadosRel)],
+      ['Receita Estimada', formatBRL(receitaEstimadaRel)],
+      ['Avaliação Média', `${avaliacaoMediaRel} / 5`],
     ];
     doc.setFontSize(9);
     const colW = (pw - margin * 2) / 2;
@@ -395,23 +425,21 @@ export const PainelAdmin: React.FC = () => {
     });
     y += 18;
 
-    // Tabela de Passeios no PDF
+    // Tabela de Passeios
     addPageIfNeeded(20);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(24, 28, 33);
     doc.text('Passeios Cadastrados', margin, y);
     y += 6;
-    doc.setDrawColor(230, 232, 240);
     doc.line(margin, y, colRight, y);
     y += 5;
 
     const pHeaders = ['Data', 'Horário', 'Valor (R$)', 'Capacidade', 'Vagoneteiro'];
-    const pCols = [40, 22, 28, 26, 0]; // 0 = restante
+    const pCols = [40, 22, 28, 26, 0];
     const pTotalFixed = pCols.slice(0, -1).reduce((a, b) => a + b, 0);
     pCols[pCols.length - 1] = colRight - margin - pTotalFixed;
 
-    // cabeçalho tabela
     doc.setFillColor(242, 243, 251);
     doc.rect(margin, y, colRight - margin, 7, 'F');
     doc.setFontSize(8);
@@ -422,7 +450,7 @@ export const PainelAdmin: React.FC = () => {
     y += 8;
 
     doc.setFont('helvetica', 'normal');
-    todosPasseios.forEach((p, idx) => {
+    todosPasseiosRel.forEach((p: any, idx: number) => {
       addPageIfNeeded(8);
       if (idx % 2 === 0) { doc.setFillColor(248, 249, 255); doc.rect(margin, y, colRight - margin, 7, 'F'); }
       doc.setTextColor(24, 28, 33);
@@ -439,7 +467,7 @@ export const PainelAdmin: React.FC = () => {
     });
     y += 6;
 
-    // Tabela de Vagoneteiros no PDF
+    // Tabela de Vagoneteiros
     addPageIfNeeded(20);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -449,7 +477,6 @@ export const PainelAdmin: React.FC = () => {
     doc.line(margin, y, colRight, y);
     y += 5;
 
-    const allVag = vagoneteirosData?.data || [];
     const vHeaders = ['Nome', 'CPF', 'Telefone', 'Status'];
     const vCols = [60, 35, 35, 0];
     const vTotalFixed = vCols.slice(0, -1).reduce((a, b) => a + b, 0);
@@ -465,7 +492,7 @@ export const PainelAdmin: React.FC = () => {
     y += 8;
 
     doc.setFont('helvetica', 'normal');
-    allVag.forEach((v, idx) => {
+    allVagRel.forEach((v: any, idx: number) => {
       addPageIfNeeded(8);
       if (idx % 2 === 0) { doc.setFillColor(248, 249, 255); doc.rect(margin, y, colRight - margin, 7, 'F'); }
       doc.setTextColor(24, 28, 33);
@@ -478,7 +505,7 @@ export const PainelAdmin: React.FC = () => {
     });
     y += 6;
 
-    // Tabela de Agendamentos no PDF
+    // Tabela de Agendamentos
     addPageIfNeeded(20);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -503,7 +530,7 @@ export const PainelAdmin: React.FC = () => {
     y += 8;
 
     doc.setFont('helvetica', 'normal');
-    agendamentos.forEach((a, idx) => {
+    agendamentosRel.forEach((a: any, idx: number) => {
       addPageIfNeeded(8);
       if (idx % 2 === 0) { doc.setFillColor(248, 249, 255); doc.rect(margin, y, colRight - margin, 7, 'F'); }
       doc.setTextColor(24, 28, 33);
@@ -529,7 +556,8 @@ export const PainelAdmin: React.FC = () => {
       doc.text(`Página ${pg} de ${totalPages}`, pw / 2, ph - 6, { align: 'center' });
     }
 
-    doc.save(`relatorio-geral_${new Date().toISOString().slice(0, 10)}.pdf`);
+    const suffix = inicio && fim ? `${inicio}_a_${fim}` : 'geral';
+    doc.save(`relatorio_${suffix}.pdf`);
   }
 
   return (
@@ -895,6 +923,76 @@ export const PainelAdmin: React.FC = () => {
 
         </div>
       </main>
+
+      {/* Modal de filtro do relatório */}
+      {modalRelatorio.open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalRelatorio({ ...modalRelatorio, open: false })}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-lg text-text-dark mb-4">Exportar Relatório</h3>
+            <p className="text-sm text-text-secondary mb-4">Selecione o período do relatório:</p>
+            <div className="flex flex-col gap-2">
+              {[
+                { label: '📅 Hoje', preset: 'hoje', get: () => { const d = new Date(); return { inicio: d.toISOString().slice(0,10), fim: d.toISOString().slice(0,10) }; } },
+                { label: '📆 Esta Semana', preset: 'semana', get: () => {
+                  const hoje = new Date();
+                  const dia = hoje.getDay();
+                  const diff = hoje.getDate() - dia + (dia === 0 ? -6 : 1);
+                  const seg = new Date(hoje.setDate(diff));
+                  const dom = new Date(hoje.setDate(seg.getDate() + 6));
+                  return { inicio: seg.toISOString().slice(0,10), fim: dom.toISOString().slice(0,10) };
+                } },
+                { label: '📊 Este Mês', preset: 'mensal', get: () => {
+                  const d = new Date();
+                  const inicio = new Date(d.getFullYear(), d.getMonth(), 1);
+                  const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                  return { inicio: inicio.toISOString().slice(0,10), fim: fim.toISOString().slice(0,10) };
+                } },
+                { label: '📈 Personalizado', preset: 'custom', get: () => ({ inicio: modalRelatorio.inicio, fim: modalRelatorio.fim }) },
+              ].map(({ label, preset, get }) => (
+                <button
+                  key={preset}
+                  onClick={async () => {
+                    if (preset === 'custom') {
+                      if (!modalRelatorio.inicio || !modalRelatorio.fim) return;
+                    }
+                    const { inicio, fim } = get();
+                    setModalRelatorio({ ...modalRelatorio, open: false });
+                    await gerarRelatorioGeral(inicio, fim);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-bg-light-1 text-sm font-semibold text-text-primary transition-colors cursor-pointer text-left"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {modalRelatorio.preset === 'custom' && (
+              <div className="flex flex-col gap-2 mt-3">
+                <input type="date" value={modalRelatorio.inicio} onChange={e => setModalRelatorio({ ...modalRelatorio, inicio: e.target.value })}
+                  className="px-3 py-2 border border-border rounded-lg text-sm" />
+                <input type="date" value={modalRelatorio.fim} onChange={e => setModalRelatorio({ ...modalRelatorio, fim: e.target.value })}
+                  className="px-3 py-2 border border-border rounded-lg text-sm" />
+                <button
+                  onClick={async () => {
+                    if (!modalRelatorio.inicio || !modalRelatorio.fim) return;
+                    const { inicio, fim } = { inicio: modalRelatorio.inicio, fim: modalRelatorio.fim };
+                    setModalRelatorio({ ...modalRelatorio, open: false });
+                    await gerarRelatorioGeral(inicio, fim);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-blue-accent text-white text-sm font-semibold hover:bg-blue-dark mt-1 transition-colors cursor-pointer"
+                >
+                  Gerar Relatório
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setModalRelatorio({ ...modalRelatorio, open: false })}
+              className="w-full mt-3 px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-primary hover:bg-bg-light-1 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal de atualizar avaliação */}
       {modalAvaliacao && (
