@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { parseFiltroData } from '../utils/filtroData';
+import { enviarEmailConfirmacaoAgendamento } from '../utils/email';
 import { calculateNotificationTimes } from '../utils/notificationUtils';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
@@ -404,6 +405,18 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
         passeio: { select: { id: true, data: true, horario: true, preco: true } },
       },
     });
+
+    // Disparar email de confirmação se o cliente informou email
+    if (cliente.email) {
+      enviarEmailConfirmacaoAgendamento(
+        cliente.email,
+        cliente.nome,
+        agendamento.id,
+        agendamento.passeio.data.toISOString().slice(0, 10),
+        agendamento.passeio.horario,
+        `Passeio de Vagoneta #${agendamento.passeio.id} — R$ ${Number(agendamento.passeio.preco).toFixed(2).replace('.', ',')}`,
+      );
+    }
 
     res.status(201).json(agendamento);
   } catch (error) {
