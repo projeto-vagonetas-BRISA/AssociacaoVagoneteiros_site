@@ -1,10 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 import { Usuario, Perfil } from '@prisma/client';
-import { verifyToken } from '../utils/jwt';
-import prisma from '../lib/prisma';
+import { verifyToken, TokenPayload } from '../utils/jwt';
 
 export interface AuthenticatedRequest extends Request {
   user?: Omit<Usuario, 'senha'>;
+}
+
+/**
+ * Cria um objeto user parcial a partir do payload do JWT.
+ * Não busca no banco — usa apenas os dados contidos no token.
+ * Rotas que precisam de dados atualizados do banco devem buscá-los explicitamente.
+ */
+function payloadToUser(payload: TokenPayload): Omit<Usuario, 'senha'> {
+  return {
+    id: payload.id,
+    cpf: payload.cpf,
+    email: payload.email,
+    perfil: payload.perfil as Perfil,
+    name: '',
+    telefone: '',
+    historico: null,
+    experiencia: null,
+    ativo: true,
+    data_associacao: new Date(),
+    foto: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 }
 
 export async function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -26,20 +48,9 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
 
   try {
     const decoded = verifyToken(token);
-    
-    // Buscar o usuário no banco de dados para garantir que ele existe e obter os dados mais atualizados
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: decoded.id },
-    });
 
-    if (!usuario) {
-      res.status(401).json({ message: 'Usuário não encontrado' });
-      return;
-    }
-
-    // Injetar usuário na requisição (removendo a senha por segurança)
-    const { senha, ...usuarioSemSenha } = usuario;
-    req.user = usuarioSemSenha;
+    // Monta user a partir do payload do JWT sem consultar o banco
+    req.user = payloadToUser(decoded);
 
     next();
   } catch (error) {

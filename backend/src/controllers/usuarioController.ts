@@ -1,6 +1,8 @@
 import { Response } from 'express';
+import { Perfil } from '@prisma/client';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
+import { parseBase64Image, fotoParaBase64 } from '../utils/image';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -37,16 +39,16 @@ export async function listarVagoneteiros(req: AuthenticatedRequest, res: Respons
 
     const perfilFiltro = req.query.perfil as string | undefined;
 
-    let perfilWhere: any[];
+    let perfilWhere: Perfil[];
     if (perfilFiltro === 'ADMIN') {
-      perfilWhere = ['ADMIN'];
+      perfilWhere = [Perfil.ADMIN];
     } else if (perfilFiltro === 'VAGONETEIRO') {
-      perfilWhere = ['VAGONETEIRO'];
+      perfilWhere = [Perfil.VAGONETEIRO];
     } else {
-      perfilWhere = ['USUARIO', 'VAGONETEIRO'];
+      perfilWhere = [Perfil.USUARIO, Perfil.VAGONETEIRO];
     }
 
-    const where = { perfil: { in: perfilWhere as any } };
+    const where = { perfil: { in: perfilWhere } };
 
     const [vagoneteiros, total] = await Promise.all([
       prisma.usuario.findMany({
@@ -151,7 +153,7 @@ export async function atualizarPerfil(req: AuthenticatedRequest, res: Response):
     }
 
     const { perfil } = req.body;
-    const perfisValidos = ['USUARIO', 'VAGONETEIRO', 'ADMIN', 'REDATOR'];
+    const perfisValidos: Perfil[] = [Perfil.USUARIO, Perfil.VAGONETEIRO, Perfil.ADMIN, Perfil.REDATOR];
 
     if (!perfil || !perfisValidos.includes(perfil)) {
       res.status(400).json({
@@ -162,7 +164,7 @@ export async function atualizarPerfil(req: AuthenticatedRequest, res: Response):
 
     const usuario = await prisma.usuario.update({
       where: { id },
-      data: { perfil: perfil as any },
+      data: { perfil },
       select: {
         id: true,
         name: true,
@@ -208,13 +210,13 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
       if (foto === null) {
         data.foto = null;
       } else {
-        const base64Data = foto.includes('base64,') ? foto.split('base64,')[1] : foto;
-        const fotoBuffer = Buffer.from(base64Data, 'base64');
-        if (fotoBuffer.length > 5 * 1024 * 1024) {
-          res.status(400).json({ message: 'A foto deve ter no máximo 5MB' });
+        try {
+          const buf = parseBase64Image(foto);
+          data.foto = buf;
+        } catch (err: any) {
+          res.status(400).json({ message: err.message });
           return;
         }
-        data.foto = fotoBuffer;
       }
     }
 
@@ -237,7 +239,7 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
 
     res.json({
       ...updated,
-      foto: updated.foto ? Buffer.from(updated.foto).toString('base64') : null,
+      foto: fotoParaBase64(updated.foto),
     });
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);

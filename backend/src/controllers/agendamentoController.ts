@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { parseFiltroData } from '../utils/filtroData';
 import { enviarEmailConfirmacaoAgendamento } from '../utils/email';
 import { calculateNotificationTimes } from '../utils/notificationUtils';
+import { calcularVagasDisponiveis } from '../services/vagas.service';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
   // Check if this client already has a push subscription (FCM token)
@@ -135,16 +136,10 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Calcular vagas já ocupadas (1 por agendamento + acompanhantes)
-    const agendamentosAtivos = await prisma.agendamento.findMany({
-      where: { passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
-      select: { acompanhantes: true },
-    });
-    const vagasOcupadas = agendamentosAtivos.reduce((sum, a) => sum + 1 + a.acompanhantes, 0);
-
     // Verificar capacidade
+    const { disponiveis } = await calcularVagasDisponiveis(parsedPasseioId);
     const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
-    if (vagasOcupadas + vagasSolicitadas > passeio.capacidade) {
+    if (vagasSolicitadas > disponiveis) {
       res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
       return;
     }
@@ -296,14 +291,10 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // Calcular vagas já ocupadas (1 por agendamento + acompanhantes)
-    const agendamentosAtivos = await prisma.agendamento.findMany({
-      where: { passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
-      select: { acompanhantes: true },
-    });
-    const vagasOcupadas = agendamentosAtivos.reduce((sum, a) => sum + 1 + a.acompanhantes, 0);
+    // Verificar capacidade
+    const { disponiveis } = await calcularVagasDisponiveis(parsedPasseioId);
     const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
-    if (vagasOcupadas + vagasSolicitadas > passeio.capacidade) {
+    if (vagasSolicitadas > disponiveis) {
       res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
       return;
     }

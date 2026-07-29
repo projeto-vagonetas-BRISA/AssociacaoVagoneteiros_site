@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
 import { generateToken } from '../utils/jwt';
+import { parseBase64Image, fotoParaBase64 } from '../utils/image';
 
 // Helper para limpar formatação de CPF (remover pontos e traço)
 function cleanCPF(cpf: string): string {
@@ -80,11 +81,11 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
     // Processar foto (base64 → Buffer)
     let fotoBuffer: Buffer | undefined = undefined;
     if (foto) {
-      // Aceita formato "data:image/...;base64,..." ou base64 puro
-      const base64Data = foto.includes('base64,') ? foto.split('base64,')[1] : foto;
-      fotoBuffer = Buffer.from(base64Data, 'base64');
-      if (fotoBuffer.length > 5 * 1024 * 1024) {
-        res.status(400).json({ message: 'A foto deve ter no máximo 5MB' });
+      try {
+        const buf = parseBase64Image(foto);
+        if (buf) fotoBuffer = buf;
+      } catch (err: any) {
+        res.status(400).json({ message: err.message });
         return;
       }
     }
