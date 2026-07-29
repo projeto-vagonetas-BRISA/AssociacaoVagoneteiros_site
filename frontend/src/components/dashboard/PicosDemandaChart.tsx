@@ -11,7 +11,9 @@ type Aba = 'dia' | 'horario';
 export const PicosDemandaChart: React.FC<Props> = ({ porDiaSemana = [], porHorario = [] }) => {
   const [aba, setAba] = useState<Aba>('dia');
 
-  const dados = aba === 'dia' ? porDiaSemana : porHorario;
+  const dados: { key: string; total: number }[] = aba === 'dia'
+    ? porDiaSemana.map(d => ({ key: d.dia, total: d.total }))
+    : porHorario.map(d => ({ key: d.horario, total: d.total }));
   const label = aba === 'dia' ? 'Passageiros por Dia da Semana' : 'Passageiros por Horário';
 
   return (
@@ -35,14 +37,14 @@ export const PicosDemandaChart: React.FC<Props> = ({ porDiaSemana = [], porHorar
           <BarChart data={dados} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
-              dataKey={aba === 'dia' ? 'dia' : 'horario'}
+              dataKey="key"
               tick={{ fontSize: 12 }}
               tickLine={false}
             />
             <YAxis tick={{ fontSize: 12 }} tickLine={false} />
             <Tooltip
               contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}
-              formatter={(value: number) => [`${value} passageiros`, 'Total']}
+              formatter={(value: any) => [`${value} passageiros`, 'Total']}
             />
             <Bar dataKey="total" fill="var(--color-blue-accent)" radius={[4, 4, 0, 0]} />
           </BarChart>

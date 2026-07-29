@@ -233,7 +233,7 @@ export const AdminSlots: React.FC = () => {
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
                     placeholder="Ex: Passeio Matinal"
-                    required={tipo !== "LOTE"}
+                    required={(tipo as TipoSlot) !== "LOTE"}
                     className={inputClass}
                   />
                 </div>
