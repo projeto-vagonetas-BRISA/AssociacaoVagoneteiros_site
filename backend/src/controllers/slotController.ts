@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { PrismaClient, TipoSlot, DiaSemana, StatusSlot } from '@prisma/client';
 import { SlotFactory, SlotComponent } from '../services/agendamento.service';
-import { recorrenciaService, horaParaMinutos, minutosParaHora } from '../services/recorrencia.service';
+import { recorrenciaService, horaParaMinutos, minutosParaHora, SlotComInstancias } from '../services/recorrencia.service';
 
 const prisma = new PrismaClient();
 
@@ -91,7 +91,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
         include: { instancias: true },
       });
       if (slotComInstancias) {
-        await recorrenciaService.expandirSlot(slotComInstancias as any, { inicio: hoje, fim: fimMes });
+        await recorrenciaService.expandirSlot(slotComInstancias as SlotComInstancias, { inicio: hoje, fim: fimMes });
       }
     }
 
@@ -261,7 +261,7 @@ export async function expandir(req: AuthenticatedRequest, res: Response): Promis
       fim: fim ? new Date(fim) : new Date(new Date().getFullYear(), 11, 31),
     };
 
-    const resultado = await recorrenciaService.expandirSlot(slot as any, periodo);
+    const resultado = await recorrenciaService.expandirSlot(slot as unknown as SlotComInstancias, periodo);
 
     res.json(resultado);
   } catch (error) {

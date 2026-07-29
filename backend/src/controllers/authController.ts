@@ -3,18 +3,8 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
 import { generateToken } from '../utils/jwt';
-import { parseBase64Image, fotoParaBase64 } from '../utils/image';
-
-// Helper para limpar formatação de CPF (remover pontos e traço)
-function cleanCPF(cpf: string): string {
-  return cpf.replace(/\D/g, '');
-}
-
-// Helper para validar e-mail simples
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
+import { parseBase64Image } from '../utils/image';
+import { cleanCPF, isValidEmail } from '../utils/documento';
 
 export async function cadastro(req: Request, res: Response): Promise<void> {
   try {

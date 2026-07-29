@@ -353,7 +353,8 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
     }
 
     const wantsNotification = notificacao === true || notificacao === 'true';
-    const cleanedToken = typeof (req.body as any).fcmToken === 'string' ? (req.body as any).fcmToken.trim() : '';
+    const rawToken = req.body?.fcmToken;
+    const cleanedToken = typeof rawToken === 'string' ? rawToken.trim() : '';
     let pushSubscription = null;
 
     if (wantsNotification && cleanedToken) {

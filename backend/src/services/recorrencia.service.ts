@@ -15,6 +15,9 @@ const DIAS_SEMANA_MAP: Record<number, DiaSemana> = {
 
 // ─── TIPOS ─────────────────────────────────────────────────────────
 
+/** Slot com instâncias incluídas para expansão */
+export type SlotComInstancias = SlotPasseio & { instancias: SlotInstancia[] };
+
 export interface LoteConfig {
   titulo: string;
   descricao?: string;
@@ -95,7 +98,7 @@ export class RecorrenciaService {
    * Expande um SlotPasseio FIXO em instâncias para um período
    */
   async expandirSlot(
-    slot: SlotPasseio & { instancias: SlotInstancia[] },
+    slot: SlotComInstancias,
     periodo: { inicio: Date; fim: Date }
   ): Promise<ExpandirResultado> {
     if (slot.tipo !== TipoSlot.FIXO || slot.diaSemana === null) {
@@ -307,7 +310,7 @@ export class RecorrenciaService {
     let totalIgnoradas = 0;
 
     for (const slot of slots) {
-      const resultado = await this.expandirSlot(slot as any, periodo);
+      const resultado = await this.expandirSlot(slot as SlotComInstancias, periodo);
       totalCriadas += resultado.criadas;
       totalIgnoradas += resultado.ignoradas;
     }
@@ -337,7 +340,7 @@ export class RecorrenciaService {
 
     // Se for FIXO, primeiro expande para criar instâncias faltantes
     if (slot.tipo === 'FIXO') {
-      await this.expandirSlot(slot as any, periodo);
+      await this.expandirSlot(slot as SlotComInstancias, periodo);
     }
 
     // Retorna TODAS as instâncias do banco no período

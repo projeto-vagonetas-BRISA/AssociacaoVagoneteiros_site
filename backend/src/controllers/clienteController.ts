@@ -1,11 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
-
-// Helper para limpar CPF
-function cleanCPF(cpf: string): string {
-  return cpf.replace(/\D/g, '');
-}
+import { cleanCPF } from '../utils/documento';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {

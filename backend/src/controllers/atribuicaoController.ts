@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { conflitoService } from '../services/agendamento.service';
-import { StatusAtribuicao } from '@prisma/client';
+import { StatusAtribuicao, Prisma } from '@prisma/client';
 
 // ─── AUTO-ATRIBUIÇÃO (modelo Uber) ────────────────────────────────
 
@@ -169,7 +169,7 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
     const limite = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
     const skip = (pagina - 1) * limite;
 
-    const where: any = { vagoneteiroId };
+    const where: Prisma.SlotAtribuicaoWhereInput = { vagoneteiroId };
     if (status) where.status = status as string;
 
     const [atribuicoes, total] = await Promise.all([
@@ -324,7 +324,7 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
         });
         await prisma.agendamento.updateMany({
           where: { passeioId: passeioExistente.id, status: { not: 'CANCELADO' } },
-          data: { status: 'CANCELADO' as any },
+          data: { status: StatusAtribuicao.CANCELADO },
         });
       } else {
         await prisma.passeio.update({
@@ -428,7 +428,7 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
           passeioId: passeioExistente.id,
           status: { not: 'CANCELADO' }
         },
-        data: { status: 'REALIZADO' as any }
+        data: { status: StatusAtribuicao.REALIZADO }
       });
     }
 

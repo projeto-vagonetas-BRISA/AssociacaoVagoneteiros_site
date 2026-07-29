@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { parseFiltroData } from '../utils/filtroData';
-import { StatusPasseio } from '@prisma/client';
+import { StatusPasseio, Prisma } from '@prisma/client';
 
 export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -12,7 +12,7 @@ export async function listar(req: AuthenticatedRequest, res: Response): Promise<
 
     const { inicio, fim } = req.query;
 
-    const where: any = { ativo: true };
+    const where: Prisma.PasseioWhereInput = { ativo: true };
     const filtroDate = parseFiltroData(inicio as string, fim as string);
     if (filtroDate) {
       where.data = filtroDate;
@@ -245,10 +245,10 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
       include: { usuario: { select: { id: true, name: true } } },
     });
 
-    if (status === 'REALIZADO' || status === 'CANCELADO') {
+    if (status === StatusPasseio.REALIZADO || status === StatusPasseio.CANCELADO) {
       await prisma.agendamento.updateMany({
         where: { passeioId: id, status: { not: 'CANCELADO' } },
-        data: { status: status as any },
+        data: { status },
       });
     }
 
@@ -282,7 +282,7 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 
     await prisma.agendamento.updateMany({
       where: { passeioId: id, status: { not: 'CANCELADO' } },
-      data: { status: 'CANCELADO' as any },
+      data: { status: StatusPasseio.CANCELADO },
     });
 
     res.json({ message: 'Passeio cancelado com sucesso' });
