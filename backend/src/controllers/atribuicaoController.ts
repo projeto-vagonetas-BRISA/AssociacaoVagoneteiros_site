@@ -170,7 +170,9 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
     const skip = (pagina - 1) * limite;
 
     const where: Prisma.SlotAtribuicaoWhereInput = { vagoneteiroId };
-    if (status) where.status = status as string;
+    if (status && Object.values(StatusAtribuicao).includes(status as StatusAtribuicao)) {
+      where.status = status as StatusAtribuicao;
+    }
 
     const [atribuicoes, total] = await Promise.all([
       prisma.slotAtribuicao.findMany({
