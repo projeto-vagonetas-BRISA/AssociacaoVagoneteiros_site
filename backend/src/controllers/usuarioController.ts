@@ -281,7 +281,7 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
     }
 
     if (id === req.user!.id) {
-      res.status(400).json({ message: 'Você não pode deletar sua própria conta' });
+      res.status(400).json({ message: 'Você não pode desativar sua própria conta' });
       return;
     }
 
@@ -291,16 +291,14 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
       return;
     }
 
-    await prisma.usuario.delete({ where: { id } });
-    res.json({ message: 'Usuário deletado com sucesso' });
+    // Soft-delete: marcar como inativo em vez de remover do banco
+    await prisma.usuario.update({
+      where: { id },
+      data: { ativo: false },
+    });
+    res.json({ message: 'Usuário desativado com sucesso' });
   } catch (error: any) {
-    console.error('Erro ao deletar usuário:', error);
-    if (error?.code === 'P2003') {
-      res.status(400).json({
-        message: 'Usuário não pode ser deletado pois possui passeios ou dados associados',
-      });
-      return;
-    }
-    res.status(500).json({ message: 'Erro ao deletar usuário' });
+    console.error('Erro ao desativar usuário:', error);
+    res.status(500).json({ message: 'Erro ao desativar usuário' });
   }
 }

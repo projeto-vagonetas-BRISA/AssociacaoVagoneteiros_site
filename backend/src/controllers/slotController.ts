@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { PrismaClient, TipoSlot, DiaSemana, StatusSlot } from '@prisma/client';
