@@ -1,25 +1,52 @@
 import { useState } from "react";
-import { formatCpf, isValidCpf } from "@brazilian-utils/brazilian-utils";
+import { formatCpf, formatCnpj, isValidCpf, isValidCnpj } from "@brazilian-utils/brazilian-utils";
+
+export function validateNameValue(value: string): string {
+    const trimmed = value.trim();
+    if (trimmed.length < 3) return "Nome deve ter ao menos 3 caracteres.";
+    if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(trimmed)) return "Nome não pode conter números ou caracteres especiais.";
+    return "";
+}
+
+export function validateCpfValue(raw: string): string {
+    if (!raw.trim()) return "CPF é obrigatório.";
+    return !isValidCpf(raw) ? "CPF inválido." : "";
+}
+
+export function validateTelValue(raw: string): string {
+    const onlyDigits = raw.replace(/\D/g, "");
+    if (onlyDigits.length !== 11) return "Telefone inválido.";
+    if (onlyDigits[2] !== "9") return "Telefone inválido.";
+    return "";
+}
+
+export function validateCnpjValue(raw: string): string {
+    if (!raw.trim()) return "CNPJ é obrigatório.";
+    return !isValidCnpj(raw) ? "CNPJ inválido." : "";
+}
+
+export function validateEmailValue(value: string): string {
+    if (!value.trim()) return "E-mail é obrigatório.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "E-mail inválido.";
+    return "";
+}
 
 export function useNameField() {
     const [name, setName] = useState("");
     const [nameError, setNameError] = useState("");
 
     function validateName(value: string): string {
-        const trimmed = value.trim();
-        if (trimmed.length < 3) return "Nome deve ter ao menos 3 caracteres.";
-        if (!/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(trimmed)) return "Nome não pode conter números ou caracteres especiais.";
-        if (trimmed.split(/\s+/).length < 2) return "Informe nome e sobrenome.";
-        return "";
+        return validateNameValue(value);
     }
 
     function handleNameChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
         setName(value);
         setNameError(validateName(value));
+        return value;
     }
 
-    return { name, nameError, setNameError, handleNameChange, validateName };
+    return { name, nameError, setName, setNameError, handleNameChange, validateName };
 }
 
 export function useCpfField() {
@@ -28,19 +55,44 @@ export function useCpfField() {
 
     function handleCpfChange(event: React.ChangeEvent<HTMLInputElement>) {
         const onlyDigits = event.target.value.replace(/\D/g, "");
-        setCpf(formatCpf(onlyDigits));
+        const formatted = formatCpf(onlyDigits);
+        setCpf(formatted);
         if (onlyDigits.length === 11) {
             setCpfError(isValidCpf(onlyDigits) ? "" : "CPF inválido.");
         } else {
             setCpfError("");
         }
+        return formatted;
     }
 
     function validateCpf(raw: string): string {
-        return !isValidCpf(raw) ? "CPF inválido." : "";
+        return validateCpfValue(raw);
     }
 
-    return { cpf, cpfError, setCpfError, handleCpfChange, validateCpf };
+    return { cpf, cpfError, setCpf, setCpfError, handleCpfChange, validateCpf };
+}
+
+export function useCnpjField() {
+    const [cnpj, setCnpj] = useState("");
+    const [cnpjError, setCnpjError] = useState("");
+
+    function handleCnpjChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const onlyDigits = event.target.value.replace(/\D/g, "");
+        const formatted = formatCnpj(onlyDigits);
+        setCnpj(formatted);
+        if (onlyDigits.length === 14) {
+            setCnpjError(isValidCnpj(onlyDigits) ? "" : "CNPJ inválido.");
+        } else {
+            setCnpjError("");
+        }
+        return formatted;
+    }
+
+    function validateCnpj(raw: string): string {
+        return validateCnpjValue(raw);
+    }
+
+    return { cnpj, cnpjError, setCnpj, setCnpjError, handleCnpjChange, validateCnpj };
 }
 
 export function useTelField() {
@@ -66,20 +118,22 @@ export function useTelField() {
     function handleTelChange(event: React.ChangeEvent<HTMLInputElement>) {
         const onlyDigits = stripMask(event.target.value).slice(0, 11);
         const currentDigits = stripMask(tel);
-        if (isValidTel(currentDigits) && onlyDigits.length >= currentDigits.length) return;
-        setTel(formatTel(onlyDigits));
+        if (isValidTel(currentDigits) && onlyDigits.length >= currentDigits.length) return tel;
+        const formatted = formatTel(onlyDigits);
+        setTel(formatted);
         if (onlyDigits.length === 10 || onlyDigits.length === 11) {
             setTelError(isValidTel(onlyDigits) ? "" : "Telefone inválido.");
         } else {
             setTelError("");
         }
+        return formatted;
     }
 
     function validateTel(raw: string): string {
-        return !isValidTel(raw) ? "Telefone inválido." : "";
+        return validateTelValue(raw);
     }
 
-    return { tel, telError, setTelError, handleTelChange, validateTel, stripMask };
+    return { tel, telError, setTel, setTelError, handleTelChange, validateTel, stripMask };
 }
 
 export function usePasswordField() {
@@ -125,18 +179,17 @@ export function useEmailField() {
     const [emailError, setEmailError] = useState("");
 
     function validateEmail(value: string): string {
-        if (!value.trim()) return "E-mail é obrigatório.";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "E-mail inválido.";
-        return "";
+        return validateEmailValue(value);
     }
 
     function handleEmailChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
         setEmail(value);
         setEmailError(validateEmail(value));
+        return value;
     }
 
-    return { email, emailError, setEmailError, handleEmailChange, validateEmail };
+    return { email, emailError, setEmail, setEmailError, handleEmailChange, validateEmail };
 }
 
 export const fieldBase = "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all";

@@ -22,6 +22,7 @@ import { useAuth } from "../contexts/AuthContext";
 import conteudo from "../assets/conteudo.json";
 import { api } from "../services/api";
 import { getFcmToken } from "../services/firebase";
+import { validateNameValue, validateCpfValue, validateTelValue, validateEmailValue, validateCnpjValue } from "../utils/formValidations";
 
 interface Passeio {
   id: number;
@@ -214,13 +215,14 @@ export const Agendamento: React.FC = () => {
 
   // Validação básica para habilitar o botão Finalizar
   const podeFinalizarReserva =
-    nome.trim() !== "" &&
-    telefone.trim() !== "" &&
-    (isAgencia ? (documento.trim() !== "" && email.trim() !== "") : email.trim() !== "") &&
+    validateNameValue(nome) === "" &&
+    validateTelValue(telefone) === "" &&
+    validateEmailValue(email) === "" &&
     selectedPasseio !== null &&
     passageiros >= 1 &&
     ciente &&
-    !submitting;
+    !submitting &&
+    (isAgencia ? validateCnpjValue(documento.replace(/\D/g, "")) === "" : validateCpfValue(documento.replace(/\D/g, "")) === "");
 
   useEffect(() => {
     setPassageiros(1);

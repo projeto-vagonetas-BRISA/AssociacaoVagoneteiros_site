@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Users, Building2 } from "lucide-react";
+import { useNameField, useCpfField, useCnpjField, useTelField, useEmailField } from "../utils/formValidations";
 
 interface Props {
   nome: string;
@@ -39,6 +40,61 @@ export const InformacoesPessoais: React.FC<Props> = ({
   setConsentimentoNotificacao,
   
 }) => {
+  const {
+    name,
+    nameError,
+    setName,
+    handleNameChange,
+  } = useNameField();
+
+  const {
+    cpf,
+    cpfError,
+    setCpf,
+    handleCpfChange,
+  } = useCpfField();
+
+  const {
+    cnpj,
+    cnpjError,
+    setCnpj,
+    handleCnpjChange,
+  } = useCnpjField();
+
+  const {
+    tel,
+    telError,
+    setTel,
+    handleTelChange,
+  } = useTelField();
+
+  const {
+    email: emailValue,
+    emailError,
+    setEmail: setEmailField,
+    handleEmailChange,
+  } = useEmailField();
+
+  useEffect(() => {
+    if (nome !== name) setName(nome);
+  }, [nome, name, setName]);
+
+  useEffect(() => {
+    if (isAgencia) {
+      if (documento !== cnpj) setCnpj(documento);
+    } else {
+      if (documento !== cpf) setCpf(documento);
+    }
+  }, [isAgencia, documento, cpf, cnpj, setCpf, setCnpj]);
+
+  useEffect(() => {
+    if (telefone !== tel) setTel(telefone);
+  }, [telefone, tel, setTel]);
+
+  useEffect(() => {
+    if (email !== emailValue) setEmailField(email);
+  }, [email, emailValue, setEmailField]);
+
   const inputClass =
     "border border-border rounded-lg px-3 py-2 text-sm text-text-dark bg-bg-light-2 focus:outline-none focus:border-blue-accent transition-colors placeholder:text-[#c4c8d4]";
 
@@ -67,19 +123,14 @@ export const InformacoesPessoais: React.FC<Props> = ({
             <div className="flex flex-col gap-1">
               <label className={labelClass}>CNPJ:</label>
               <input
-                value={documento}
+                value={cnpj}
                 placeholder="00.000.000/0000-00"
                 maxLength={18}
                 onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "").slice(0, 14);
-                  const masked = digits
-                    .replace(/^(\d{2})(\d)/, "$1.$2")
-                    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-                    .replace(/\.(\d{3})(\d)/, ".$1/$2")
-                    .replace(/(\d{4})(\d)/, "$1-$2");
-                  setDocumento(masked);
+                  const formattedCnpj = handleCnpjChange(e);
+                  setDocumento(formattedCnpj);
 
-                  // Buscar automaticamente quando tiver 14 dígitos
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 14);
                   if (digits.length === 14) {
                     import('../services/api').then(({ api }) => {
                       api.request(`/clientes/busca/${digits}`)
@@ -96,42 +147,47 @@ export const InformacoesPessoais: React.FC<Props> = ({
                 }}
                 className={inputClass}
               />
+              {cnpjError && <p className="mt-1 text-xs text-red-500">{cnpjError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Nome da Agência:</label>
               <input
-                value={nome}
+                value={name}
                 placeholder="Razão social ou nome fantasia"
-                onChange={(e) => setNome(e.target.value)}
+                onChange={(e) => {
+                  const formattedName = handleNameChange(e);
+                  setNome(formattedName);
+                }}
                 className={inputClass}
               />
+              {nameError && <p className="mt-1 text-xs text-red-500">{nameError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Telefone:</label>
               <input
-                value={telefone}
+                value={tel}
                 placeholder="(xx) 9xxxx-xxxx"
                 maxLength={15}
                 onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  const masked = digits.length <= 2
-                    ? `(${digits}`
-                    : digits.length <= 7
-                      ? `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-                      : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
-                  setTelefone(masked);
+                  const formattedTel = handleTelChange(e);
+                  setTelefone(formattedTel);
                 }}
                 className={inputClass}
               />
+              {telError && <p className="mt-1 text-xs text-red-500">{telError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>E-mail:</label>
               <input
-                value={email}
+                value={emailValue}
                 placeholder="agencia@exemplo.com"
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const formattedEmail = handleEmailChange(e);
+                  setEmail(formattedEmail);
+                }}
                 className={inputClass}
               />
+              {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
             </div>
           </>
         ) : (
@@ -139,18 +195,13 @@ export const InformacoesPessoais: React.FC<Props> = ({
             <div className="flex flex-col gap-1">
               <label className={labelClass}>CPF:</label>
               <input
-                value={documento}
+                value={cpf}
                 placeholder="000.000.000-00"
                 maxLength={14}
                 onChange={(e) => {
+                  const formattedCpf = handleCpfChange(e);
+                  setDocumento(formattedCpf);
                   const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  const masked = digits
-                    .replace(/^(\d{3})(\d)/, "$1.$2")
-                    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-                    .replace(/\.(\d{3})(\d)/, ".$1-$2");
-                  setDocumento(masked);
-
-                  // Buscar automaticamente quando tiver 11 dígitos
                   if (digits.length === 11) {
                     import('../services/api').then(({ api }) => {
                       api.request(`/clientes/busca/${digits}`)
@@ -167,42 +218,47 @@ export const InformacoesPessoais: React.FC<Props> = ({
                 }}
                 className={inputClass}
               />
+              {cpfError && <p className="mt-1 text-xs text-red-500">{cpfError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Nome:</label>
               <input
-                value={nome}
+                value={name}
                 placeholder="Seu nome completo"
-                onChange={(e) => setNome(e.target.value)}
+                onChange={(e) => {
+                  const formattedName = handleNameChange(e);
+                  setNome(formattedName);
+                }}
                 className={inputClass}
               />
+              {nameError && <p className="mt-1 text-xs text-red-500">{nameError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Telefone:</label>
               <input
-                value={telefone}
+                value={tel}
                 placeholder="(xx) 9xxxx-xxxx"
                 maxLength={15}
                 onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  const masked = digits.length <= 2
-                    ? `(${digits}`
-                    : digits.length <= 7
-                      ? `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-                      : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
-                  setTelefone(masked);
+                  const formattedTel = handleTelChange(e);
+                  setTelefone(formattedTel);
                 }}
                 className={inputClass}
               />
+              {telError && <p className="mt-1 text-xs text-red-500">{telError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Email:</label>
               <input
-                value={email}
+                value={emailValue}
                 placeholder="seu.email@exemplo.com"
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const formattedEmail = handleEmailChange(e);
+                  setEmail(formattedEmail);
+                }}
                 className={inputClass}
               />
+              {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
             </div>
           </>
         )}
