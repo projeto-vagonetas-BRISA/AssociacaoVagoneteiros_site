@@ -56,6 +56,9 @@ export const AdminSlots: React.FC = () => {
   const [diaSemana, setDiaSemana] = useState("SEGUNDA");
   const [dataInicio, setDataInicio] = useState("");
 
+  // Campos de Horário Individual
+  const [data, setData] = useState("");
+
   // Campos de Geração em Lote
   const [loteDataInicio, setLoteDataInicio] = useState("");
   const [loteDataFim, setLoteDataFim] = useState("");
@@ -107,6 +110,10 @@ export const AdminSlots: React.FC = () => {
           if (dataInicio) body.dataInicio = dataInicio;
         }
 
+        if (tipo === "INDIVIDUAL") {
+          body.data = data;
+        }
+
         await api.request("/slots", {
           method: "POST",
           body: JSON.stringify(body),
@@ -121,6 +128,7 @@ export const AdminSlots: React.FC = () => {
       setHoraFim("09:30");
       setCapacidade("5");
       setValor("30");
+      setData("");
       setLoteDataInicio("");
       setLoteDataFim("");
       setLoteHoraInicio("08:00");
@@ -223,6 +231,20 @@ export const AdminSlots: React.FC = () => {
                     className={inputClass}
                   />
                 </div>
+                {tipo === "INDIVIDUAL" && (
+                  <div>
+                    <label className={labelClass}>
+                      Data <span className="text-red">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={data}
+                      onChange={(e) => setData(e.target.value)}
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                )}
                 <div>
                   <label className={labelClass}>
                     Hora Início <span className="text-red">*</span>

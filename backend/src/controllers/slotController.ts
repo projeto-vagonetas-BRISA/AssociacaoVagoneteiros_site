@@ -29,7 +29,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       tipo, titulo, descricao,
       horaInicio, horaFim, duracaoMinutos,
       diaSemana, dataInicio, dataFim, intervaloDias,
-      capacidade, valor, usuarioId,
+      capacidade, valor, usuarioId, data,
     } = req.body;
 
     // Validações básicas
@@ -58,6 +58,19 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       }
     }
 
+    let parsedData: Date | undefined;
+    if (parsedTipo === 'INDIVIDUAL') {
+      if (!data) {
+        res.status(400).json({ message: 'data é obrigatória para slots INDIVIDUAL' });
+        return;
+      }
+      parsedData = new Date(data);
+      if (Number.isNaN(parsedData.getTime())) {
+        res.status(400).json({ message: 'data inválida' });
+        return;
+      }
+    }
+
     const parsedValor = parseFloat(valor);
     const parsedCapacidade = parseInt(capacidade, 10);
     const parsedDuracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : calcularDuracao(horaInicio, horaFim);
@@ -71,8 +84,8 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
         horaFim,
         duracaoMinutos: parsedDuracao,
         diaSemana: parsedDiaSemana || null,
-        dataInicio: dataInicio ? new Date(dataInicio) : (parsedTipo === 'FIXO' ? new Date() : null),
-        dataFim: dataFim ? new Date(dataFim) : null,
+        dataInicio: parsedTipo === 'INDIVIDUAL' ? parsedData : (dataInicio ? new Date(dataInicio) : (parsedTipo === 'FIXO' ? new Date() : null)),
+        dataFim: parsedTipo === 'INDIVIDUAL' ? parsedData : (dataFim ? new Date(dataFim) : null),
         intervaloDias: intervaloDias ? parseInt(intervaloDias, 10) : null,
         capacidade: parsedCapacidade,
         valor: parsedValor,
@@ -81,6 +94,18 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       },
       include: { usuario: { select: { id: true, name: true } } },
     });
+
+    // Se for INDIVIDUAL, criar instância com data específica
+    if (parsedTipo === 'INDIVIDUAL' && parsedData) {
+      await prisma.slotInstancia.create({
+        data: {
+          slotPasseioId: slot.id,
+          data: parsedData,
+          horaInicio,
+          horaFim,
+        },
+      });
+    }
 
     // Se for FIXO, expandir automaticamente para as próximas semanas
     if (parsedTipo === 'FIXO') {
