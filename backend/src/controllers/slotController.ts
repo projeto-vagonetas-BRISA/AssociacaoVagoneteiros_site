@@ -315,6 +315,18 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
     // Calcula duracao se não veio
     const duracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : (horaFim ? calcularDuracao(horaInicio, horaFim) : 60);
 
+    const usuarioIdValue = usuarioId ? parseInt(usuarioId, 10) : req.user?.id;
+    if (!usuarioIdValue) {
+      res.status(400).json({ message: 'usuarioId é obrigatório para gerar o lote' });
+      return;
+    }
+
+    const usuarioExists = await prisma.usuario.findUnique({ where: { id: usuarioIdValue } });
+    if (!usuarioExists) {
+      res.status(400).json({ message: `Usuário com id ${usuarioIdValue} não encontrado` });
+      return;
+    }
+
     const slots = await recorrenciaService.gerarLote({
       titulo,
       descricao: descricao || undefined,
@@ -323,7 +335,7 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
       duracaoMinutos: duracao,
       capacidade: parseInt(capacidade, 10),
       valor: parseFloat(valor),
-      usuarioId: usuarioId ? parseInt(usuarioId, 10) : req.user?.id,
+      usuarioId: usuarioIdValue,
       dataInicio: dataInicio ? new Date(dataInicio) : undefined,
       dataFim: dataFim ? new Date(dataFim) : undefined,
     });

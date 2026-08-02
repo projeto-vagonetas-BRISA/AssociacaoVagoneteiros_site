@@ -51,6 +51,7 @@ model Passeio {
   agendamentos Agendamento[]
   avaliacoes   Avaliacao[]  
   slotAtribuicaoId Int?      @unique
+  slotInstanciaId Int?      @unique
   createdAt    DateTime      @default(now())
 }
 

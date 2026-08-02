@@ -257,27 +257,97 @@ export async function consultaPorDocumento(req: AuthenticatedRequest, res: Respo
   }
 }
 
+async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
+  const instancia = await prisma.slotInstancia.findUnique({
+    where: { id: instanciaId },
+    include: {
+      slotPasseio: {
+        include: {
+          usuario: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  if (!instancia) {
+    return null;
+  }
+
+  const slot = instancia.slotPasseio;
+  if (!slot || slot.status !== 'DISPONIVEL') {
+    throw new Error('Instância de slot indisponível para agendamento');
+  }
+  if (!slot.usuarioId) {
+    throw new Error('Slot sem vagoneteiro vinculado');
+  }
+
+  let passeio = await prisma.passeio.findFirst({
+    where: { slotInstanciaId: instancia.id },
+  });
+
+  if (!passeio) {
+    passeio = await prisma.passeio.create({
+      data: {
+        usuarioId: slot.usuarioId,
+        preco: slot.valor,
+        capacidade: slot.capacidade,
+        data: instancia.data,
+        horario: instancia.horaInicio,
+        status: 'CONFIRMADO',
+        ativo: true,
+        slotInstanciaId: instancia.id,
+      },
+    });
+  }
+
+  return passeio;
+}
+
 export async function agendarPublico(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { nome, telefone, email, documento, passeioId, promocao, notificacao, ciente, acompanhantes } = req.body;
+    const { nome, telefone, email, documento, passeioId, instanciaId, promocao, notificacao, ciente, acompanhantes } = req.body;
 
-    if (!nome || !telefone || !passeioId) {
-      res.status(400).json({ message: 'nome, telefone e passeioId são obrigatórios' });
+    if (!nome || !telefone || (!passeioId && !instanciaId)) {
+      res.status(400).json({ message: 'nome, telefone e instanciaId ou passeioId são obrigatórios' });
       return;
     }
 
-    const parsedPasseioId = Number(passeioId);
-    if (isNaN(parsedPasseioId)) {
+    const parsedInstanciaId = instanciaId ? Number(instanciaId) : undefined;
+    const parsedPasseioId = passeioId ? Number(passeioId) : undefined;
+
+    if (parsedInstanciaId !== undefined && isNaN(parsedInstanciaId)) {
+      res.status(400).json({ message: 'instanciaId inválido' });
+      return;
+    }
+    if (parsedPasseioId !== undefined && isNaN(parsedPasseioId)) {
       res.status(400).json({ message: 'passeioId inválido' });
       return;
     }
 
-    // Verificar se passeio existe
-    const passeio = await prisma.passeio.findUnique({
-      where: { id: parsedPasseioId, ativo: true },
-    });
+    let passeio: any = null;
+    if (parsedInstanciaId !== undefined) {
+      try {
+        passeio = await obterOuCriarPasseioParaInstancia(parsedInstanciaId);
+      } catch (err) {
+        res.status(400).json({ message: err instanceof Error ? err.message : 'Instância de slot inválida' });
+        return;
+      }
+      if (!passeio) {
+        res.status(404).json({ message: 'Instância de slot não encontrada' });
+        return;
+      }
+    } else if (parsedPasseioId !== undefined) {
+      passeio = await prisma.passeio.findUnique({
+        where: { id: parsedPasseioId, ativo: true },
+      });
+      if (!passeio) {
+        res.status(404).json({ message: 'Passeio não encontrado ou inativo' });
+        return;
+      }
+    }
+
     if (!passeio) {
-      res.status(404).json({ message: 'Passeio não encontrado ou inativo' });
+      res.status(400).json({ message: 'Passeio inválido' });
       return;
     }
 
@@ -292,7 +362,7 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
     }
 
     // Verificar capacidade
-    const { disponiveis } = await calcularVagasDisponiveis(parsedPasseioId);
+    const { disponiveis } = await calcularVagasDisponiveis(passeio.id);
     const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
     if (vagasSolicitadas > disponiveis) {
       res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
@@ -343,7 +413,7 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
     const jaAgendado = await prisma.agendamento.findFirst({
       where: {
         clienteId: cliente.id,
-        passeioId: parsedPasseioId,
+        passeioId: passeio.id,
         status: { not: 'CANCELADO' },
       },
     });
@@ -379,7 +449,7 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
     const agendamento = await prisma.agendamento.create({
       data: {
         clienteId: cliente.id,
-        passeioId: parsedPasseioId,
+        passeioId: passeio.id,
         promocao: promocao === true,
         notificacao: wantsNotification,
         ciente: ciente === true,
@@ -423,33 +493,84 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    const passeios = await prisma.passeio.findMany({
+    const instancias = await prisma.slotInstancia.findMany({
       where: {
-        ativo: true,
-        status: 'CONFIRMADO',
         data: { gte: hoje },
+        status: 'AGENDADO',
+        slotPasseio: { status: 'DISPONIVEL' },
       },
       include: {
-        usuario: { select: { id: true, name: true } },
-        agendamentos: {
-          where: { status: { not: 'CANCELADO' } },
-          select: { acompanhantes: true },
+        slotPasseio: {
+          include: {
+            usuario: { select: { id: true, name: true } },
+          },
         },
       },
-      orderBy: { data: 'asc' },
+      orderBy: [{ data: 'asc' }, { horaInicio: 'asc' }],
     });
 
-    const resultado = passeios.map(p => {
-      const vagasOcupadas = p.agendamentos.reduce((sum, a) => sum + 1 + a.acompanhantes, 0);
+    if (instancias.length === 0) {
+      res.json({ data: [] });
+      return;
+    }
+
+    const instanciaIds = instancias.map((inst) => inst.id);
+
+    const passeiosExistentes = await prisma.passeio.findMany({
+      where: {
+        slotInstanciaId: { in: instanciaIds },
+        status: { not: 'CANCELADO' },
+      },
+      select: { id: true, slotInstanciaId: true },
+    });
+
+    const passeioIds = passeiosExistentes.map((p) => p.id);
+    const agendamentosPorPasseio = passeioIds.length > 0
+      ? await prisma.agendamento.groupBy({
+          by: ['passeioId'],
+          where: {
+            passeioId: { in: passeioIds },
+            status: { not: 'CANCELADO' },
+          },
+          _count: { _all: true },
+          _sum: { acompanhantes: true },
+        })
+      : [];
+
+    const ocupacaoMap = new Map<number, number>();
+    agendamentosPorPasseio.forEach((group) => {
+      const ocupadas = (group._count._all || 0) + (group._sum.acompanhantes || 0);
+      ocupacaoMap.set(group.passeioId, ocupadas);
+    });
+
+    const passeioPorInstancia = new Map<number, number>();
+    passeiosExistentes.forEach((p) => {
+      if (p.slotInstanciaId !== null) {
+        passeioPorInstancia.set(p.slotInstanciaId, p.id);
+      }
+    });
+
+    const resultado = instancias.map((inst) => {
+      const slot = inst.slotPasseio;
+      const passeioId = passeioPorInstancia.get(inst.id);
+      const vagasOcupadas = passeioId ? ocupacaoMap.get(passeioId) ?? 0 : 0;
+      const vagasDisponiveis = slot.capacidade - vagasOcupadas;
+
       return {
-        id: p.id,
-        preco: p.preco,
-        capacidade: p.capacidade,
-        data: p.data,
-        horario: p.horario,
+        id: inst.id,
+        instanciaId: inst.id,
+        slotPasseioId: inst.slotPasseioId,
+        titulo: slot.titulo,
+        descricao: slot.descricao,
+        data: inst.data,
+        horario: inst.horaInicio,
+        horaFim: inst.horaFim,
+        capacidade: slot.capacidade,
+        valor: slot.valor,
+        preco: slot.valor,
         vagasOcupadas,
-        vagasDisponiveis: p.capacidade - vagasOcupadas,
-        usuario: p.usuario,
+        vagasDisponiveis,
+        usuario: slot.usuario,
       };
     });
 

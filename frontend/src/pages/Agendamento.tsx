@@ -25,10 +25,15 @@ import { getFcmToken } from "../services/firebase";
 
 interface Passeio {
   id: number;
+  instanciaId: number;
+  slotPasseioId: number;
+  titulo?: string;
+  descricao?: string;
   preco: number;
   capacidade: number;
   data: string;
   horario: string;
+  horaFim?: string;
   vagasDisponiveis: number;
   usuario: { id: number; name: string };
 }
@@ -251,7 +256,8 @@ export const Agendamento: React.FC = () => {
           telefone,
           email: email.trim() || undefined,
           documento: documento.replace(/\D/g, '') || undefined,
-          passeioId: selectedPasseio.id,
+          instanciaId: selectedPasseio.instanciaId || selectedPasseio.id,
+          acompanhante: passageiros - 1,
           acompanhantes: passageiros - 1,
           promocao: consentimento,
           notificacao: consentimentoNotificacao,
