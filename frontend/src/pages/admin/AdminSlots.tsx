@@ -161,20 +161,6 @@ export const AdminSlots: React.FC = () => {
       </div>
 
       <div className="max-w-3xl w-full mx-auto px-4 md:px-8 pb-16">
-        {/* Alertas */}
-        {erro && (
-          <div className="mb-5 flex items-center gap-3 px-4 py-3 bg-red/10 border border-red/20 rounded-xl text-red text-sm font-medium">
-            <AlertCircle className="size-4 shrink-0" />
-            {erro}
-          </div>
-        )}
-        {sucesso && (
-          <div className="mb-5 flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-timeline/30 rounded-xl text-green-timeline text-sm font-medium">
-            <CheckCircle2 className="size-4 shrink-0" />
-            {sucesso}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
           {/* Seleção de Tipo */}
@@ -294,6 +280,11 @@ export const AdminSlots: React.FC = () => {
                 />
               </div>
             </div>
+            {tipo === "INDIVIDUAL" && (
+              <p className="text-xs text-text-secondary bg-bg-light-1 border border-border rounded-lg px-3 py-2">
+                Horários <strong>Individuais</strong> são criados sem recorrência. Use <strong>Lote</strong> para múltiplas datas.
+              </p>
+            )}
           </div>
 
           {/* Campos específicos — FIXO */}
@@ -415,12 +406,20 @@ export const AdminSlots: React.FC = () => {
             </div>
           )}
 
-          {/* Individual — info */}
-          {tipo === "INDIVIDUAL" && (
-            <div className="bg-bg-light-1 border border-border rounded-xl px-4 py-3">
-              <p className="text-xs text-text-secondary">
-                Horários <strong>Individuais</strong> são criados sem recorrência. Use <strong>Lote</strong> para múltiplas datas.
-              </p>
+          {(erro || sucesso) && (
+            <div className="flex flex-col gap-3">
+              {erro && (
+                <div className="flex items-center gap-3 px-4 py-3 bg-red/10 border border-red/20 rounded-xl text-red text-sm font-medium">
+                  <AlertCircle className="size-4 shrink-0" />
+                  {erro}
+                </div>
+              )}
+              {sucesso && (
+                <div className="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-timeline/30 rounded-xl text-green-timeline text-sm font-medium">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  {sucesso}
+                </div>
+              )}
             </div>
           )}
 
