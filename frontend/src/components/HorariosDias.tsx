@@ -4,6 +4,10 @@ import { formatBRL } from "../utils/format";
 // Atualizado para a interface real do backend
 interface Passeio {
   id: number;
+  instanciaId: number;
+  slotPasseioId: number;
+  titulo?: string;
+  descricao?: string;
   preco: number;
   capacidade: number;
   data: string;
