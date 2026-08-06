@@ -42,17 +42,20 @@ node dist/server.js
 
 ## Testes
 
-Os testes unitários rodam com **Vitest**:
+Os testes (unitários + integração) rodam com **Vitest**:
 
 ```bash
-npm test          # roda uma vez
-npm run test:watch # modo watch
+npm test                # roda toda a suíte uma vez
+npm run test:watch      # modo watch
+npm run test:integration # só os testes de integração
+npm run test:coverage   # suíte + relatório de cobertura
 ```
 
 Para rodar um arquivo específico:
 
 ```bash
 npx vitest run tests/controllers/authController.test.ts
+npx vitest run tests/integration/agendamentos.integration.test.ts
 ```
 
 ### Suíte de testes (backend)
@@ -69,4 +72,16 @@ npx vitest run tests/controllers/authController.test.ts
 | `tests/utils/filtroData.test.ts` | Parsing e ajuste de período (fim do dia) |
 | `tests/utils/notificationUtils.test.ts` | Calculo de horários de notificação (timezone) |
 
-Os testes usam **mocks do Prisma** — não tocam no banco de dados real.
+**Integração** — exercitam o app Express real via HTTP (`supertest`), com o Prisma mockado:
+
+| Arquivo | O que cobre |
+| ------- | ----------- |
+| `tests/integration/auth.integration.test.ts` | Registro/login/me via HTTP, tokens malformados |
+| `tests/integration/reset-senha.integration.test.ts` | Esqueci/redefinir senha (token, expiração, email) |
+| `tests/integration/agendamentos.integration.test.ts` | Agendamento público, consulta, vagas, status, email de confirmação |
+| `tests/integration/passeios.integration.test.ts` | Lista/busca/cria passeio (público + admin) |
+| `tests/integration/atribuicoes.integration.test.ts` | Auto-atribuição (modelo Uber), minhas atribuições |
+| `tests/integration/rbac.integration.test.ts` | Proteção por perfil (401/403): clientes, usuários, avaliações |
+| `tests/integration/painel.integration.test.ts` | Resumo do painel e cache de avaliação |
+
+Os testes usam **mocks do Prisma** — não tocam no banco de dados real. O helper `tests/integration/helpers/prismaMock.ts` cria o mock profundo do client, e os testes de integração importam o `app` real e disparam requisições HTTP com `supertest`.

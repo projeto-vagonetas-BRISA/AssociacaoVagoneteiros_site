@@ -9,7 +9,9 @@
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
     "seed": "ts-node prisma/seed.ts",
-    "seed:full": "ts-node prisma/seed-full.ts"
+    "seed:full": "ts-node prisma/seed-full.ts",
+    "test:integration": "vitest run tests/integration",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -28,7 +30,6 @@
     "tsx": "^4.23.1"
   },
   "devDependencies": {
-    "playwright": "^1.62.0",
     "@prisma/config": "^7.6.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
@@ -37,10 +38,13 @@
     "@types/node": "^25.9.5",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^8.0.1",
+    "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^4.1.10",
     "dotenv": "^17.4.0",
     "nodemon": "^3.1.14",
+    "playwright": "^1.62.0",
     "prisma": "^6.4.0",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2",
     "vitest": "^4.1.10"
