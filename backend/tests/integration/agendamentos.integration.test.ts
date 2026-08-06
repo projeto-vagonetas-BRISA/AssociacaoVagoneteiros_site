@@ -32,21 +32,33 @@ describe('INTEGRAÇÃO — Agendamentos (/agendamentos)', () => {
     mockVagas.mockResolvedValue({ ocupadas: 0, disponiveis: 10, capacidade: 10 });
   });
 
-  it('GET /agendamentos/vagas-disponiveis (público) retorna vagas', async () => {
-    const hoje = new Date();
-    prisma.model.passeio.findMany.mockResolvedValue([
+  it('GET /agendamentos/vagas-disponiveis (público) retorna vagas por slot', async () => {
+    const hoje = new Date('2099-01-01');
+    prisma.model.slotInstancia.findMany.mockResolvedValue([
       {
-        id: 1, preco: '50', capacidade: 10, data: hoje, horario: '08:00', usuario: { id: 1, name: 'Ana' },
-        agendamentos: [{ acompanhantes: 1 }, { acompanhantes: 0 }],
+        id: 10, slotPasseioId: 3, data: hoje, horaInicio: '09:00', horaFim: '10:00', status: 'AGENDADO',
+        slotPasseio: { id: 3, titulo: 'Passeio Lagoa', descricao: 'Desc', capacidade: 10, valor: 50, status: 'DISPONIVEL', usuario: { id: 1, name: 'Ana' } },
       },
+    ]);
+    prisma.model.passeio.findMany.mockResolvedValue([{ id: 1, slotInstanciaId: 10 }]);
+    prisma.model.agendamento.groupBy.mockResolvedValue([
+      { passeioId: 1, _count: { _all: 3 }, _sum: { acompanhantes: 2 } },
     ]);
 
     const res = await request(app).get('/agendamentos/vagas-disponiveis');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
-    // vagasOcupadas = (1+1)+(1+0) = 3
-    expect(res.body.data[0].vagasOcupadas).toBe(3);
-    expect(res.body.data[0].vagasDisponiveis).toBe(7);
+    // ocupadas = 3 + 2 = 5 → disponíveis = 10 - 5 = 5
+    expect(res.body.data[0].vagasOcupadas).toBe(5);
+    expect(res.body.data[0].vagasDisponiveis).toBe(5);
+    expect(res.body.data[0].titulo).toBe('Passeio Lagoa');
+  });
+
+  it('GET /agendamentos/vagas-disponiveis sem instâncias retorna lista vazia', async () => {
+    prisma.model.slotInstancia.findMany.mockResolvedValue([]);
+    const res = await request(app).get('/agendamentos/vagas-disponiveis');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
   });
 
   it('POST /agendamentos/publico agendar com sucesso e disparar email', async () => {

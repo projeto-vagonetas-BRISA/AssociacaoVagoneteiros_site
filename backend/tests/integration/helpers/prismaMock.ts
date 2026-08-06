@@ -26,7 +26,7 @@ export function createPrismaMock() {
   const model: Record<string, any> = {};
   const methods = [
     'findUnique', 'findFirst', 'findMany', 'create', 'update', 'delete',
-    'updateMany', 'deleteMany', 'count', 'aggregate', 'upsert',
+    'updateMany', 'deleteMany', 'count', 'aggregate', 'upsert', 'groupBy',
   ];
 
   for (const name of modelNames) {
