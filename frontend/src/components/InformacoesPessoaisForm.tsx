@@ -1,6 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Users, Building2 } from "lucide-react";
+import { formatCpf, formatCnpj } from "@brazilian-utils/brazilian-utils";
 import { useNameField, useCpfField, useCnpjField, useTelField, useEmailField } from "../utils/formValidations";
+import { api } from "../services/api";
 
 interface Props {
   nome: string;
@@ -79,13 +81,42 @@ export const InformacoesPessoais: React.FC<Props> = ({
     if (nome !== name) setName(nome);
   }, [nome, name, setName]);
 
+  const apiBuscaCliente = useCallback(async (valor: string) => {
+    try {
+      const cliente = await api.request<any>(`/clientes/busca/${valor}`);
+      if (cliente) {
+        setNome(cliente.nome || "");
+        setTelefone(cliente.telefone || "");
+        setEmail(cliente.email || "");
+      }
+    } catch {
+      // ignore lookup failures
+    }
+  }, [setNome, setTelefone, setEmail]);
+
   useEffect(() => {
     if (isAgencia) {
-      if (documento !== cnpj) setCnpj(documento);
+      const digits = documento.replace(/\D/g, "");
+      if (digits) {
+        const formatted = formatCnpj(digits);
+        if (formatted !== documento) setDocumento(formatted);
+        if (formatted !== cnpj) setCnpj(formatted);
+        if (digits.length === 14 && !nome && !telefone && !email) apiBuscaCliente(digits);
+      } else if (documento !== cnpj) {
+        setCnpj(documento);
+      }
     } else {
-      if (documento !== cpf) setCpf(documento);
+      const digits = documento.replace(/\D/g, "");
+      if (digits) {
+        const formatted = formatCpf(digits);
+        if (formatted !== documento) setDocumento(formatted);
+        if (formatted !== cpf) setCpf(formatted);
+        if (digits.length === 11 && !nome && !telefone && !email) apiBuscaCliente(digits);
+      } else if (documento !== cpf) {
+        setCpf(documento);
+      }
     }
-  }, [isAgencia, documento, cpf, cnpj, setCpf, setCnpj]);
+  }, [isAgencia, documento, cpf, cnpj, setCpf, setCnpj, setDocumento, apiBuscaCliente, nome, telefone, email]);
 
   useEffect(() => {
     if (telefone !== tel) setTel(telefone);
@@ -132,17 +163,15 @@ export const InformacoesPessoais: React.FC<Props> = ({
 
                   const digits = e.target.value.replace(/\D/g, "").slice(0, 14);
                   if (digits.length === 14) {
-                    import('../services/api').then(({ api }) => {
-                      api.request(`/clientes/busca/${digits}`)
-                        .then((cliente: any) => {
-                          if (cliente) {
-                            setNome(cliente.nome || '');
-                            setTelefone(cliente.telefone || '');
-                            setEmail(cliente.email || '');
-                          }
-                        })
-                        .catch(() => {});
-                    });
+                    api.request(`/clientes/busca/${digits}`)
+                      .then((cliente: any) => {
+                        if (cliente) {
+                          setNome(cliente.nome || '');
+                          setTelefone(cliente.telefone || '');
+                          setEmail(cliente.email || '');
+                        }
+                      })
+                      .catch(() => {});
                   }
                 }}
                 className={inputClass}
@@ -203,17 +232,15 @@ export const InformacoesPessoais: React.FC<Props> = ({
                   setDocumento(formattedCpf);
                   const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
                   if (digits.length === 11) {
-                    import('../services/api').then(({ api }) => {
-                      api.request(`/clientes/busca/${digits}`)
-                        .then((cliente: any) => {
-                          if (cliente) {
-                            setNome(cliente.nome || '');
-                            setTelefone(cliente.telefone || '');
-                            setEmail(cliente.email || '');
-                          }
-                        })
-                        .catch(() => {});
-                    });
+                    api.request(`/clientes/busca/${digits}`)
+                      .then((cliente: any) => {
+                        if (cliente) {
+                          setNome(cliente.nome || '');
+                          setTelefone(cliente.telefone || '');
+                          setEmail(cliente.email || '');
+                        }
+                      })
+                      .catch(() => {});
                   }
                 }}
                 className={inputClass}
