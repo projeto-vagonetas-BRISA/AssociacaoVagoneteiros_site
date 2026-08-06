@@ -27,7 +27,7 @@ Sistema de gestão de passeios, agendamentos e vagoneteiros para a Associação 
 | **Cache** | *(futuro)* Redis |
 | **Frontend** | React + Vite + Tailwind CSS |
 | **Auth** | JWT (bcrypt + jsonwebtoken) |
-| **Testes** | *(pendente)* Jest |
+| **Testes** | Vitest (unitários, backend + frontend) |
 
 ---
 
@@ -78,6 +78,33 @@ npm install
 npx prisma migrate dev
 npm run dev
 ```
+
+#### 📧 SMTP do Gmail (e-mails)
+
+O backend usa o Gmail para e-mails de **redefinição de senha** e **confirmação de agendamento** (`backend/src/utils/email.ts`, via Nodemailer).
+
+As variáveis usadas são `EMAIL_USER` e `EMAIL_PASS` no `backend/.env`:
+
+```env
+EMAIL_USER=seu-email@gmail.com
+EMAIL_PASS=xxxx xxxx xxxx xxxx
+```
+
+> ⚠️ **`EMAIL_PASS` é uma Senha de Aplicativo (App Password), NÃO a senha normal do Gmail.**
+> Usar a senha normal + SMTP do Google resulta em erro `535 5.7.8 Username and Password not accepted`.
+
+**Passo a passo para gerar a App Password:**
+
+1. Acesse [myaccount.google.com/security](https://myaccount.google.com/security) com a conta que enviará os e-mails;
+2. **Ative a Verificação em 2 etapas** (obrigatória — sem ela a opção de app password não aparece);
+3. Vá em [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords);
+4. Crie um app (ex.: nome "Vagoneteiros Backend") e **copie os 16 caracteres gerados**;
+5. Cole no `EMAIL_PASS` do `backend/.env`, **sem espaços**;
+6. Reinicie o backend (`npm run dev`) e teste o fluxo de "esqueci minha senha".
+
+Se ainda falhar, confira que o e-mail também precisa estar preenchido em `EMAIL_USER` e que o backend foi reiniciado após a alteração do `.env` (variáveis são lidas na inicialização).
+
+Se preferir não expor a conta institucional, cada dev pode usar a **própria conta Gmail** como remetente durante o desenvolvimento local.
 
 ### 3. Configurar Frontend
 
@@ -324,11 +351,11 @@ associacao-site/
 
 ## 🔮 Próximos Passos
 
-- [ ] **Task 2 — Auto-Atribuição (modelo Uber)**
+- [x] **Task 2 — Auto-Atribuição (modelo Uber)**
   - Frontend: Feed de passeios disponíveis
   - Vagoneteiro se auto-atribui a slots
   - Notificações em tempo real
-- [ ] Testes unitários (Jest)
+- [x] Testes unitários — **Vitest** (`npm test` no backend e frontend)
 - [ ] Deploy em produção
 - [ ] CI/CD
 
