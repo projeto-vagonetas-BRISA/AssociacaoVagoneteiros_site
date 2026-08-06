@@ -27,7 +27,7 @@ Sistema de gestão de passeios, agendamentos e vagoneteiros para a Associação 
 | **Cache** | *(futuro)* Redis |
 | **Frontend** | React + Vite + Tailwind CSS |
 | **Auth** | JWT (bcrypt + jsonwebtoken) |
-| **Testes** | *(pendente)* Jest |
+| **Testes** | Vitest (unitários, backend + frontend) |
 
 ---
 
@@ -351,11 +351,11 @@ associacao-site/
 
 ## 🔮 Próximos Passos
 
-- [ ] **Task 2 — Auto-Atribuição (modelo Uber)**
+- [x] **Task 2 — Auto-Atribuição (modelo Uber)**
   - Frontend: Feed de passeios disponíveis
   - Vagoneteiro se auto-atribui a slots
   - Notificações em tempo real
-- [ ] Testes unitários (Jest)
+- [x] Testes unitários — **Vitest** (`npm test` no backend e frontend)
 - [ ] Deploy em produção
 - [ ] CI/CD
 

@@ -1,7 +1,7 @@
 # 🚂 Vagoneteiros dos Molhes da Barra — Manual do Usuário
 
-> **Versão:** 1.1
-> **Última atualização:** 28/07/2026
+> **Versão:** 1.2
+> **Última atualização:** 06/08/2026
 > **Baseado na branch:** `release/v1.1`
 
 ---
@@ -375,6 +375,8 @@ Lembretes automáticos enviados para o navegador do cliente sobre agendamentos f
 - Informação sobre lembretes (se autorizou notificações)
 
 O e-mail tem o mesmo layout visual do sistema (fundo escuro, cores Vagoneteiros).
+
+> 📩 **Não recebeu o e-mail?** Confira a **caixa de spam**. Se ainda assim não encontrar, confirme se digitou o e-mail corretamente no formulário de agendamento ou fale com o administrador.
 
 ### 7.4 Posso cancelar um agendamento?
 

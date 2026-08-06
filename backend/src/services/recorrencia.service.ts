@@ -1,7 +1,6 @@
 import crypto from 'crypto';
-import { PrismaClient, TipoSlot, DiaSemana, SlotPasseio, SlotInstancia } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { TipoSlot, DiaSemana, SlotPasseio, SlotInstancia } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 const DIAS_SEMANA_MAP: Record<number, DiaSemana> = {
   0: 'DOMINGO',
