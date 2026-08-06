@@ -240,7 +240,7 @@ export const Agendamento: React.FC = () => {
         setFcmToken(token);
       } catch (error) {
         console.error('Erro ao obter token FCM:', error);
-        setSubmitError('Devido a um problema interno, o agendamento será feito sem notificações web.');
+        setSubmitError('Devido a um problema interno, o agendamento será feito sem notificações web');
         // Não bloqueia o agendamento se o token falhar
         // (Service Workers precisam de HTTPS)
       }
