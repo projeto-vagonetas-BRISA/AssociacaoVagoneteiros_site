@@ -7,13 +7,13 @@ import { calculateNotificationTimes } from '../utils/notificationUtils';
 import { calcularVagasDisponiveis } from '../services/vagas.service';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
-  // Check if this client already has a push subscription (FCM token)
+  // Check (FCM token)
   const existingSubscription = await prisma.pushSubscription.findFirst({
     where: { clienteId },
   });
 
   if (existingSubscription) {
-    // If they already have a token, update it if the generated one is different than the one in the DB
+    // Update da subscription se o token mudou
     if (existingSubscription.token !== token) {
       return prisma.pushSubscription.update({
         where: { id: existingSubscription.id },
@@ -26,7 +26,7 @@ async function upsertPushSubscription(clienteId: number, token: string, userAgen
     return existingSubscription;
   }
 
-  // If the client does not have a token inside PushSubscription, create a new row
+  // Se o usuário não tem subscription, cria uma nova
   return prisma.pushSubscription.create({
     data: {
       token,
@@ -126,7 +126,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // 🛑 Validar que o passeio não é no passado
+    // Validar que o passeio não é no passado
     const agora = new Date();
     const dataPasseio = new Date(passeio.data);
     const fimDoDia = new Date(dataPasseio);
@@ -351,7 +351,7 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // 🛑 Validar que o passeio não é no passado
+    // Validar que o passeio não é no passado
     const agora = new Date();
     const dataPasseio = new Date(passeio.data);
     const fimDoDia = new Date(dataPasseio);
