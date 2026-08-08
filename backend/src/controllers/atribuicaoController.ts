@@ -120,8 +120,7 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
     // Sincroniza a capacidade com o passeio público equivalente
     const passeioExistente = await prisma.passeio.findFirst({
       where: {
-        data: instancia.data,
-        horario: instancia.horaInicio,
+        slotInstanciaId: instancia.id,
         ativo: true,
         status: { not: 'CANCELADO' }
       }
@@ -140,7 +139,8 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
         data: instancia.data,
         horario: instancia.horaInicio,
         ativo: true,
-        status: 'CONFIRMADO'
+        status: 'CONFIRMADO',
+        slotInstanciaId: instancia.id
       };
       await prisma.passeio.create({ data: passeioData });
     }
@@ -208,8 +208,7 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
       atribuicoes.map(async (attr) => {
         const passeio = await prisma.passeio.findFirst({
           where: { 
-            data: attr.instancia?.data,
-            horario: attr.instancia?.horaInicio,
+            slotInstanciaId: attr.instanciaId,
             ativo: true,
             status: { not: 'CANCELADO' }
           },
@@ -306,14 +305,9 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
       },
     });
 
-    // Reduz a capacidade do passeio público equivalente
+    // Reduz a capacidade do passeio público equivalente ou cancela o passeio
     const passeioExistente = await prisma.passeio.findFirst({
-      where: {
-        data: atribuicao.instancia!.data,
-        horario: atribuicao.instancia!.horaInicio,
-        ativo: true,
-        status: { not: 'CANCELADO' }
-      }
+      where: { slotInstanciaId: atribuicao.instanciaId }
     });
 
     if (passeioExistente && atribuicao.instancia) {
@@ -326,7 +320,7 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
         });
         await prisma.agendamento.updateMany({
           where: { passeioId: passeioExistente.id, status: { not: 'CANCELADO' } },
-          data: { status: StatusAtribuicao.CANCELADO },
+          data: { status: 'CANCELADO' },
         });
       } else {
         await prisma.passeio.update({
@@ -397,26 +391,25 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
 
     // Marca o passeio público equivalente e seus agendamentos como REALIZADO
     let passeioExistente = null;
-    if (atribuicao.instancia) {
+    if (atribuicao.instanciaId) {
       passeioExistente = await prisma.passeio.findFirst({
-        where: {
-          data: atribuicao.instancia.data,
-          horario: atribuicao.instancia.horaInicio,
-          ativo: true,
-          status: { not: 'CANCELADO' }
-        }
+        where: { slotInstanciaId: atribuicao.instanciaId }
       });
     }
 
     if (!passeioExistente) {
-      passeioExistente = await prisma.passeio.findFirst({
-        where: {
-          usuarioId: atribuicao.vagoneteiroId,
-          ativo: true,
-          status: { not: 'CANCELADO' }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      // Fallback: se não achar por slotInstanciaId, tenta pela data e horário
+      if (atribuicao.instancia) {
+        passeioExistente = await prisma.passeio.findFirst({
+          where: {
+            data: atribuicao.instancia.data,
+            horario: atribuicao.instancia.horaInicio,
+            usuarioId: atribuicao.vagoneteiroId,
+            ativo: true,
+            status: { not: 'CANCELADO' }
+          }
+        });
+      }
     }
 
     if (passeioExistente) {
@@ -430,7 +423,7 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
           passeioId: passeioExistente.id,
           status: { not: 'CANCELADO' }
         },
-        data: { status: StatusAtribuicao.REALIZADO }
+        data: { status: 'REALIZADO' }
       });
     }
 

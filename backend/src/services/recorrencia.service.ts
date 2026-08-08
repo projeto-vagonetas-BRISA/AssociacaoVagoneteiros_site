@@ -181,9 +181,7 @@ export class RecorrenciaService {
    * a cada duracaoMinutos entre horaInicio e horaFim.
    */
   async gerarLote(config: LoteConfig): Promise<SlotPasseio[]> {
-    if (config.usuarioId == null) {
-      throw new Error('usuarioId é obrigatório para gerar lote');
-    }
+    // usuarioId é opcional (se null, os slots são criados "abertos")
 
     // Modo datas específicas (tradicional)
     if (config.datas && config.datas.length > 0) {

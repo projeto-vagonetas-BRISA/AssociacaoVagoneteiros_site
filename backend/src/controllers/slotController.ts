@@ -75,6 +75,23 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
     const parsedCapacidade = parseInt(capacidade, 10);
     const parsedDuracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : calcularDuracao(horaInicio, horaFim);
 
+    // Se usuarioId foi passado explicitamente, valida que é VAGONETEIRO
+    const parsedUsuarioId: number | null = usuarioId ? parseInt(usuarioId, 10) : null;
+    if (parsedUsuarioId) {
+      const usuarioVinculado = await prisma.usuario.findUnique({
+        where: { id: parsedUsuarioId },
+        select: { id: true, perfil: true },
+      });
+      if (!usuarioVinculado) {
+        res.status(400).json({ message: `Usuário com id ${parsedUsuarioId} não encontrado` });
+        return;
+      }
+      if (usuarioVinculado.perfil !== 'VAGONETEIRO') {
+        res.status(400).json({ message: 'O responsável do slot deve ter perfil VAGONETEIRO' });
+        return;
+      }
+    }
+
     const slot = await prisma.slotPasseio.create({
       data: {
         tipo: parsedTipo,
@@ -89,7 +106,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
         intervaloDias: intervaloDias ? parseInt(intervaloDias, 10) : null,
         capacidade: parsedCapacidade,
         valor: parsedValor,
-        usuarioId: usuarioId ? parseInt(usuarioId, 10) : req.user?.id || null,
+        usuarioId: parsedUsuarioId,  // null = slot aberto, vagoneteiro pegará via atribuição
         loteId: parsedTipo === 'LOTE' ? crypto.randomUUID() : undefined,
       },
       include: { usuario: { select: { id: true, name: true } } },
@@ -250,10 +267,41 @@ export async function cancelar(req: AuthenticatedRequest, res: Response): Promis
     });
 
     // Cancelar instâncias futuras também
-    await prisma.slotInstancia.updateMany({
+    const instanciasFuturas = await prisma.slotInstancia.findMany({
       where: { slotPasseioId: id, data: { gte: new Date() } },
-      data: { status: 'CANCELADO' },
+      select: { id: true }
     });
+
+    if (instanciasFuturas.length > 0) {
+      const instanciaIds = instanciasFuturas.map(i => i.id);
+
+      await prisma.slotInstancia.updateMany({
+        where: { id: { in: instanciaIds } },
+        data: { status: 'CANCELADO' },
+      });
+
+      await prisma.slotAtribuicao.updateMany({
+        where: { instanciaId: { in: instanciaIds }, status: { not: 'REALIZADO' } },
+        data: { status: 'CANCELADO' },
+      });
+
+      const passeiosAfetados = await prisma.passeio.findMany({
+        where: { slotInstanciaId: { in: instanciaIds }, status: { not: 'REALIZADO' } },
+        select: { id: true }
+      });
+
+      if (passeiosAfetados.length > 0) {
+        const passeioIds = passeiosAfetados.map(p => p.id);
+        await prisma.passeio.updateMany({
+          where: { id: { in: passeioIds } },
+          data: { status: 'CANCELADO' }
+        });
+        await prisma.agendamento.updateMany({
+          where: { passeioId: { in: passeioIds }, status: { not: 'REALIZADO' } },
+          data: { status: 'CANCELADO' }
+        });
+      }
+    }
 
     res.json({ message: 'Slot cancelado', slot });
   } catch (error) {
@@ -340,16 +388,21 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
     // Calcula duracao se não veio
     const duracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : (horaFim ? calcularDuracao(horaInicio, horaFim) : 60);
 
-    const usuarioIdValue = usuarioId ? parseInt(usuarioId, 10) : req.user?.id;
-    if (!usuarioIdValue) {
-      res.status(400).json({ message: 'usuarioId é obrigatório para gerar o lote' });
-      return;
-    }
+    const parsedUsuarioId = usuarioId ? parseInt(usuarioId, 10) : null;
 
-    const usuarioExists = await prisma.usuario.findUnique({ where: { id: usuarioIdValue } });
-    if (!usuarioExists) {
-      res.status(400).json({ message: `Usuário com id ${usuarioIdValue} não encontrado` });
-      return;
+    if (parsedUsuarioId) {
+      const usuarioExists = await prisma.usuario.findUnique({
+        where: { id: parsedUsuarioId },
+        select: { id: true, perfil: true },
+      });
+      if (!usuarioExists) {
+        res.status(400).json({ message: `Usuário com id ${parsedUsuarioId} não encontrado` });
+        return;
+      }
+      if (usuarioExists.perfil !== 'VAGONETEIRO') {
+        res.status(400).json({ message: 'O responsável do lote deve ter perfil VAGONETEIRO' });
+        return;
+      }
     }
 
     const slots = await recorrenciaService.gerarLote({
@@ -360,7 +413,7 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
       duracaoMinutos: duracao,
       capacidade: parseInt(capacidade, 10),
       valor: parseFloat(valor),
-      usuarioId: usuarioIdValue,
+      usuarioId: parsedUsuarioId || undefined,
       dataInicio: dataInicio ? new Date(dataInicio) : undefined,
       dataFim: dataFim ? new Date(dataFim) : undefined,
     });

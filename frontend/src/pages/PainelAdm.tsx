@@ -668,6 +668,8 @@ export const PainelAdmin: React.FC = () => {
             vagLoading={vagLoading}
             toggleAtivo={toggleAtivo}
             togglingId={togglingId}
+            tipoUsuario={tipoUsuario}
+            setTipoUsuario={setTipoUsuario}
           />
           {/* Histórico de Agenda */}
           <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden flex flex-col">

@@ -157,6 +157,12 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Verificar se a conta está ativa
+    if (!usuario.ativo) {
+      res.status(403).json({ message: 'Conta desativada. Entre em contato com um administrador.' });
+      return;
+    }
+
     // Gerar token
     const token = generateToken({
       id: usuario.id,

@@ -69,27 +69,7 @@ async function main() {
 
   console.log(`✅ Usuário criado: ${usuario.name} (CPF: 879.129.164-07, senha: vaga123)`);
 
-  // Criar um passeio de exemplo (com data futura)
-  const dataFutura = new Date();
-  dataFutura.setDate(dataFutura.getDate() + 7);
-  dataFutura.setHours(9, 0, 0, 0);
-
-  const passeio = await prisma.passeio.upsert({
-    where: { id: 1 },
-    update: { data: dataFutura },
-    create: {
-      preco: 30.00,
-      capacidade: 20,
-      data: dataFutura,
-      horario: "09:00",
-      usuarioId: usuario.id,
-    },
-  });
-
-  console.log(`✅ Passeio exemplo: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco} (${dataFutura.toLocaleDateString('pt-BR')})`);
-
-  // Criar SlotPasseio + SlotInstancia + SlotAtribuicao para o vagoneteiro de teste
-  // (necessário para que apareça em "Minhas Atribuições")
+  // Primeiro cria SlotPasseio + SlotInstancia + SlotAtribuicao para o vagoneteiro de teste
   const slotExistente = await prisma.slotPasseio.findFirst({
     where: { titulo: 'Passeio Molhes - Turno Manhã (Seed)' },
   });
@@ -112,6 +92,10 @@ async function main() {
   console.log(`✅ SlotPasseio: ${slot.id} - ${slot.titulo}`);
 
   // Data da instância: mesma do passeio (7 dias no futuro)
+  const dataFutura = new Date();
+  dataFutura.setDate(dataFutura.getDate() + 7);
+  dataFutura.setHours(9, 0, 0, 0);
+  
   const dataInstancia = new Date(dataFutura);
   dataInstancia.setHours(0, 0, 0, 0);
 
@@ -130,6 +114,25 @@ async function main() {
   });
 
   console.log(`✅ SlotInstancia: ${instancia.id} - ${dataInstancia.toLocaleDateString('pt-BR')}`);
+
+  // Agora cria um passeio vinculado a essa instância
+  const passeio = await prisma.passeio.upsert({
+    where: { id: 1 },
+    update: { 
+      data: dataFutura,
+      slotInstanciaId: instancia.id,
+    },
+    create: {
+      preco: 30.00,
+      capacidade: 20,
+      data: dataFutura,
+      horario: "09:00",
+      usuarioId: usuario.id,
+      slotInstanciaId: instancia.id,
+    },
+  });
+
+  console.log(`✅ Passeio exemplo vinculado à instância: ${passeio.id} - ${passeio.capacidade} vagas - R$ ${passeio.preco} (${dataFutura.toLocaleDateString('pt-BR')})`);
 
   const atribuicaoExistente = await prisma.slotAtribuicao.findFirst({
     where: { slotPasseioId: slot.id, instanciaId: instancia.id, vagoneteiroId: usuario.id },

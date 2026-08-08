@@ -263,8 +263,12 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
     include: {
       slotPasseio: {
         include: {
-          usuario: { select: { id: true, name: true } },
+          usuario: { select: { id: true, name: true, perfil: true } },
         },
+      },
+      atribuicoes: {
+        where: { status: 'ATRIBUIDO' },
+        include: { vagoneteiro: { select: { id: true, name: true } } },
       },
     },
   });
@@ -277,8 +281,10 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
   if (!slot || slot.status !== 'DISPONIVEL') {
     throw new Error('Instância de slot indisponível para agendamento');
   }
-  if (!slot.usuarioId) {
-    throw new Error('Slot sem vagoneteiro vinculado');
+  const vagoneteiroResponsavelId = instancia.atribuicoes[0]?.vagoneteiroId || slot.usuarioId;
+  
+  if (!vagoneteiroResponsavelId) {
+    throw new Error('Slot sem vagoneteiro vinculado (nem lote fechado nem atribuído)');
   }
 
   let passeio = await prisma.passeio.findFirst({
@@ -288,7 +294,7 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
   if (!passeio) {
     passeio = await prisma.passeio.create({
       data: {
-        usuarioId: slot.usuarioId,
+        usuarioId: vagoneteiroResponsavelId,
         preco: slot.valor,
         capacidade: slot.capacidade,
         data: instancia.data,
@@ -297,6 +303,13 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
         ativo: true,
         slotInstanciaId: instancia.id,
       },
+    });
+  } else if (passeio.status === 'CANCELADO' || !passeio.ativo) {
+    // Passeio foi cancelado (todos agendamentos anteriores cancelados).
+    // Reativa para que o novo agendamento seja contabilizado corretamente.
+    passeio = await prisma.passeio.update({
+      where: { id: passeio.id },
+      data: { status: 'CONFIRMADO', ativo: true },
     });
   }
 
@@ -498,6 +511,10 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
         data: { gte: hoje },
         status: 'AGENDADO',
         slotPasseio: { status: 'DISPONIVEL' },
+        OR: [
+          { slotPasseio: { usuarioId: { not: null } } },
+          { atribuicoes: { some: { status: 'ATRIBUIDO' } } }
+        ]
       },
       include: {
         slotPasseio: {
@@ -505,6 +522,10 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
             usuario: { select: { id: true, name: true } },
           },
         },
+        atribuicoes: {
+          where: { status: 'ATRIBUIDO' },
+          include: { vagoneteiro: { select: { id: true, name: true } } },
+        }
       },
       orderBy: [{ data: 'asc' }, { horaInicio: 'asc' }],
     });
@@ -570,7 +591,7 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
         preco: slot.valor,
         vagasOcupadas,
         vagasDisponiveis,
-        usuario: slot.usuario,
+        usuario: inst.atribuicoes[0]?.vagoneteiro || slot.usuario,
       };
     });
 
