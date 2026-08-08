@@ -14,11 +14,10 @@ function looksLikeCpf(value: string): boolean {
 }
 
 export function LoginPopUp({ onClose }: LoginPopUpProps) {
-  const [esqueciSenha, setEsqueciSenha] = useState(false);
-  const [emailReset, setEmailReset] = useState('');
-  const [mensagemReset, setMensagemReset] = useState<string | null>(null);
-  const [erroReset, setErroReset] = useState<string | null>(null);
-  const [enviandoReset, setEnviandoReset] = useState(false);
+    const [esqueciSenha, setEsqueciSenha] = useState(false);
+    const [mensagemReset, setMensagemReset] = useState<string | null>(null);
+    const [erroReset, setErroReset] = useState<string | null>(null);
+    const [enviandoReset, setEnviandoReset] = useState(false);
 
     const popUpRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640); // 640px = Tailwind's `sm`
@@ -227,13 +226,13 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             <p className="text-sm text-slate-300 text-center">
                               Digite seu e-mail cadastrado e enviaremos um link para redefinir sua senha.
                             </p>
-                            <input
-                              type="email"
-                              value={emailReset}
-                              onChange={e => setEmailReset(e.target.value)}
-                              placeholder="seu@email.com"
-                              className="block w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 bg-[#0d1117] border border-white/10 focus:outline-none focus:ring-1 focus:border-blue focus:ring-blue transition-colors"
-                            />
+                                                        <input
+                                                            type="email"
+                                                            value={emailField.email}
+                                                            onChange={emailField.handleEmailChange}
+                                                            placeholder="seu@email.com"
+                                                            className="block w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 bg-[#0d1117] border border-white/10 focus:outline-none focus:ring-1 focus:border-blue focus:ring-blue transition-colors"
+                                                        />
                             {erroReset && (
                               <p className="text-sm text-red-300 text-center">{erroReset}</p>
                             )}
@@ -243,36 +242,38 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             <div className="flex gap-2">
                               <button
                                 type="button"
-                                onClick={() => { setEsqueciSenha(false); setMensagemReset(null); setErroReset(null); }}
+                                  onClick={() => { setEsqueciSenha(false); setMensagemReset(null); setErroReset(null); emailField.setEmail(''); emailField.setEmailError(''); }}
                                 className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors cursor-pointer"
                               >
                                 Voltar
                               </button>
                               <button
                                 type="button"
-                                disabled={enviandoReset || !emailReset}
-                                onClick={async () => {
-                                  setErroReset(null);
-                                  setMensagemReset(null);
-                                  if (!emailReset) { setErroReset('Informe seu e-mail.'); return; }
-                                  setEnviandoReset(true);
-                                  try {
-                                    const res = await fetch('/auth/esqueci-senha', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ email: emailReset }),
-                                    });
-                                    const data = await res.json();
-                                    if (!res.ok) {
-                                      setErroReset(data.message || 'Erro ao enviar email');
-                                    } else {
-                                      setMensagemReset(data.message);
-                                    }
-                                  } catch {
-                                    setErroReset('Erro de conexão. Tente novamente.');
-                                  }
-                                  setEnviandoReset(false);
-                                }}
+                                                                disabled={enviandoReset || !emailField.email}
+                                                                onClick={async () => {
+                                                                    setErroReset(null);
+                                                                    setMensagemReset(null);
+                                                                    if (!emailField.email) { setErroReset('Informe seu e-mail.'); return; }
+                                                                    const validationErr = emailField.validateEmail(emailField.email);
+                                                                    if (validationErr) { setErroReset(validationErr); return; }
+                                                                    setEnviandoReset(true);
+                                                                    try {
+                                                                        const res = await fetch('/auth/esqueci-senha', {
+                                                                            method: 'POST',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ email: emailField.email }),
+                                                                        });
+                                                                        const data = await res.json();
+                                                                        if (!res.ok) {
+                                                                            setErroReset(data.message || 'Erro ao enviar email');
+                                                                        } else {
+                                                                            setMensagemReset(data.message);
+                                                                        }
+                                                                    } catch {
+                                                                        setErroReset('Erro de conexão. Tente novamente.');
+                                                                    }
+                                                                    setEnviandoReset(false);
+                                                                }}
                                 className="flex-1 rounded-lg bg-red-dark px-3 py-2.5 text-sm font-semibold text-white hover:bg-red transition-colors disabled:opacity-60 cursor-pointer"
                               >
                                 {enviandoReset ? 'Enviando...' : 'Enviar'}
