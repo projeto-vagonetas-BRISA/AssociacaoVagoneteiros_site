@@ -21,6 +21,7 @@ export function createPrismaMock() {
     'pushSubscription',
     'notificacaoAgendamento',
     'resetToken',
+    'suspensao',
   ];
 
   const model: Record<string, any> = {};
