@@ -28,6 +28,18 @@ export interface MeResponse {
   user: User;
 }
 
+export interface ResetRequest {
+  id: number;
+  email: string;
+  perfil: 'USUARIO' | 'VAGONETEIRO' | 'ADMIN' | 'REDATOR';
+  criadoEm: string;
+  usuario?: { id: number; name: string } | null;
+}
+
+export interface ResetRequestsResponse {
+  solicitacoes: ResetRequest[];
+}
+
 export const authService = {
   async login(identifier: string, senha: string): Promise<AuthResponse> {
     const data = await api.request<AuthResponse>('/auth/login', {
@@ -83,12 +95,30 @@ export const authService = {
     senha: string;
     email: string;
     telefone: string;
+    foto?: string;
   }): Promise<User> {
     const result = await api.request<CreateOnlyResponse>('/auth/register/admin', {
       method: 'POST',
       body: JSON.stringify(data),
     });
     return result.user;
+  },
+
+  async listResetRequests(): Promise<ResetRequest[]> {
+    const data = await api.request<ResetRequestsResponse>('/auth/reset-requests');
+    return data.solicitacoes;
+  },
+
+  async approveResetRequest(id: number): Promise<{ message: string }> {
+    return api.request<{ message: string }>(`/auth/reset-requests/${id}/approve`, {
+      method: 'POST',
+    });
+  },
+
+  async rejectResetRequest(id: number): Promise<{ message: string }> {
+    return api.request<{ message: string }>(`/auth/reset-requests/${id}/reject`, {
+      method: 'POST',
+    });
   },
 
   async me(): Promise<User> {

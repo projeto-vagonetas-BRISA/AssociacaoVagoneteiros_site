@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNameField, useCpfField, useTelField, useEmailField, usePasswordField, field } from "../utils/formValidations";
 import { authService } from "../services/auth";
@@ -13,6 +13,8 @@ export function Registration_Administrador() {
     const telField      = useTelField();
     const emailField    = useEmailField();
     const passwordField = usePasswordField();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
 
     async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -46,12 +48,22 @@ export function Registration_Administrador() {
                 senha: passwordField.password,
                 email: emailField.email.trim(),
                 telefone: rawTel,
+                foto: profileImage || undefined,
             });
             navigate("/painel-admin");
         } catch (err: any) {
             setApiError(err instanceof Error ? err.message : "Erro ao cadastrar administrador");
         } finally {
             setLoading(false);
+        }
+    }
+
+    function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => setProfileImage(e.target?.result as string);
+            reader.readAsDataURL(file);
         }
     }
 
@@ -162,7 +174,19 @@ export function Registration_Administrador() {
 
             <div className="hidden md:flex md:w-2/5 bg-blue-900 items-center justify-center p-12">
                 <div className="text-white text-center">
-                    <img className="block mx-auto mb-4" src="/src/assets/icons/userAdm-32.png" alt="Ícone de administrador" />
+                    <div className="mb-4">
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-28 h-28 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center overflow-hidden mx-auto mb-3 bg-white/5">
+                            {profileImage ? (
+                                <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
+                            ) : (
+                                <img className="w-10" src="/src/assets/icons/userAdm-32.png" alt="Ícone de administrador" />
+                            )}
+                        </button>
+                        <input ref={fileInputRef} type="file" accept="image/jpg,image/png" onChange={handleImageUpload} className="hidden" />
+                    </div>
                     <h2 className="text-3xl font-bold mb-3">Área Admin</h2>
                     <p className="text-blue-200 text-sm max-w-xs">Cadastre um administrador para gerenciar o sistema</p>
                 </div>

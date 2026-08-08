@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FileText, LogOut } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/auth";
 
 export const HeaderAdm: React.FC = () => {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -20,9 +21,24 @@ export const HeaderAdm: React.FC = () => {
         return activeTipo === targetTipo;
     };
 
+    const [pendingResetCount, setPendingResetCount] = useState(0);
+
+    useEffect(() => {
+        let active = true;
+        authService.listResetRequests()
+            .then((solicitacoes) => {
+                if (active) setPendingResetCount(solicitacoes.length);
+            })
+            .catch(() => {
+                if (active) setPendingResetCount(0);
+            });
+        return () => { active = false; };
+    }, []);
+
     const navLinks = [
         { label: "Cadastrar Vagoneteiro", path: "/cadastro?tipo=vagoneteiro" },
         { label: "Painel Adm", path: "/painel-admin" },
+        { label: "Solicitações de Reset", path: "/admin/reset-requests", badge: pendingResetCount > 0 ? pendingResetCount : undefined },
     ];
 
     return (
@@ -34,7 +50,7 @@ export const HeaderAdm: React.FC = () => {
                 </Link>
 
                 <ul className="hidden md:flex items-center gap-8">
-                    {navLinks.map(({ label, path }) => {
+                    {navLinks.map(({ label, path, badge }) => {
                         const active = getIsActive(path);
                         return (
                             <li key={label}>
@@ -43,7 +59,14 @@ export const HeaderAdm: React.FC = () => {
                                     className={`relative text-sm font-medium tracking-wide transition-colors cursor-pointer ${
                                         active ? "text-white" : "text-white/60 hover:text-white"
                                     }`}>
-                                    {label}
+                                    <span className="inline-flex items-center gap-2">
+                                        <span>{label}</span>
+                                        {badge !== undefined && (
+                                            <span className="inline-flex items-center justify-center rounded-full bg-red-dark px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                                                {badge}
+                                            </span>
+                                        )}
+                                    </span>
                                     {active && (
                                         <span className="absolute -bottom-5.5 left-0 right-0 h-0.75 bg-red-dark rounded-t-sm" />
                                     )}
@@ -93,13 +116,20 @@ export const HeaderAdm: React.FC = () => {
 
             {menuOpen && (
                 <div className="md:hidden bg-blue-dark border-t border-white/10 px-4 py-4 flex flex-col gap-4">
-                    {navLinks.map(({ label, path }) => (
+                    {navLinks.map(({ label, path, badge }) => (
                         <Link
                             key={label}
                             to={path}
                             onClick={() => setMenuOpen(false)}
                             className={`text-sm font-medium transition-colors cursor-pointer ${getIsActive(path) ? "text-white" : "text-white/70 hover:text-white"}`}>
-                            {label}
+                            <span className="inline-flex items-center gap-2">
+                                <span>{label}</span>
+                                {badge !== undefined && (
+                                    <span className="inline-flex items-center justify-center rounded-full bg-red-dark px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                                        {badge}
+                                    </span>
+                                )}
+                            </span>
                         </Link>
                     ))}
                     <div className="flex gap-3 pt-2">

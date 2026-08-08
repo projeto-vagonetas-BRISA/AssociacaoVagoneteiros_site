@@ -11,6 +11,7 @@ import { CadastroPasseio } from "../pages/CadastroPasseio";
 import { EditarPasseio } from "../pages/EditarPasseio";
 import { Investimento } from "../pages/Investimento";
 import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
+import { ResetRequests } from "../pages/admin/ResetRequests";
 import { FeedVagoneteiro } from "../pages/FeedVagoneteiro";
 import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
 import { MinhasAtribuicoes } from "../pages/MinhasAtribuicoes";
@@ -68,6 +69,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/vagoneteiros/:id",
         element: <VagoneteiroPerfil />
+      },
+      {
+        path: "/admin/reset-requests",
+        element: <ResetRequests />
       },
       {
         path: "/feed-vagoneteiro",

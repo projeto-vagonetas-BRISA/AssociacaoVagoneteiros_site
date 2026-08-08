@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
+import { AdminQuickActions } from "../components/AdminQuickActions";
+import { AdminVagoneteiros } from "../components/AdminVagoneteiros";
+import { PasseiosTable } from "../components/PasseiosTable";
 import { formatBRL } from "../utils/format";
 
 const MAX_PAG_VISIVEIS = 20;
@@ -577,20 +580,7 @@ export const PainelAdmin: React.FC = () => {
           </h1>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            to="/cadastro?tipo=vagoneteiro"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer"
-          >
-            <Plus size={15} /> Cadastrar Vagoneteiro
-          </Link>
-          <Link
-            to="/admin/slots"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer"
-          >
-            <Plus size={15} /> Gerenciar Horários
-          </Link>
-        </div>
+        <AdminQuickActions />
 
         {/* Dashboard / Métricas */}
         <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
@@ -652,193 +642,33 @@ export const PainelAdmin: React.FC = () => {
         )}
 
         {/* Gestão de Passeios */}
-        <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border-b border-border">
-            <div>
-              <h2 className="font-bold text-lg text-text-dark">Gestão de Passeios Disponíveis</h2>
-              <p className="text-sm text-[#7a8394] mt-0.5">Gerencie os horários e vagas disponíveis</p>
-            </div>
-            <button
-              onClick={() => navigate("/admin/slots")}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer shrink-0">
-              <Plus size={15} /> Cadastrar Novo Horário
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-bg-light-2">
-                  {["Data / Hora", "Horário", "Valor", "Capacidade", "Vagoneteiro", "Ações"].map(h => (
-                    <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-[#7a8394] tracking-widest uppercase whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loadingData ? (
-                  <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-[#7a8394]">Carregando...</td></tr>
-                ) : passeios.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-[#7a8394]">Nenhum passeio cadastrado</td></tr>
-                ) : passeios.map((p) => (
-                  <tr key={p.id} className={`border-b border-border last:border-0 transition-colors ${
-                    p.status === 'REALIZADO' ? 'bg-green-timeline/5 hover:bg-green-timeline/10' :
-                    p.status === 'CANCELADO' ? 'bg-red-dark/5 hover:bg-red-dark/10' :
-                    'hover:bg-bg-light-2'
-                  }`}>
-                    <td className="px-6 py-4 text-sm font-medium text-text-dark whitespace-nowrap">{formatData(p.data)}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block bg-blue-accent/10 text-blue-accent border border-blue-accent/20 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
-                          {p.horario}
-                        </span>
-                        {p.status === 'REALIZADO' && (
-                          <span className="inline-block bg-green-timeline/10 text-green-timeline border border-green-timeline/20 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                            Realizado
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-bold text-green-timeline">{formatBRL(Number(p.preco))}</td>
-                    <td className="px-6 py-4 text-sm text-text-primary">
-                      <span className="font-bold">{String(p.capacidade).padStart(2, "0")}</span>
-                      <span className="text-[#7a8394]"> vagas</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text-primary">{p.usuario?.name || "—"}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => navigate(`/editar-passeio/${p.id}`)}
-                          className={`transition-colors ${p.status === 'REALIZADO' ? 'text-gray-300 cursor-not-allowed' : 'text-[#7a8394] hover:text-blue-accent cursor-pointer'}`}
-                          title={p.status === 'REALIZADO' ? "Passeio já realizado" : "Editar passeio"}
-                          disabled={p.status === 'REALIZADO'}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (p.status === 'REALIZADO') return;
-                            if (!confirm(`Tem certeza que deseja cancelar o passeio #${p.id}?`)) return;
-                            try {
-                              await api.request(`/passeios/${p.id}`, { method: 'DELETE' });
-                              await carregarPasseios(paginaPasseio);
-                            } catch { /* api.request já trata erro */ }
-                          }}
-                          className={`transition-colors ${p.status === 'REALIZADO' ? 'text-gray-300 cursor-not-allowed' : 'text-[#7a8394] hover:text-red-dark cursor-pointer'}`}
-                          title={p.status === 'REALIZADO' ? "Passeio já realizado" : "Cancelar passeio"}
-                          disabled={p.status === 'REALIZADO'}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Paginação da tabela de passeios */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-            <p className="text-xs text-[#7a8394]">
-              Página {paginaPasseio} de {totalPaginasPasseio} — {passeiosData?.total || 0} passeio{(passeiosData?.total || 0) !== 1 ? "s" : ""}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => carregarPasseios(Math.max(1, paginaPasseio - 1))}
-                disabled={paginaPasseio === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-[#7a8394] hover:bg-bg-light-1 disabled:opacity-40 transition-colors cursor-pointer"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              {renderPaginacao(paginaPasseio, totalPaginasPasseio, carregarPasseios)}
-            </div>
-          </div>
-        </div>
+        <PasseiosTable
+          passeiosData={passeiosData}
+          loadingData={loadingData}
+          paginaPasseio={paginaPasseio}
+          totalPaginasPasseio={totalPaginasPasseio}
+          carregarPasseios={carregarPasseios}
+          onEdit={(id) => navigate(`/editar-passeio/${id}`)}
+          onDelete={async (id) => {
+            if (!confirm(`Tem certeza que deseja cancelar o passeio #${id}?`)) return;
+            try {
+              await api.request(`/passeios/${id}`, { method: 'DELETE' });
+              await carregarPasseios(paginaPasseio);
+            } catch { }
+          }}
+        />
 
         {/* Vagoneteiros + Histórico */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
 
-          {/* Vagoneteiros / Admins */}
-          <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-              <div className="flex items-center gap-2">
-                {/* <h2 className="font-bold text-base text-text-dark">
-                  {tipoUsuario === 'VAGONETEIRO' ? 'Vagoneteiros' : 'Administradores'}
-                </h2> */}
-                <select
-                  value={tipoUsuario}
-                  onChange={e => {
-                    const t = e.target.value as 'VAGONETEIRO' | 'ADMIN';
-                    setTipoUsuario(t);
-                    carregarVagoneteiros(1, t);
-                  }}
-                  className="text-sm font-bold text-base text-text-dark bg-bg-light-1 border border-border rounded-lg px-2 py-1 cursor-pointer focus:outline-none"
-                >
-                  <option value="VAGONETEIRO">Vagoneteiros</option>
-                  <option value="ADMIN">Admins</option>
-                </select>
-              </div>
-              <Link
-                to="/cadastro?tipo=vagoneteiro"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-xs font-semibold transition-colors cursor-pointer"
-              >
-                <UserCheck size={13} /> Cadastrar
-              </Link>
-            </div>
-            <div className="flex flex-col divide-y divide-border flex-1">
-              {vagLoading ? (
-                <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">Carregando...</div>
-              ) : vagPaginados.length === 0 ? (
-                <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">
-                  {tipoUsuario === 'VAGONETEIRO' ? 'Nenhum vagoneteiro cadastrado' : 'Nenhum administrador cadastrado'}
-                </div>
-              ) : vagPaginados.map((v, i) => (
-                <div key={`${v.id}-${i}`} className="flex items-center gap-2 px-3 py-3 hover:bg-bg-light-2 transition-colors">
-                  <Link to={`/admin/vagoneteiros/${v.id}`} className="shrink-0">
-                    {v.foto ? (
-                      <img src={`data:image/jpeg;base64,${v.foto}`} alt="" className="w-9 h-9 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-blue-accent/20 text-blue-accent flex items-center justify-center text-sm font-bold">
-                        {v.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </Link>
-                  <Link to={`/admin/vagoneteiros/${v.id}`} className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text-dark truncate">{v.name}</p>
-                    <p className="text-xs text-[#7a8394] truncate">{v.telefone}</p>
-                  </Link>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${v.ativo
-                    ? "bg-green-timeline/10 text-green-timeline border border-green-timeline/20"
-                    : "bg-red-dark/10 text-red-dark border border-red-dark/20"
-                    }`}>
-                    {v.ativo ? "Ativo" : "Inativo"}
-                  </span>
-                  <button
-                    onClick={() => toggleAtivo(v.id)}
-                    disabled={togglingId === v.id}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${v.ativo
-                      ? "text-green-timeline hover:bg-green-timeline/10"
-                      : "text-[#7a8394] hover:bg-red-dark/10 hover:text-red-dark"
-                      } disabled:opacity-40`}
-                    title={v.ativo ? "Desativar" : "Ativar"}
-                  >
-                    {togglingId === v.id ? (
-                      <span className="block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    ) : v.ativo ? (
-                      <PowerOff size={14} />
-                    ) : (
-                      <Power size={14} />
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-              <p className="text-xs text-[#7a8394]">Página {paginaVag} de {totalPaginasVag}</p>
-              <div className="flex items-center gap-1">
-                {renderPaginacao(paginaVag, totalPaginasVag, carregarVagoneteiros)}
-              </div>
-            </div>
-          </div>
-
+          <AdminVagoneteiros
+            vagoneteirosData={vagoneteirosData}
+            carregarVagoneteiros={carregarVagoneteiros}
+            paginaVag={paginaVag}
+            vagLoading={vagLoading}
+            toggleAtivo={toggleAtivo}
+            togglingId={togglingId}
+          />
           {/* Histórico de Agenda */}
           <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden flex flex-col">
 

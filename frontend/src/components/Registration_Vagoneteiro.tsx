@@ -1,12 +1,13 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/auth";
-import { useNameField, useCpfField, useTelField, usePasswordField, field, fieldBase } from "../utils/formValidations";
+import { useNameField, useCpfField, useTelField, useEmailField, usePasswordField, field, fieldBase } from "../utils/formValidations";
 
 export function Registration_Vagoneteiro() {
     const nameField     = useNameField();
     const cpfField      = useCpfField();
     const telField      = useTelField();
+    const emailField    = useEmailField();
     const passwordField = usePasswordField();
 
     const navigate = useNavigate();
@@ -40,22 +41,25 @@ export function Registration_Vagoneteiro() {
         const newNameError            = nameField.validateName(nameTrimmed);
         const newCpfError             = cpfField.validateCpf(rawCpf);
         const newTelError             = telField.validateTel(rawTel);
+        const newEmailError           = emailField.validateEmail(emailField.email);
         const newPasswordError        = passwordField.validatePassword(passwordField.password);
         const newConfirmPasswordError = passwordField.password !== passwordField.confirmPassword ? "As senhas não coincidem." : "";
 
         nameField.setNameError(newNameError);
         cpfField.setCpfError(newCpfError);
         telField.setTelError(newTelError);
+        emailField.setEmailError(newEmailError);
         passwordField.setPasswordError(newPasswordError);
         passwordField.setConfirmPasswordError(newConfirmPasswordError);
 
-        if (newNameError || newCpfError || newTelError || newPasswordError || newConfirmPasswordError) return;
+        if (newNameError || newCpfError || newTelError || newEmailError || newPasswordError || newConfirmPasswordError) return;
 
         setLoading(true);
         try {
             await authService.createOnly({
                 name: nameTrimmed,
                 cpf: rawCpf,
+                email: emailField.email.trim(),
                 telefone: rawTel,
                 senha: passwordField.password,
                 perfil,
@@ -116,6 +120,16 @@ export function Registration_Vagoneteiro() {
                                             className={field(!!telField.telError)}
                                         />
                                         {telField.telError && <p className="mt-1 text-xs text-red-500">{telField.telError}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">E-mail</label>
+                                        <input
+                                            type="email" name="email" required autoComplete="email"
+                                            value={emailField.email} onChange={emailField.handleEmailChange}
+                                            placeholder="vagoneteiro@email.com"
+                                            className={field(!!emailField.emailError)}
+                                        />
+                                        {emailField.emailError && <p className="mt-1 text-xs text-red-500">{emailField.emailError}</p>}
                                     </div>
                                 </div>
                             </div>
