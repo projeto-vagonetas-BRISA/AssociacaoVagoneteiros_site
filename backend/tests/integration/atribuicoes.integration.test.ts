@@ -117,4 +117,52 @@ describe('INTEGRAÇÃO — Atribuições (/atribuicoes)', () => {
     const res = await request(app).get('/atribuicoes/minhas');
     expect(res.status).toBe(401);
   });
+
+  it('PATCH /atribuicoes/:id/realizar sem token retorna 401', async () => {
+    const res = await request(app).patch('/atribuicoes/7/realizar');
+    expect(res.status).toBe(401);
+  });
+
+  it('PATCH /atribuicoes/:id/realizar com id inválido retorna 400', async () => {
+    const res = await request(app)
+      .patch('/atribuicoes/abc/realizar')
+      .set('Authorization', vagToken);
+    expect(res.status).toBe(400);
+  });
+
+  it('PATCH /atribuicoes/:id/realizar retorna 404 para atribuição inexistente', async () => {
+    prisma.model.slotAtribuicao.findUnique.mockResolvedValue(null);
+    const res = await request(app)
+      .patch('/atribuicoes/999/realizar')
+      .set('Authorization', vagToken);
+    expect(res.status).toBe(404);
+  });
+
+  it('PATCH /atribuicoes/:id/realizar conclui atribuição e marca passeio/agendamentos como REALIZADO', async () => {
+    prisma.model.slotAtribuicao.findUnique.mockResolvedValue({
+      id: 7, status: 'ATRIBUIDO', vagoneteiroId: 7, instanciaId: 4,
+      instancia: { data: new Date('2099-12-14T03:00:00.000Z'), horaInicio: '08:00' },
+    });
+    prisma.model.slotAtribuicao.update.mockResolvedValue({ id: 7, instanciaId: 4, status: 'REALIZADO' });
+    prisma.model.slotAtribuicao.count.mockResolvedValue(0); // nenhuma atribuição pendente restante
+    prisma.model.passeio.findFirst.mockResolvedValue({ id: 2957, status: 'CONFIRMADO' });
+    prisma.model.agendamento.updateMany.mockResolvedValue({ count: 2 });
+
+    const res = await request(app)
+      .patch('/atribuicoes/7/realizar')
+      .set('Authorization', vagToken);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain('realizados');
+    expect(prisma.model.slotAtribuicao.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 7 }, data: { status: 'REALIZADO' } }),
+    );
+    // passeio e instância marcados como REALIZADO
+    expect(prisma.model.passeio.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 2957 }, data: { status: 'REALIZADO' } }),
+    );
+    expect(prisma.model.agendamento.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { passeioId: 2957, status: { not: 'CANCELADO' } }, data: { status: 'REALIZADO' } }),
+    );
+  });
 });

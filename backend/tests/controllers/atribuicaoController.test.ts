@@ -7,6 +7,7 @@ const mockFindFirst = vi.fn();  // slotAtribuicao.findFirst + passeio.findFirst
 const mockCreate = vi.fn();     // slotAtribuicao.create
 const mockUpdate = vi.fn();     // slotInstancia.update + passeio.update
 const mockPasseioCreate = vi.fn();
+const mockUpdateMany = vi.fn(); // agendamento.updateMany
 
 const mockVerificarConflito = vi.fn();
 
@@ -19,12 +20,17 @@ vi.mock('../../src/lib/prisma', () => ({
     slotAtribuicao: {
       count: mockCount,
       findFirst: mockFindFirst,
+      findUnique: mockFindUnique,
       create: mockCreate,
+      update: mockUpdate,
     },
     passeio: {
       findFirst: mockFindFirst,
       create: mockPasseioCreate,
       update: mockUpdate,
+    },
+    agendamento: {
+      updateMany: mockUpdateMany,
     },
   },
 }));
@@ -35,7 +41,7 @@ vi.mock('../../src/services/agendamento.service', () => ({
   },
 }));
 
-const { autoAtribuir } = await import('../../src/controllers/atribuicaoController');
+const { autoAtribuir, realizarAtribuicao } = await import('../../src/controllers/atribuicaoController');
 const { mockRes } = await import('../helpers/mockRes');
 
 function mockReq(body: Record<string, any> = {}) {
@@ -184,6 +190,83 @@ describe('atribuicaoController.autoAtribuir', () => {
           usuarioId: 7,
         }),
       }),
+    );
+  });
+});
+
+describe('atribuicaoController.realizarAtribuicao', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdate.mockResolvedValue({});
+    mockUpdateMany.mockResolvedValue({ count: 0 });
+  });
+
+  function atribuicaoPendente() {
+    return {
+      id: 7,
+      vagoneteiroId: 40,
+      status: 'ATRIBUIDO',
+      instanciaId: 4,
+      instancia: { data: new Date('2026-12-14T03:00:00.000Z'), horaInicio: '08:00' },
+      slotPasseioId: 4,
+    };
+  }
+
+  it('rejeita ID inválido', async () => {
+    const res = mockRes();
+    await realizarAtribuicao({ params: { id: 'abc' }, user: { id: 40 } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('retorna 404 quando atribuição não existe', async () => {
+    mockFindUnique.mockResolvedValue(null);
+    const res = mockRes();
+    await realizarAtribuicao({ params: { id: '999' }, user: { id: 40 } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('rejeita atribuição já realizada', async () => {
+    const attr = atribuicaoPendente();
+    attr.status = 'REALIZADO';
+    mockFindUnique.mockResolvedValue(attr);
+    const res = mockRes();
+    await realizarAtribuicao({ params: { id: '7' }, user: { id: 40 } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('já está como realizada') }),
+    );
+  });
+
+  it('marca atribuição, instância e passeio como REALIZADO quando não há pendentes', async () => {
+    mockFindUnique.mockResolvedValue(atribuicaoPendente());
+    mockUpdate.mockResolvedValue({ id: 7, instanciaId: 4, status: 'REALIZADO' }); // slotAtribuicao.update
+    mockCount.mockResolvedValue(0); // nenhuma atribuição ATRIBUIDO restante na instância
+    // passeio.findFirst por slotInstanciaId → encontra passeio 2957
+    mockFindFirst.mockResolvedValueOnce({ id: 2957, status: 'CONFIRMADO' });
+
+    const res = mockRes();
+    await realizarAtribuicao({ params: { id: '7' }, user: { id: 40 } } as any, res);
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: 'REALIZADO' }) }),
+    );
+    // instância marcada como REALIZADO (mockUpdate segunda chamada)
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: 'REALIZADO' }) }),
+    );
+    // passeio marcado como REALIZADO
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: 'REALIZADO' }) }),
+    );
+    // agendamentos do passeio marcados como REALIZADO
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ passeioId: 2957 }),
+        data: expect.objectContaining({ status: 'REALIZADO' }),
+      }),
+    );
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('realizados') }),
     );
   });
 });
