@@ -282,10 +282,8 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
     throw new Error('Instância de slot indisponível para agendamento');
   }
   const vagoneteiroResponsavelId = instancia.atribuicoes[0]?.vagoneteiroId || slot.usuarioId;
-  
-  if (!vagoneteiroResponsavelId) {
-    throw new Error('Slot sem vagoneteiro vinculado (nem lote fechado nem atribuído)');
-  }
+  // Passeio pode ser criado SEM vagoneteiro (slot livre): o vagoneteiro se
+  // atribui ao passeio depois pelo painel (modelo tipo Uber).
 
   let passeio = await prisma.passeio.findFirst({
     where: { slotInstanciaId: instancia.id },
