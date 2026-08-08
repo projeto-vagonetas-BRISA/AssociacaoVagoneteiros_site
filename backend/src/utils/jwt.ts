@@ -21,6 +21,7 @@ export interface TokenPayload {
   cpf: string;
   email: string | null;
   perfil: string;
+  tokenVersion?: number;
 }
 
 export function generateToken(payload: TokenPayload): string {

@@ -102,6 +102,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       cpf: novoUsuario.cpf,
       email: novoUsuario.email,
       perfil: novoUsuario.perfil,
+      tokenVersion: novoUsuario.tokenVersion,
     });
 
     // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
@@ -162,6 +163,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       cpf: usuario.cpf,
       email: usuario.email,
       perfil: usuario.perfil,
+      tokenVersion: usuario.tokenVersion,
     });
 
     // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
@@ -217,6 +219,19 @@ export async function cadastroAdmin(req: AuthenticatedRequest, res: Response): P
 
     const hashedSenha = await bcrypt.hash(senha, 10);
 
+    // aceitar foto opcional (base64) semelhante ao cadastro normal
+    let fotoBuffer: Buffer | undefined = undefined;
+    const { foto } = req.body as any;
+    if (foto) {
+      try {
+        const buf = parseBase64Image(foto);
+        if (buf) fotoBuffer = buf;
+      } catch (err: any) {
+        res.status(400).json({ message: err.message });
+        return;
+      }
+    }
+
     const admin = await prisma.usuario.create({
       data: {
         name,
@@ -224,6 +239,7 @@ export async function cadastroAdmin(req: AuthenticatedRequest, res: Response): P
         senha: hashedSenha,
         email,
         telefone,
+        foto: fotoBuffer,
         perfil: 'ADMIN',
       },
     });

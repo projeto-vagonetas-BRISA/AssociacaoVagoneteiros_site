@@ -81,7 +81,7 @@ export async function enviarEmailResetSenha(destino: string, nome: string, token
         </a>
       </div>
       <p style="color: #888; font-size: 12px; line-height: 1.5;">
-        Este link expira em <strong>1 hora</strong>.
+        Este link expira em <strong>15 minutos</strong>.
         Se você não solicitou esta redefinição, ignore este email.
       </p>
     `),

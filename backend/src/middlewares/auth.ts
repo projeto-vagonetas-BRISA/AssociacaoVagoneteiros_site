@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Usuario, Perfil } from '@prisma/client';
 import { verifyToken, TokenPayload } from '../utils/jwt';
+import prisma from '../lib/prisma';
 
 export interface AuthenticatedRequest extends Request {
   user?: Omit<Usuario, 'senha'>;
@@ -16,6 +17,7 @@ function payloadToUser(payload: TokenPayload): Omit<Usuario, 'senha'> {
     id: payload.id,
     cpf: payload.cpf,
     email: payload.email,
+    tokenVersion: payload.tokenVersion ?? 0,
     perfil: payload.perfil as Perfil,
     name: '',
     telefone: '',
@@ -48,10 +50,20 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
 
   try {
     const decoded = verifyToken(token);
+    const usuario = await prisma.usuario.findUnique({ where: { id: decoded.id } });
 
-    // Monta user a partir do payload do JWT sem consultar o banco
+    if (!usuario) {
+      res.status(401).json({ message: 'Token inválido ou expirado' });
+      return;
+    }
+
+    const payloadVersion = decoded.tokenVersion ?? 0;
+    if (usuario.tokenVersion !== payloadVersion) {
+      res.status(401).json({ message: 'Token inválido ou expirado' });
+      return;
+    }
+
     req.user = payloadToUser(decoded);
-
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token inválido ou expirado' });
