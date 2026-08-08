@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
+import { usePasswordField } from '../utils/formValidations';
 
 export function RedefinirSenha() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
 
-  const [novaSenha, setNovaSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const passwordField = usePasswordField();
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -26,14 +26,25 @@ export function RedefinirSenha() {
     setMensagem(null);
 
     if (!token) { setErro('Token inválido.'); return; }
-    if (novaSenha.length < 6) { setErro('A senha deve ter pelo menos 6 caracteres.'); return; }
-    if (novaSenha !== confirmarSenha) { setErro('As senhas não conferem.'); return; }
+
+    const validationErr = passwordField.validatePassword(passwordField.password);
+    if (validationErr) {
+      passwordField.setPasswordError(validationErr);
+      setErro(validationErr);
+      return;
+    }
+
+    if (passwordField.password !== passwordField.confirmPassword) {
+      passwordField.setConfirmPasswordError('As senhas não coincidem.');
+      setErro('As senhas não conferem.');
+      return;
+    }
 
     setEnviando(true);
     try {
       const res = await api.request<{ message: string }>('/auth/redefinir-senha', {
         method: 'POST',
-        body: JSON.stringify({ token, novaSenha }),
+        body: JSON.stringify({ token, novaSenha: passwordField.password }),
       });
       setSucesso(true);
       setMensagem(res.message);
@@ -60,7 +71,7 @@ export function RedefinirSenha() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-light-3 px-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="text-5xl mb-4">✅</div>
+          <div className="text-5xl mb-4">🎉</div>
           <h1 className="text-2xl font-bold text-green-600 mb-2">Senha Redefinida!</h1>
           <p className="text-text-secondary mb-2">{mensagem}</p>
           <p className="text-sm text-text-secondary">Redirecionando para Home...</p>
@@ -82,22 +93,27 @@ export function RedefinirSenha() {
             <label className="block text-sm font-semibold text-text-dark mb-1">Nova senha</label>
             <input
               type="password"
-              value={novaSenha}
-              onChange={e => setNovaSenha(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+              value={passwordField.password}
+              onChange={passwordField.handlePasswordChange}
+              className={`w-full px-3 py-2.5 border ${passwordField.passwordError ? 'border-red-400 focus:ring-red-400/20' : 'border-border'} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30`}
               autoFocus
             />
+            {passwordField.passwordError && (
+              <p className="mt-1 text-xs text-red-500">{passwordField.passwordError}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-text-dark mb-1">Confirmar senha</label>
             <input
               type="password"
-              value={confirmarSenha}
-              onChange={e => setConfirmarSenha(e.target.value)}
+              value={passwordField.confirmPassword}
+              onChange={passwordField.handleConfirmPasswordChange}
               placeholder="Digite a senha novamente"
-              className="w-full px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+              className={`w-full px-3 py-2.5 border ${passwordField.confirmPasswordError ? 'border-red-400 focus:ring-red-400/20' : 'border-border'} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30`}
             />
+            {passwordField.confirmPasswordError && (
+              <p className="mt-1 text-xs text-red-500">{passwordField.confirmPasswordError}</p>
+            )}
           </div>
 
           {erro && (

@@ -5,6 +5,7 @@
 .env.development
 
 # Secrets and service accounts
+SYSTEM.md
 secrets/
 serviceAccountKey.json
 backend/serviceAccountKey.json
