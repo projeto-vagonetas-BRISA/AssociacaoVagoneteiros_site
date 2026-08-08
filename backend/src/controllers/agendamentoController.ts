@@ -511,10 +511,6 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
         data: { gte: hoje },
         status: 'AGENDADO',
         slotPasseio: { status: 'DISPONIVEL' },
-        OR: [
-          { slotPasseio: { usuarioId: { not: null } } },
-          { atribuicoes: { some: { status: 'ATRIBUIDO' } } }
-        ]
       },
       include: {
         slotPasseio: {

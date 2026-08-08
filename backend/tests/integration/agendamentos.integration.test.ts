@@ -64,6 +64,17 @@ describe('INTEGRAÇÃO — Agendamentos (/agendamentos)', () => {
     expect(res.body.data).toEqual([]);
   });
 
+  it('GET /agendamentos/vagas-disponiveis NÃO filtra slots livres (sem vagoneteiro)', async () => {
+    // O filtro OR que exigia usuarioId not null / atribuição ATRIBUIDO foi removido:
+    // slots livres também devem aparecer como vagas disponíveis.
+    prisma.model.slotInstancia.findMany.mockResolvedValue([]);
+    await request(app).get('/agendamentos/vagas-disponiveis');
+    const where = prisma.model.slotInstancia.findMany.mock.calls[0][0].where;
+    expect(where.OR).toBeUndefined();
+    expect(where.status).toBe('AGENDADO');
+    expect(where.slotPasseio.status).toBe('DISPONIVEL');
+  });
+
   it('POST /agendamentos/publico agendar com sucesso e disparar email', async () => {
     const passeio = { id: 1, preco: '50', data: new Date('2099-01-01T12:00:00.000Z'), horario: '08:00', ativo: true };
     prisma.model.passeio.findUnique.mockResolvedValue(passeio);
