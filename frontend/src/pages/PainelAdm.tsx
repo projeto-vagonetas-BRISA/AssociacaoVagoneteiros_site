@@ -265,6 +265,7 @@ export const PainelAdmin: React.FC = () => {
     criadoEm: string;
   };
   const [suspensoes, setSuspensoes] = useState<Suspensao[]>([]);
+  const [filtroSuspensao, setFiltroSuspensao] = useState<'ativas' | 'todas' | 'removidas'>('ativas');
   const [modalSuspensao, setModalSuspensao] = useState<{
     open: boolean; inicio: string; fim: string; motivo: string;
     carregando: boolean; erro: string | null; resultado: string | null;
@@ -767,6 +768,16 @@ export const PainelAdmin: React.FC = () => {
             <div className="flex items-center gap-3">
               <PauseCircle className="text-amber-600" size={20} strokeWidth={1.8} />
               <h2 className="font-bold text-base text-text-dark">Suspensão de Atividades</h2>
+              <select
+                value={filtroSuspensao}
+                onChange={e => setFiltroSuspensao(e.target.value as any)}
+                className="ml-1 text-xs font-medium rounded-lg border border-border px-2 py-1.5 bg-white text-text-dark focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer"
+                title="Filtrar suspensões"
+              >
+                <option value="ativas">Somente ativas</option>
+                <option value="todas">Todas</option>
+                <option value="removidas">Somente removidas</option>
+              </select>
             </div>
             <button
               onClick={() => setModalSuspensao(m => ({ ...m, open: true, erro: null, resultado: null }))}
@@ -777,11 +788,16 @@ export const PainelAdmin: React.FC = () => {
           </div>
 
           <div className="px-6 py-4">
-            {suspensoes.length === 0 ? (
-              <p className="text-sm text-text-secondary">Nenhum período de suspensão registrado.</p>
-            ) : (
-              <ul className="flex flex-col divide-y divide-border">
-                {suspensoes.map(s => (
+            {(() => {
+              const filtradas = suspensoes.filter(s =>
+                filtroSuspensao === 'ativas' ? s.ativa :
+                filtroSuspensao === 'removidas' ? !s.ativa : true
+              );
+              return filtradas.length === 0 ? (
+                <p className="text-sm text-text-secondary">Nenhum período de suspensão registrado.</p>
+              ) : (
+                <ul className="flex flex-col divide-y divide-border">
+                  {filtradas.map(s => (
                   <li key={s.id} className="py-3 flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-3">
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${s.ativa ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-text-secondary'}`}>
@@ -810,7 +826,8 @@ export const PainelAdmin: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            )}
+              );
+            })()}
           </div>
         </section>
 
