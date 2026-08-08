@@ -108,8 +108,8 @@ describe('dashboardController - metricas', () => {
       { id: 1, capacidade: 5, ativo: true },
     ]);
     mockPrisma.agendamento.findMany.mockResolvedValue([
-      { acompanhantes: 0, status: 'CONFIRMADO', passeioId: 1, passeio: { preco: 100 } },
-      { acompanhantes: 0, status: 'CONFIRMADO', passeioId: 1, passeio: { preco: 100 } },
+      { acompanhantes: 0, status: 'CONFIRMADO', passeioId: 1, passeio: { preco: 100, status: 'REALIZADO' } },
+      { acompanhantes: 0, status: 'CONFIRMADO', passeioId: 1, passeio: { preco: 100, status: 'REALIZADO' } },
     ]);
     mockPrisma.agendamento.count
       .mockResolvedValueOnce(2) // total
@@ -137,7 +137,7 @@ describe('dashboardController - metricas', () => {
     ]);
     // Agendamentos cancelados não entram no findMany porque tem where: { status: { not: 'CANCELADO' } }
     mockPrisma.agendamento.findMany.mockResolvedValue([
-      { acompanhantes: 0, status: 'CONFIRMADO', passeioId: 1, passeio: { preco: 80 } },
+      { acompanhantes: 0, status: 'CONFIRMADO', passeioId: 1, passeio: { preco: 80, status: 'REALIZADO' } },
     ]);
     mockPrisma.agendamento.count
       .mockResolvedValueOnce(2) // total (inclui cancelado)
