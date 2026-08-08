@@ -18,6 +18,7 @@ model Usuario {
   historico       String?
   experiencia     String?  // tempo de experiência: "Menos de 1 ano", "1 a 3 anos", etc.
   email           String?  @unique
+  tokenVersion    Int      @default(0)
   telefone        String
   senha           String
   perfil          Perfil   @default(USUARIO)
@@ -27,6 +28,7 @@ model Usuario {
   passeios        Passeio[]
   slotPasseios    SlotPasseio[]       @relation("UsuarioSlots")
   slotAtribuicoes SlotAtribuicao[]    @relation("VagoneteiroAtribuicoes")
+  resetTokens     ResetToken[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -262,12 +264,25 @@ model AvaliacaoCache {
 }
 
 model ResetToken {
-  id        Int      @id @default(autoincrement())
-  email     String
-  token     String   @unique
-  usado     Boolean  @default(false)
-  expiraEm  DateTime
-  criadoEm  DateTime @default(now())
+  id            Int               @id @default(autoincrement())
+  email         String
+  usuarioId     Int?
+  usuario       Usuario?          @relation(fields: [usuarioId], references: [id])
+  perfil        Perfil
+  status        ResetTokenStatus  @default(PENDING_APPROVAL)
+  token         String?           @unique
+  usado         Boolean           @default(false)
+  expiraEm      DateTime?
+  criadoEm      DateTime          @default(now())
+  aprovadoPorId Int?
+  aprovadoEm    DateTime?
 
   @@map("ResetToken")
+}
+
+enum ResetTokenStatus {
+  PENDING_APPROVAL
+  APPROVED
+  COMPLETED
+  REJECTED
 }

@@ -10,10 +10,16 @@ async function main() {
   const senha = await bcrypt.hash('admin123', saltRounds);
 
   // Remover dados antigos antes de recriar
-  await prisma.avaliacao.deleteMany({});
+  await prisma.slotAtribuicao.deleteMany({});
+  await prisma.slotInstancia.deleteMany({});
+  await prisma.slotPasseio.deleteMany({});
+  await prisma.notificacaoAgendamento.deleteMany({});
   await prisma.agendamento.deleteMany({});
+  await prisma.pushSubscription.deleteMany({});
   await prisma.passeio.deleteMany({});
+  await prisma.avaliacao.deleteMany({});
   await prisma.clientes.deleteMany({});
+  await prisma.resetToken.deleteMany({});
   await prisma.usuario.deleteMany({
     where: { email: { in: ['admin@vagoneteiros.com', 'redator@vagoneteiros.com', 'vagoneteiro@vagoneteiros.com'] } },
   });
