@@ -77,6 +77,37 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
+    // Regra: enquanto o vagoneteiro estiver ATRIBUIDO a um passeio pendente,
+    // não pode se atribuir a um novo — deve concluir o atual antes.
+    const pendente = await prisma.slotAtribuicao.findFirst({
+      where: {
+        vagoneteiroId,
+        status: 'ATRIBUIDO',
+        instanciaId: { not: instancia.id },
+      },
+      select: {
+        id: true,
+        instancia: {
+          select: { data: true, horaInicio: true },
+        },
+        slotPasseio: {
+          select: { titulo: true },
+        },
+      },
+    });
+
+    if (pendente) {
+      const tituloPendente = pendente.slotPasseio?.titulo || 'um passeio';
+      const dataPendente = pendente.instancia?.data
+        ? new Date(pendente.instancia.data).toLocaleDateString('pt-BR')
+        : '';
+      res.status(409).json({
+        message: `Você já está atribuído a ${tituloPendente}${dataPendente ? ` (${dataPendente})` : ''}. Conclua-o antes de se atribuir a um novo passeio.`,
+        atribuicaoPendenteId: pendente.id,
+      });
+      return;
+    }
+
     // Verificar conflito de horário com outras atribuições do vagoneteiro
     const conflitos = await conflitoService.verificarConflitoVagoneteiro(
       vagoneteiroId,

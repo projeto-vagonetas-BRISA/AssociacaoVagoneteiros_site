@@ -130,6 +130,28 @@ describe('atribuicaoController.autoAtribuir', () => {
     );
   });
 
+  it('rejeita nova atribuição enquanto tem outra pendente em outro passeio (regra: conclua antes)', async () => {
+    mockCount.mockResolvedValue(0);
+    // 1ª chamada (jaAtribuido p/ mesma instancia) = null; 2ª chamada (pendente em outro passeio) = objeto
+    mockFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 77,
+        slotPasseio: { titulo: 'Passeio 08:00' },
+        instancia: { data: new Date('2026-12-22T03:00:00.000Z'), horaInicio: '08:00' },
+      });
+    const res = mockRes();
+    await autoAtribuir(mockReq({ instanciaId: 10 }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('Conclua-o antes de se atribuir a um novo'),
+        atribuicaoPendenteId: 77,
+      }),
+    );
+  });
+
+
   it('retorna 409 em conflito de horário com outra atribuição', async () => {
     mockCount.mockResolvedValue(0);
     mockFindFirst.mockResolvedValue(null); // não há outra atribuição do vagoneteiro
