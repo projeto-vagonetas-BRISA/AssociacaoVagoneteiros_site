@@ -21,6 +21,13 @@ function calcularDuracao(horaInicio: string, horaFim: string): number {
   return horaParaMinutos(horaFim) - horaParaMinutos(horaInicio);
 }
 
+/** Constrói data "YYYY-MM-DD" como MEIA-NOITE LOCAL (ex: 2026-12-14 em GMT-3 = 03:00Z no banco UTC),
+ *  casando com o armazenamento dos Passeios/Slots — evita bug de fuso. */
+function parseDataLocal(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
+}
+
 // ─── CRUD ───────────────────────────────────────────────────────────
 
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -64,7 +71,10 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
         res.status(400).json({ message: 'data é obrigatória para slots INDIVIDUAL' });
         return;
       }
-      parsedData = new Date(data);
+      // Constrói como meia-noite LOCAL (ex: 2026-12-20 em GMT-3 = 03:00Z) para
+      // casar com o armazenamento dos Passeios/Slots e evitar bug de fuso.
+      const dp = String(data).split('-').map(Number);
+      parsedData = new Date(dp[0], dp[1] - 1, dp[2], 0, 0, 0, 0);
       if (Number.isNaN(parsedData.getTime())) {
         res.status(400).json({ message: 'data inválida' });
         return;
@@ -414,8 +424,8 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
       capacidade: parseInt(capacidade, 10),
       valor: parseFloat(valor),
       usuarioId: parsedUsuarioId || undefined,
-      dataInicio: dataInicio ? new Date(dataInicio) : undefined,
-      dataFim: dataFim ? new Date(dataFim) : undefined,
+      dataInicio: dataInicio ? parseDataLocal(dataInicio) : undefined,
+      dataFim: dataFim ? parseDataLocal(dataFim) : undefined,
     });
 
     res.status(201).json({ data: slots, total: slots.length });

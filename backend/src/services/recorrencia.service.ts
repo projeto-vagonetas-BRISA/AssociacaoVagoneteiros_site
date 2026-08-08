@@ -209,6 +209,9 @@ export class RecorrenciaService {
 
   private async gerarLotePorIntervalo(config: LoteConfig): Promise<SlotPasseio[]> {
     const slotsCriados: SlotPasseio[] = [];
+    // dataInicio/fim já chegam normalizados como MEIA-NOITE LOCAL pelo chamador
+    // (slotController.gerarLote) — evita bug de fuso (slots em 00:00Z UTC ficavam
+    // 3h defasados e não batiam com filtros que usam meia-noite local).
     const inicio = new Date(config.dataInicio!);
     const fim = new Date(config.dataFim!);
     const horaInicioMin = horaParaMinutos(config.horaInicio);
