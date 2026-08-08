@@ -602,6 +602,65 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
   }
 }
 
+// Cancelamento em massa (só ADMIN) — cancela agendamentos de passeios ainda
+// não realizados dentro de um período informado.
+export async function cancelarEmMassa(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { dataInicio, dataFim, motivo } = req.body;
+
+    if (!dataInicio || !dataFim) {
+      res.status(400).json({ message: 'Informe dataInicio e dataFim.' });
+      return;
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataInicio) || !/^\d{4}-\d{2}-\d{2}$/.test(dataFim)) {
+      res.status(400).json({ message: 'Datas inválidas. Use o formato AAAA-MM-DD.' });
+      return;
+    }
+
+    // Constrói as datas como LOCAIS para casar com o fuso em que os passeios
+    // foram gravados (ex: 2026-08-09 local = 03:00:00Z no banco UTC).
+    const inicio = parseDataLocal(dataInicio);
+    const fim = parseDataLocal(dataFim);
+    fim.setHours(23, 59, 59, 999);
+
+    if (inicio > fim) {
+      res.status(400).json({ message: 'dataInicio deve ser menor ou igual a dataFim.' });
+      return;
+    }
+
+    const result = await prisma.agendamento.updateMany({
+      where: {
+        passeio: {
+          data: { gte: inicio, lte: fim },
+        },
+        // Cancela apenas os que ainda não foram realizados/cancelados
+        NOT: { status: { in: ['CANCELADO', 'REALIZADO'] } },
+      },
+      data: {
+        status: 'CANCELADO',
+        canceladoEm: new Date(),
+        canceladoPor: req.user?.cpf ?? null,
+        motivoCancelamento: motivo || null,
+      },
+    });
+
+    res.json({
+      message: `${result.count} agendamento(s) cancelado(s) no período.`,
+      cancelados: result.count,
+    });
+  } catch (error) {
+    console.error('Erro ao cancelar em massa:', error);
+    res.status(500).json({ message: 'Erro ao cancelar em massa' });
+  }
+}
+
+function parseDataLocal(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  // constrói como meia-noite do fuso local (bate com o armazenamento dos passeios)
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
+}
+
 export async function atualizarStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const id = Number(req.params.id);

@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
   ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff,
-  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal
+  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal, X, CalendarX2, Loader2
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
@@ -222,6 +222,38 @@ export const PainelAdmin: React.FC = () => {
   const [editTotal, setEditTotal] = useState('');
   const [salvandoAvaliacao, setSalvandoAvaliacao] = useState(false);
   const [modalRelatorio, setModalRelatorio] = useState<{ open: boolean; inicio: string; fim: string; preset: string }>({ open: false, inicio: '', fim: '', preset: 'mensal' });
+  const [modalCancelamentoMassa, setModalCancelamentoMassa] = useState<{
+    open: boolean; inicio: string; fim: string; motivo: string;
+    carregando: boolean; resultado: string | null; erro: string | null;
+  }>({ open: false, inicio: '', fim: '', motivo: '', carregando: false, resultado: null, erro: null });
+
+  // Data mínima selecionável no modal (hoje, fuso local) — inibe dias passados
+  const hoje = new Date();
+  const dataMinimaHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+  const cancelarEmMassa = async () => {
+    const { inicio, fim, motivo } = modalCancelamentoMassa;
+    if (!inicio || !fim) return;
+    setModalCancelamentoMassa(m => ({ ...m, carregando: true, erro: null, resultado: null }));
+    try {
+      const resp = await api.request<{ message: string; cancelados: number }>('/agendamentos/cancelar-em-massa', {
+        method: 'POST',
+        body: JSON.stringify({ dataInicio: inicio, dataFim: fim, motivo: motivo || undefined }),
+      });
+      setModalCancelamentoMassa(m => ({
+        ...m,
+        carregando: false,
+        resultado: resp.message,
+      }));
+      await carregarDados();
+    } catch (e: any) {
+      setModalCancelamentoMassa(m => ({
+        ...m,
+        carregando: false,
+        erro: e?.message || 'Erro ao cancelar em massa. Tente novamente.',
+      }));
+    }
+  };
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -592,9 +624,16 @@ export const PainelAdmin: React.FC = () => {
         </div>
 
         {/* Gestão de Passeios e Agendamentos */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Ticket className="text-text-dark" size={22} strokeWidth={1.8} />
           <h2 className="font-bold text-lg text-text-dark">Gestão de Passeios e Agendamentos</h2>
+          <div className="flex-1" />
+          <button
+            onClick={() => setModalCancelamentoMassa(m => ({ ...m, open: true, resultado: null, erro: null }))}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors cursor-pointer"
+          >
+            <CalendarX2 size={16} /> Cancelamento em massa
+          </button>
         </div>
 
         {/* Stat Cards */}
@@ -937,6 +976,93 @@ export const PainelAdmin: React.FC = () => {
                   {salvandoAvaliacao ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Cancelamento em Massa */}
+      {modalCancelamentoMassa.open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => !modalCancelamentoMassa.carregando && setModalCancelamentoMassa(m => ({ ...m, open: false }))}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg text-text-dark">Cancelamento em massa</h3>
+              <button
+                onClick={() => setModalCancelamentoMassa(m => ({ ...m, open: false }))}
+                className="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                disabled={modalCancelamentoMassa.carregando}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm text-text-secondary mb-4">
+              Cancela todos os agendamentos de passeios ainda não realizados dentro do período selecionado.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Data início</label>
+                <input
+                  type="date"
+                  min={dataMinimaHoje}
+                  value={modalCancelamentoMassa.inicio}
+                  onChange={e => setModalCancelamentoMassa(m => ({ ...m, inicio: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Data fim</label>
+                <input
+                  type="date"
+                  min={dataMinimaHoje}
+                  value={modalCancelamentoMassa.fim}
+                  onChange={e => setModalCancelamentoMassa(m => ({ ...m, fim: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Motivo (opcional)</label>
+                <textarea
+                  value={modalCancelamentoMassa.motivo}
+                  onChange={e => setModalCancelamentoMassa(m => ({ ...m, motivo: e.target.value }))}
+                  rows={2}
+                  placeholder="Ex: Condição climática adversa"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30 resize-none"
+                />
+              </div>
+            </div>
+
+            {modalCancelamentoMassa.resultado && (
+              <div className="mt-3 px-3 py-2 rounded-lg bg-green-50 text-green-700 text-sm">
+                {modalCancelamentoMassa.resultado}
+              </div>
+            )}
+            {modalCancelamentoMassa.erro && (
+              <div className="mt-3 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-sm">
+                {modalCancelamentoMassa.erro}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                onClick={() => setModalCancelamentoMassa(m => ({ ...m, open: false }))}
+                className="flex-1 px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-primary hover:bg-bg-light-1 transition-colors cursor-pointer"
+                disabled={modalCancelamentoMassa.carregando}
+              >
+                Fechar
+              </button>
+              <button
+                disabled={modalCancelamentoMassa.carregando || !modalCancelamentoMassa.inicio || !modalCancelamentoMassa.fim}
+                onClick={() => {
+                  if (!confirm(`Confirmar o cancelamento em massa de todos os agendamentos entre ${modalCancelamentoMassa.inicio} e ${modalCancelamentoMassa.fim}?`)) return;
+                  cancelarEmMassa();
+                }}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {modalCancelamentoMassa.carregando ? (
+                  <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Cancelando...</span>
+                ) : 'Confirmar cancelamento'}
+              </button>
             </div>
           </div>
         </div>
