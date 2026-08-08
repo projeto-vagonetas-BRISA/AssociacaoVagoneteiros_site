@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
   ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff,
-  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal, X, CalendarX2, Loader2
+  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal, X, CalendarX2, Loader2, PauseCircle, PlayCircle, Ban
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
@@ -253,6 +253,70 @@ export const PainelAdmin: React.FC = () => {
         erro: e?.message || 'Erro ao cancelar em massa. Tente novamente.',
       }));
     }
+  };
+
+  // ---- Suspensão de atividades ----
+  type Suspensao = {
+    id: number;
+    dataInicio: string;
+    dataFim: string;
+    motivo: string | null;
+    ativa: boolean;
+    criadoEm: string;
+  };
+  const [suspensoes, setSuspensoes] = useState<Suspensao[]>([]);
+  const [modalSuspensao, setModalSuspensao] = useState<{
+    open: boolean; inicio: string; fim: string; motivo: string;
+    carregando: boolean; erro: string | null; resultado: string | null;
+  }>({ open: false, inicio: '', fim: '', motivo: '', carregando: false, erro: null, resultado: null });
+  const [removendoSuspensaoId, setRemovendoSuspensaoId] = useState<number | null>(null);
+
+  const carregarSuspensoes = async () => {
+    try {
+      const resp = await api.request<{ suspensoes: any[] }>('/suspensoes');
+      setSuspensoes(resp.suspensoes ?? []);
+    } catch { }
+  };
+
+  useEffect(() => { carregarSuspensoes(); }, []);
+
+  const criarSuspensao = async () => {
+    const { inicio, fim, motivo } = modalSuspensao;
+    if (!inicio || !fim) return;
+    setModalSuspensao(m => ({ ...m, carregando: true, erro: null, resultado: null }));
+    try {
+      const resp = await api.request<{ message: string }>('/suspensoes', {
+        method: 'POST',
+        body: JSON.stringify({ dataInicio: inicio, dataFim: fim, motivo: motivo || undefined }),
+      });
+      setModalSuspensao(m => ({ ...m, carregando: false, resultado: resp.message }));
+      await carregarSuspensoes();
+      await carregarDados();
+    } catch (e: any) {
+      setModalSuspensao(m => ({
+        ...m,
+        carregando: false,
+        erro: e?.message || 'Erro ao suspender período. Tente novamente.',
+      }));
+    }
+  };
+
+  const removerSuspensao = async (id: number) => {
+    if (!confirm(`Remover a suspensão deste período? Os agendamentos voltarão ao status anterior.`)) return;
+    setRemovendoSuspensaoId(id);
+    try {
+      await api.request(`/suspensoes/${id}`, { method: 'DELETE' });
+      await carregarSuspensoes();
+      await carregarDados();
+    } catch (e: any) {
+      alert(e?.message || 'Erro ao remover suspensão.');
+    }
+    setRemovendoSuspensaoId(null);
+  };
+
+  const formatarDataSuspensao = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   };
 
   useEffect(() => {
@@ -697,6 +761,59 @@ export const PainelAdmin: React.FC = () => {
           }}
         />
 
+        {/* Suspensão de Atividades */}
+        <section className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-border flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <PauseCircle className="text-amber-600" size={20} strokeWidth={1.8} />
+              <h2 className="font-bold text-base text-text-dark">Suspensão de Atividades</h2>
+            </div>
+            <button
+              onClick={() => setModalSuspensao(m => ({ ...m, open: true, erro: null, resultado: null }))}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors cursor-pointer"
+            >
+              <Ban size={16} /> Suspender período
+            </button>
+          </div>
+
+          <div className="px-6 py-4">
+            {suspensoes.length === 0 ? (
+              <p className="text-sm text-text-secondary">Nenhum período de suspensão registrado.</p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-border">
+                {suspensoes.map(s => (
+                  <li key={s.id} className="py-3 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${s.ativa ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-text-secondary'}`}>
+                        {s.ativa ? <PauseCircle size={12} /> : <PlayCircle size={12} />}
+                        {s.ativa ? 'Ativa' : 'Removida'}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-text-dark">
+                          {formatarDataSuspensao(s.dataInicio)} — {formatarDataSuspensao(s.dataFim)}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {s.motivo || 'Sem motivo informado'}
+                        </p>
+                      </div>
+                    </div>
+                    {s.ativa && (
+                      <button
+                        onClick={() => removerSuspensao(s.id)}
+                        disabled={removendoSuspensaoId === s.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        {removendoSuspensaoId === s.id ? <Loader2 size={12} className="animate-spin" /> : <PlayCircle size={12} />}
+                        Remover suspensão
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
         {/* Vagoneteiros + Histórico */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
 
@@ -1062,6 +1179,93 @@ export const PainelAdmin: React.FC = () => {
                 {modalCancelamentoMassa.carregando ? (
                   <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Cancelando...</span>
                 ) : 'Confirmar cancelamento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Suspensão de Atividades */}
+      {modalSuspensao.open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => !modalSuspensao.carregando && setModalSuspensao(m => ({ ...m, open: false }))}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg text-text-dark">Suspender período</h3>
+              <button
+                onClick={() => setModalSuspensao(m => ({ ...m, open: false }))}
+                className="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                disabled={modalSuspensao.carregando}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm text-text-secondary mb-4">
+              Suspende os passeios e slots do período. Os agendamentos existentes ficam suspensos (status original preservado) e os slots não aparecem para agendamento.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Data início</label>
+                <input
+                  type="date"
+                  min={dataMinimaHoje}
+                  value={modalSuspensao.inicio}
+                  onChange={e => setModalSuspensao(m => ({ ...m, inicio: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Data fim</label>
+                <input
+                  type="date"
+                  min={dataMinimaHoje}
+                  value={modalSuspensao.fim}
+                  onChange={e => setModalSuspensao(m => ({ ...m, fim: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1 block">Motivo (opcional)</label>
+                <textarea
+                  value={modalSuspensao.motivo}
+                  onChange={e => setModalSuspensao(m => ({ ...m, motivo: e.target.value }))}
+                  rows={2}
+                  placeholder="Ex: Manutenção no trajeto"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-accent/30 resize-none"
+                />
+              </div>
+            </div>
+
+            {modalSuspensao.resultado && (
+              <div className="mt-3 px-3 py-2 rounded-lg bg-green-50 text-green-700 text-sm">
+                {modalSuspensao.resultado}
+              </div>
+            )}
+            {modalSuspensao.erro && (
+              <div className="mt-3 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-sm">
+                {modalSuspensao.erro}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                onClick={() => setModalSuspensao(m => ({ ...m, open: false }))}
+                className="flex-1 px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-primary hover:bg-bg-light-1 transition-colors cursor-pointer"
+                disabled={modalSuspensao.carregando}
+              >
+                Fechar
+              </button>
+              <button
+                disabled={modalSuspensao.carregando || !modalSuspensao.inicio || !modalSuspensao.fim}
+                onClick={() => {
+                  if (!confirm(`Suspender todas as atividades entre ${modalSuspensao.inicio} e ${modalSuspensao.fim}?`)) return;
+                  criarSuspensao();
+                }}
+                className="flex-1 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {modalSuspensao.carregando ? (
+                  <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Suspendendo...</span>
+                ) : 'Suspender período'}
               </button>
             </div>
           </div>

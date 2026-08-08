@@ -94,9 +94,14 @@ model Agendamento {
   canceladoEm         DateTime?
   canceladoPor        String?
   motivoCancelamento  String?
-  notificacoes       NotificacaoAgendamento[]    
+  notificacoes       NotificacaoAgendamento[]   
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
+
+  // Suspensão de atividades
+  suspensaoId         Int?
+  suspensao           Suspensao?                 @relation("SuspensaoAgendamentos", fields: [suspensaoId], references: [id], onDelete: SetNull)
+  statusAnterior      StatusAgendamento?
 }
 
 model NotificacaoAgendamento {
@@ -140,6 +145,7 @@ enum StatusAgendamento {
   CANCELADO
   REMARCADO
   REALIZADO
+  SUSPENSO
 }
 
 // ─── NOVOS MODELOS: Sistema de Agendamento (Composite Pattern) ─────
@@ -172,6 +178,7 @@ enum StatusInstancia {
   EM_ANDAMENTO
   REALIZADO
   CANCELADO
+  SUSPENSO
 }
 
 enum StatusPasseio {
@@ -234,6 +241,11 @@ model SlotInstancia {
   status         StatusInstancia @default(AGENDADO)
   createdAt      DateTime      @default(now())
 
+  // Suspensão de atividades
+  suspensaoId    Int?
+  suspensao      Suspensao?    @relation("SuspensaoInstancias", fields: [suspensaoId], references: [id], onDelete: SetNull)
+  statusAnterior StatusInstancia?
+
   atribuicoes    SlotAtribuicao[]
 
   @@unique([slotPasseioId, data, horaInicio])
@@ -288,4 +300,19 @@ enum ResetTokenStatus {
   APPROVED
   COMPLETED
   REJECTED
+}
+
+model Suspensao {
+  id            Int       @id @default(autoincrement())
+  dataInicio    DateTime
+  dataFim       DateTime
+  motivo        String?
+  criadoPorId   Int?
+  criadoEm      DateTime  @default(now())
+  ativa         Boolean   @default(true)
+  removidaEm    DateTime?
+  removidaPorId Int?
+
+  instancias   SlotInstancia[] @relation("SuspensaoInstancias")
+  agendamentos Agendamento[]   @relation("SuspensaoAgendamentos")
 }
