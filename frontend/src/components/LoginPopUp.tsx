@@ -29,6 +29,7 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
     const [isCpfMode, setIsCpfMode] = useState(false);
     const cpfField = useCpfField();
     const emailField = useEmailField();
+    const resetEmailField = useEmailField();
 
     function handleIdentifierChange(e: React.ChangeEvent<HTMLInputElement>) {
         const isCpf = looksLikeCpf(e.target.value);
@@ -226,13 +227,22 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             <p className="text-sm text-slate-300 text-center">
                               Digite seu e-mail cadastrado e enviaremos um link para redefinir sua senha.
                             </p>
-                                                        <input
-                                                            type="email"
-                                                            value={emailField.email}
-                                                            onChange={emailField.handleEmailChange}
-                                                            placeholder="seu@email.com"
-                                                            className="block w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 bg-[#0d1117] border border-white/10 focus:outline-none focus:ring-1 focus:border-blue focus:ring-blue transition-colors"
-                                                        />
+                            <div>
+                                <input
+                                    id="reset_email"
+                                    type="email"
+                                    name="reset_email"
+                                    value={resetEmailField.email}
+                                    onChange={resetEmailField.handleEmailChange}
+                                    placeholder="seu@email.com"
+                                    className="block w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 bg-[#0d1117] border border-white/10 focus:outline-none focus:ring-1 focus:border-blue focus:ring-blue transition-colors"
+                                />
+                                {resetEmailField.emailError && (
+                                    <p className="mt-1.5 text-xs text-red-400">
+                                        {resetEmailField.emailError}
+                                    </p>
+                                )}
+                            </div>
                             {erroReset && (
                               <p className="text-sm text-red-300 text-center">{erroReset}</p>
                             )}
@@ -242,26 +252,32 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                             <div className="flex gap-2">
                               <button
                                 type="button"
-                                  onClick={() => { setEsqueciSenha(false); setMensagemReset(null); setErroReset(null); emailField.setEmail(''); emailField.setEmailError(''); }}
+                                  onClick={() => { setEsqueciSenha(false); setMensagemReset(null); setErroReset(null); resetEmailField.setEmail(''); resetEmailField.setEmailError(''); }}
                                 className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors cursor-pointer"
                               >
                                 Voltar
                               </button>
                               <button
                                 type="button"
-                                                                disabled={enviandoReset || !emailField.email}
+                                                                disabled={enviandoReset || !resetEmailField.email}
                                                                 onClick={async () => {
                                                                     setErroReset(null);
                                                                     setMensagemReset(null);
-                                                                    if (!emailField.email) { setErroReset('Informe seu e-mail.'); return; }
-                                                                    const validationErr = emailField.validateEmail(emailField.email);
-                                                                    if (validationErr) { setErroReset(validationErr); return; }
+                                                                    if (!resetEmailField.email) {
+                                                                        resetEmailField.setEmailError('E-mail é obrigatório.');
+                                                                        return;
+                                                                    }
+                                                                    const validationErr = resetEmailField.validateEmail(resetEmailField.email);
+                                                                    if (validationErr) {
+                                                                        resetEmailField.setEmailError(validationErr);
+                                                                        return;
+                                                                    }
                                                                     setEnviandoReset(true);
                                                                     try {
                                                                         const res = await fetch('/auth/esqueci-senha', {
                                                                             method: 'POST',
                                                                             headers: { 'Content-Type': 'application/json' },
-                                                                            body: JSON.stringify({ email: emailField.email }),
+                                                                            body: JSON.stringify({ email: resetEmailField.email }),
                                                                         });
                                                                         const data = await res.json();
                                                                         if (!res.ok) {
