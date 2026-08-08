@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { parseFiltroData } from '../utils/filtroData';
@@ -217,12 +217,7 @@ export async function consultaPorDocumento(req: AuthenticatedRequest, res: Respo
     }
 
     const agendamento = await prisma.agendamento.findFirst({
-      where: {
-        id,
-        cliente: {
-          cpf: { contains: documento },
-        },
-      },
+      where: { id },
       include: {
         cliente: { select: { id: true, nome: true, cpf: true } },
         passeio: {
@@ -234,7 +229,9 @@ export async function consultaPorDocumento(req: AuthenticatedRequest, res: Respo
       },
     });
 
-    if (!agendamento) {
+    // Normaliza o CPF do cliente (pode estar mascarado no banco) antes de comparar
+    const cpfCliente = (agendamento?.cliente.cpf ?? '').replace(/\D/g, '');
+    if (!agendamento || cpfCliente !== documento) {
       res.status(404).json({ message: 'Nenhum agendamento encontrado para o ID e CPF informados.' });
       return;
     }
@@ -250,6 +247,9 @@ export async function consultaPorDocumento(req: AuthenticatedRequest, res: Respo
       total: Number(agendamento.passeio.preco) * passageiros,
       cliente: agendamento.cliente.nome,
       cpf: agendamento.cliente.cpf,
+      canceladoEm: agendamento.canceladoEm,
+      canceladoPor: agendamento.canceladoPor,
+      motivoCancelamento: agendamento.motivoCancelamento,
     });
   } catch (error) {
     console.error('Erro ao consultar agendamento:', error);
@@ -626,9 +626,16 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
       return;
     }
 
+    // Auditoria: ao cancelar, registra quem (CPF do admin) e quando
+    const dadosAtualizacao: any = { status };
+    if (status === 'CANCELADO' && agendamentoExistente.status !== 'CANCELADO') {
+      dadosAtualizacao.canceladoEm = new Date();
+      if (req.user?.cpf) dadosAtualizacao.canceladoPor = req.user.cpf;
+    }
+
     const agendamento = await prisma.agendamento.update({
       where: { id },
-      data: { status },
+      data: dadosAtualizacao,
       include: {
         cliente: { select: { id: true, nome: true } },
         passeio: { select: { id: true, data: true, preco: true } },
@@ -661,5 +668,68 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
   } catch (error) {
     console.error('Erro ao deletar agendamento:', error);
     res.status(500).json({ message: 'Erro ao deletar agendamento' });
+  }
+}
+
+/**
+ * Cancela um agendamento publicamente (sem autenticação), validando o CPF do cliente.
+ * Ao cancelar, o status vira CANCELADO e a vaga (1 + acompanhantes) é liberada
+ * automaticamente, pois cancelados são excluídos do cálculo de vagas ocupadas.
+ */
+export async function cancelarPublico(req: Request, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    const documento = String(req.body.documento ?? '').replace(/\D/g, '');
+
+    if (isNaN(id) || !documento || documento.length < 11) {
+      res.status(400).json({ message: 'ID e CPF válidos são obrigatórios' });
+      return;
+    }
+
+    const agendamento = await prisma.agendamento.findFirst({
+      where: { id },
+      include: {
+        cliente: { select: { cpf: true } },
+        passeio: { select: { data: true } },
+      },
+    });
+
+    // Normaliza o CPF do cliente (pode estar mascarado no banco)
+    const cpfCliente = (agendamento?.cliente.cpf ?? '').replace(/\D/g, '');
+    if (!agendamento || cpfCliente !== documento) {
+      res.status(404).json({ message: 'Nenhum agendamento encontrado para o ID e CPF informados.' });
+      return;
+    }
+
+    // Regras de negócio
+    if (agendamento.status === 'CANCELADO') {
+      res.status(400).json({ message: 'Este agendamento já foi cancelado.' });
+      return;
+    }
+    if (agendamento.status === 'REALIZADO') {
+      res.status(400).json({ message: 'Passeio já realizado. Não é possível cancelar.' });
+      return;
+    }
+
+    // Impede cancelar passeio que já ocorreu
+    if (agendamento.passeio && agendamento.passeio.data && agendamento.passeio.data < new Date()) {
+      res.status(400).json({ message: 'Passeio já ocorreu. Não é possível cancelar.' });
+      return;
+    }
+
+    const agora = new Date();
+    await prisma.agendamento.update({
+      where: { id },
+      data: {
+        status: 'CANCELADO',
+        canceladoEm: agora,
+        canceladoPor: documento,
+      },
+    });
+
+    res.json({ message: 'Agendamento cancelado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao cancelar agendamento:', error);
+    res.status(500).json({ message: 'Erro ao cancelar agendamento' });
   }
 }

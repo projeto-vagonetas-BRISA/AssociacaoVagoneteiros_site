@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listar, buscarPorId, criar, agendarPublico, vagasDisponiveis, consultaPorDocumento, atualizarStatus, deletar } from '../controllers/agendamentoController';
+import { listar, buscarPorId, criar, agendarPublico, vagasDisponiveis, consultaPorDocumento, atualizarStatus, deletar, cancelarPublico } from '../controllers/agendamentoController';
 import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
@@ -8,6 +8,7 @@ const router = Router();
 router.get('/vagas-disponiveis', vagasDisponiveis);
 router.post('/publico', agendarPublico);
 router.get('/consulta/:id/:documento', consultaPorDocumento);
+router.post('/cancelar/:id', cancelarPublico);
 
 // Rotas administrativas
 router.get('/', authMiddleware, listar);

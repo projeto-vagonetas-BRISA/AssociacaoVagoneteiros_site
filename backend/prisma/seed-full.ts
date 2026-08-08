@@ -53,7 +53,7 @@ function randomChoice<T>(arr: T[]): T {
 
 function randomCPF(): string {
   const n = () => randomInt(0, 9);
-  return `${n()}${n()}${n()}.${n()}${n()}${n()}.${n()}${n()}${n()}-${n()}${n()}`;
+  return `${n()}${n()}${n()}${n()}${n()}${n()}${n()}${n()}${n()}${n()}${n()}`;
 }
 
 function randomTelefone(): string {
@@ -104,7 +104,7 @@ async function main() {
         email: `vagoneteiro${i + 1}@vagoneteiros.com`,
         telefone: randomTelefone(),
         senha: await bcrypt.hash('vaga123', saltRounds),
-        perfil: 'USUARIO',
+        perfil: 'VAGONETEIRO',
         experiencia: `${randomInt(1, 20)} anos de experiência`,
       },
     });
@@ -233,7 +233,7 @@ async function main() {
   const totalP = await prisma.passeio.count();
   const totalA = await prisma.agendamento.count();
   const totalC = await prisma.clientes.count();
-  const totalV = await prisma.usuario.count({ where: { perfil: 'USUARIO' } });
+  const totalV = await prisma.usuario.count({ where: { perfil: 'VAGONETEIRO' } });
 
   console.log('🎉 Povoamento completo!');
   console.log('══════════════════════════');

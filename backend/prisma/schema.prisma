@@ -91,6 +91,9 @@ model Agendamento {
   notificacao        Boolean                    @default(false)
   ciente             Boolean                    @default(false)
   acompanhantes       Int                        @default(0)
+  canceladoEm         DateTime?
+  canceladoPor        String?
+  motivoCancelamento  String?
   notificacoes       NotificacaoAgendamento[]    
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt

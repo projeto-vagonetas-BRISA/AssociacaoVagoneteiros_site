@@ -246,9 +246,20 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
     });
 
     if (status === StatusPasseio.REALIZADO || status === StatusPasseio.CANCELADO) {
+      const agora = new Date();
+      const motivo = (req.body?.motivo as string)?.trim();
       await prisma.agendamento.updateMany({
         where: { passeioId: id, status: { not: 'CANCELADO' } },
-        data: { status },
+        data: {
+          status,
+          ...(status === StatusPasseio.CANCELADO
+            ? {
+                canceladoEm: agora,
+                canceladoPor: req.user?.cpf ?? null,
+                ...(motivo ? { motivoCancelamento: motivo } : {}),
+              }
+            : {}),
+        },
       });
 
       // Se o passeio estiver vinculado a um slotInstancia, propaga o status
@@ -293,9 +304,16 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 
     await prisma.passeio.update({ where: { id }, data: { status: 'CANCELADO' } });
 
+    // Auditoria: registra quem cancelou o passeio (CPF do admin) e o motivo (se informado, ex: condição climática)
+    const motivo = (req.body?.motivo as string)?.trim() || null;
     await prisma.agendamento.updateMany({
       where: { passeioId: id, status: { not: 'CANCELADO' } },
-      data: { status: StatusPasseio.CANCELADO },
+      data: {
+        status: StatusPasseio.CANCELADO,
+        canceladoEm: new Date(),
+        canceladoPor: req.user?.cpf ?? null,
+        ...(motivo ? { motivoCancelamento: motivo } : {}),
+      },
     });
 
     // Cancela a instância de slot vinculada para que não apareça mais

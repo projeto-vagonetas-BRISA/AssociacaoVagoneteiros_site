@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, CheckCircle2, Download } from "lucide-react";
+import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, CheckCircle2, Download, XCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
 import { api } from "../services/api";
@@ -17,6 +17,9 @@ interface AgendamentoResponse {
   vagas: number;
   total: number;
   cliente: string;
+  canceladoEm?: string | null;
+  canceladoPor?: string | null;
+  motivoCancelamento?: string | null;
 }
 
 const SITUACAO_LABEL: Record<SituacaoAgendamento, string> = {
@@ -70,6 +73,23 @@ const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
   </div>
 );
 
+// Monta o texto informativo de cancelamento: "Cancelado em dd/mm/aa - motivo/CPF"
+function formatCancelamento(consulta: AgendamentoResponse): string {
+  let texto = "Cancelado";
+  if (consulta.canceladoEm) {
+    const d = new Date(consulta.canceladoEm);
+    if (!isNaN(d.getTime())) {
+      texto += ` em ${d.toLocaleDateString("pt-BR")}`;
+    }
+  }
+  if (consulta.motivoCancelamento) {
+    texto += ` — ${consulta.motivoCancelamento}`;
+  } else if (consulta.canceladoPor) {
+    texto += ` por ${formatarCpf(consulta.canceladoPor)}`;
+  }
+  return texto;
+}
+
 export const ConsultaAgendamento: React.FC = () => {
   const [id, setId] = useState("");
   const [cpf, setCpf] = useState("");
@@ -86,6 +106,8 @@ export const ConsultaAgendamento: React.FC = () => {
     setLoading(true);
     setErro("");
     setConsulta(null);
+    setCancelErro("");
+    setCancelSucesso(false);
 
     const idNumero = Number(id);
     const cpfLimpo = normalizarCpf(cpf);
@@ -124,6 +146,43 @@ export const ConsultaAgendamento: React.FC = () => {
       alert("Houve um erro ao gerar o PDF. Detalhes: " + error.message);
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelErro, setCancelErro] = useState("");
+  const [cancelSucesso, setCancelSucesso] = useState(false);
+
+  // Pode cancelar apenas se estiver PENDENTE/CONFIRMADO (não cancelado/realizado)
+  const podeCancelar =
+    !!consulta &&
+    !isCancelling &&
+    (consulta.situacao === "PENDENTE" || consulta.situacao === "CONFIRMADO");
+
+  const cancelarPasseio = async () => {
+    if (!consulta) return;
+    if (!window.confirm("Confirma o cancelamento?")) return;
+
+    setIsCancelling(true);
+    setCancelErro("");
+    setCancelSucesso(false);
+    try {
+      await api.request(
+        `/agendamentos/cancelar/${consulta.id}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ documento: normalizarCpf(consulta.cpf) }),
+        }
+      );
+      setCancelSucesso(true);
+      // Atualiza a consulta local para refletir o cancelamento
+      setConsulta((prev) =>
+        prev ? { ...prev, situacao: "CANCELADO" } : prev
+      );
+    } catch (err: any) {
+      setCancelErro(err.message || "Não foi possível cancelar o agendamento.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -316,6 +375,51 @@ export const ConsultaAgendamento: React.FC = () => {
                         </>
                       )}
                     </button>
+
+                    {/* Botão de cancelamento (desabilitado quando já cancelado/realizado) */}
+                    {consulta.situacao === "CANCELADO" || consulta.situacao === "REALIZADO" ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full flex items-center justify-center gap-2 h-11 bg-red-dark/10 text-red-dark/60 font-bold text-sm rounded-lg border border-red-dark/20 cursor-not-allowed"
+                        >
+                          <XCircle className="size-4" strokeWidth={2.5} />
+                          Cancelar passeio
+                        </button>
+                        {/* Texto informativo de cancelamento */}
+                        {consulta.situacao === "CANCELADO" && (
+                          <p className="mt-2 text-xs text-[#7a8394] leading-relaxed">
+                            {formatCancelamento(consulta)}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <button
+                        onClick={cancelarPasseio}
+                        disabled={!podeCancelar}
+                        className="w-full flex items-center justify-center gap-2 h-11 bg-red-dark hover:bg-red-hover text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCancelling ? (
+                          <>Cancelando...</>
+                        ) : (
+                          <>
+                            <XCircle className="size-4" strokeWidth={2.5} />
+                            Cancelar passeio
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Feedback de erro/sucesso do cancelamento */}
+                    {cancelErro && (
+                      <p className="mt-2 text-xs font-semibold text-red-dark">{cancelErro}</p>
+                    )}
+                    {cancelSucesso && (
+                      <p className="mt-2 text-xs font-semibold text-green-timeline">
+                        Passeio cancelado com sucesso.
+                      </p>
+                    )}
                   </div>
                 </>
               ) : erro ? (
