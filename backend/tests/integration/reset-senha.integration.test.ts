@@ -39,7 +39,8 @@ describe('INTEGRAÇÃO — Reset de senha (/auth/esqueci-senha, /auth/redefinir-
   });
 
   it('POST /auth/esqueci-senha gera token, invalida anteriores e envia email', async () => {
-    prisma.model.usuario.findUnique.mockResolvedValue({ id: 1, name: 'João', email: 'joao@x.com' });
+    // perfil VAGONETEIRO → fluxo de geração de link automática (envia email)
+    prisma.model.usuario.findUnique.mockResolvedValue({ id: 1, name: 'João', email: 'joao@x.com', perfil: 'VAGONETEIRO' });
     prisma.model.resetToken.updateMany.mockResolvedValue({ count: 0 });
     prisma.model.resetToken.create.mockResolvedValue({ id: 1, email: 'joao@x.com', token: 'abc', expiraEm: new Date() });
 
@@ -64,7 +65,7 @@ describe('INTEGRAÇÃO — Reset de senha (/auth/esqueci-senha, /auth/redefinir-
 
   it('POST /auth/redefinir-senha com token expirado retorna 400', async () => {
     prisma.model.resetToken.findUnique.mockResolvedValue({
-      id: 1, token: 'abc', usado: false, expiraEm: new Date(Date.now() - 1000),
+      id: 1, token: 'abc', usado: false, status: 'APPROVED', email: 'joao@x.com', expiraEm: new Date(Date.now() - 1000),
     });
     const res = await request(app).post('/auth/redefinir-senha').send({ token: 'abc', novaSenha: '123456' });
     expect(res.status).toBe(400);
@@ -73,9 +74,9 @@ describe('INTEGRAÇÃO — Reset de senha (/auth/esqueci-senha, /auth/redefinir-
 
   it('POST /auth/redefinir-senha com token válido redefine a senha', async () => {
     prisma.model.resetToken.findUnique.mockResolvedValue({
-      id: 1, token: 'abc', usado: false, email: 'joao@x.com', expiraEm: new Date(Date.now() + 3600000),
+      id: 1, token: 'abc', usado: false, status: 'APPROVED', email: 'joao@x.com', expiraEm: new Date(Date.now() + 3600000),
     });
-    prisma.model.usuario.findUnique.mockResolvedValue({ id: 1, email: 'joao@x.com' });
+    prisma.model.usuario.findUnique.mockResolvedValue({ id: 1, email: 'joao@x.com', tokenVersion: 0 });
     prisma.model.usuario.update.mockResolvedValue({ id: 1 });
     prisma.model.resetToken.update.mockResolvedValue({ id: 1, usado: true });
 
@@ -86,7 +87,7 @@ describe('INTEGRAÇÃO — Reset de senha (/auth/esqueci-senha, /auth/redefinir-
       expect.objectContaining({ data: expect.objectContaining({ senha: 'hash_novo' }) }),
     );
     expect(prisma.model.resetToken.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { usado: true } }),
+      expect.objectContaining({ data: expect.objectContaining({ usado: true, status: 'COMPLETED' }) }),
     );
   });
 

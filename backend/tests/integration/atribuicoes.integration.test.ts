@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createPrismaMock } from './helpers/prismaMock';
+import { mockAuthSetup } from './helpers/auth';
 
 const prisma = createPrismaMock();
 vi.mock('../../src/lib/prisma', () => prisma.lib);
@@ -37,7 +38,7 @@ function instanciaValida() {
 describe('INTEGRAÇÃO — Atribuições (/atribuicoes)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockVerifyToken.mockReturnValue({ id: 7, cpf: '12345678909', email: null, perfil: 'VAGONETEIRO' });
+    mockAuthSetup(prisma, mockVerifyToken, { id: 7, perfil: 'VAGONETEIRO' });
     mockVerificarConflito.mockResolvedValue([]);
   });
 

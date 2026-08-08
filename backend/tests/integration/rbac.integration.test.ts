@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createPrismaMock } from './helpers/prismaMock';
+import { mockAuthSetup, mockAuthHeader } from './helpers/auth';
 
 const prisma = createPrismaMock();
 vi.mock('../../src/lib/prisma', () => prisma.lib);
@@ -18,11 +19,12 @@ vi.mock('../../src/utils/image', () => ({
 const { default: app } = await import('../../src/app');
 
 function setPerfil(perfil: string) {
-  mockVerifyToken.mockReturnValue({ id: 1, cpf: '12345678909', email: null, perfil });
+  // Configura o payload E o prisma.usuario.findUnique (authMiddleware) com tokenVersion
+  mockAuthSetup(prisma, mockVerifyToken, { perfil });
 }
 function auth(perfil: string) {
-  setPerfil(perfil);
-  return { Authorization: `Bearer token-${perfil}` };
+  // Configura o mock e retorna o header
+  return mockAuthHeader(prisma, mockVerifyToken, perfil);
 }
 
 describe('INTEGRAÇÃO — RBAC / proteção de rotas', () => {

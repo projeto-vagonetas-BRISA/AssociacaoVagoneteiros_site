@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createPrismaMock } from './helpers/prismaMock';
+import { mockAuthSetup } from './helpers/auth';
 
 const prisma = createPrismaMock();
 vi.mock('../../src/lib/prisma', () => prisma.lib);
@@ -18,7 +19,7 @@ const adminToken = 'Bearer token-admin';
 describe('INTEGRAÇÃO — Passeios (/passeios)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockVerifyToken.mockReturnValue({ id: 1, cpf: '12345678909', email: null, perfil: 'ADMIN' });
+    mockAuthSetup(prisma, mockVerifyToken, { perfil: 'ADMIN' });
   });
 
   it('GET /passeios (público) lista passeios com paginação', async () => {

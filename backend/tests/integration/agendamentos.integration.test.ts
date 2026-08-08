@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createPrismaMock } from './helpers/prismaMock';
+import { mockAuthSetup } from './helpers/auth';
 
 const prisma = createPrismaMock();
 vi.mock('../../src/lib/prisma', () => prisma.lib);
@@ -28,7 +29,8 @@ const adminToken = 'Bearer token-admin';
 describe('INTEGRAÇÃO — Agendamentos (/agendamentos)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockVerifyToken.mockReturnValue({ id: 1, cpf: '12345678909', email: null, perfil: 'ADMIN' });
+    // authMiddleware busca usuário no banco e valida tokenVersion
+    mockAuthSetup(prisma, mockVerifyToken, { perfil: 'ADMIN' });
     mockVagas.mockResolvedValue({ ocupadas: 0, disponiveis: 10, capacidade: 10 });
   });
 
@@ -37,6 +39,7 @@ describe('INTEGRAÇÃO — Agendamentos (/agendamentos)', () => {
     prisma.model.slotInstancia.findMany.mockResolvedValue([
       {
         id: 10, slotPasseioId: 3, data: hoje, horaInicio: '09:00', horaFim: '10:00', status: 'AGENDADO',
+        atribuicoes: [], // controller acessa inst.atribuicoes[0]?.vagoneteiro
         slotPasseio: { id: 3, titulo: 'Passeio Lagoa', descricao: 'Desc', capacidade: 10, valor: 50, status: 'DISPONIVEL', usuario: { id: 1, name: 'Ana' } },
       },
     ]);

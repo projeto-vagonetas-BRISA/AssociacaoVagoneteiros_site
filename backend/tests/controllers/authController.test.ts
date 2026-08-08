@@ -213,6 +213,8 @@ describe('authController.login', () => {
       perfil: 'ADMIN',
       senha: 'hash',
       foto: null,
+      ativo: true,
+      tokenVersion: 0,
     });
     mockCompare.mockResolvedValue(true);
     mockGenerateToken.mockReturnValue('token_jwt');
@@ -239,6 +241,8 @@ describe('authController.login', () => {
       perfil: 'VAGONETEIRO',
       senha: 'hash',
       foto: null,
+      ativo: true,
+      tokenVersion: 0,
     });
     mockCompare.mockResolvedValue(true);
     mockGenerateToken.mockReturnValue('token_jwt');

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createPrismaMock } from './helpers/prismaMock';
+import { mockAuthSetup } from './helpers/auth';
 
 // ─── Mocks globais (antes do import do app) ───
 const prisma = createPrismaMock();
@@ -32,7 +33,6 @@ describe('INTEGRAÇÃO — Auth (/auth)', () => {
     mockGenerateToken.mockReturnValue('token_jwt');
     mockVerifyToken.mockReturnValue({ id: 1, cpf: '12345678909', email: null, perfil: 'VAGONETEIRO' });
   });
-
   it('registra usuário via HTTP e retorna 201 com token', async () => {
     prisma.model.usuario.findUnique.mockResolvedValue(null);
     prisma.model.usuario.create.mockResolvedValue({
@@ -68,6 +68,7 @@ describe('INTEGRAÇÃO — Auth (/auth)', () => {
     prisma.model.usuario.findUnique.mockResolvedValue({
       id: 1, cpf: '12345678909', email: 'joao@x.com',
       perfil: 'ADMIN', senha: 'hash', foto: null,
+      ativo: true, tokenVersion: 0,
     });
     mockCompare.mockResolvedValue(true);
 
@@ -101,7 +102,8 @@ describe('INTEGRAÇÃO — Auth (/auth)', () => {
   });
 
   it('/auth/me com token válido retorna o usuário', async () => {
-    mockVerifyToken.mockReturnValue({ id: 1, cpf: '12345678909', email: null, perfil: 'VAGONETEIRO' });
+    // authMiddleware busca usuário no banco e valida tokenVersion
+    mockAuthSetup(prisma, mockVerifyToken, { id: 1, perfil: 'VAGONETEIRO' });
 
     const res = await request(app)
       .get('/auth/me')
