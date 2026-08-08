@@ -111,6 +111,40 @@ describe('INTEGRAÇÃO — Agendamentos (/agendamentos)', () => {
     expect(res.status).toBe(404);
   });
 
+  it('POST /agendamentos/publico por instanciaId cria passeio SEM vagoneteiro (regra Uber)', async () => {
+    // Slot livre (sem usuarioId e sem atribuição) — o passeio é criado sem vagoneteiro;
+    // o vagoneteiro se atribui depois pelo painel.
+    prisma.model.slotInstancia.findUnique.mockResolvedValue({
+      id: 179, data: new Date('2099-01-01T03:00:00.000Z'), horaInicio: '08:00', horaFim: '08:40', status: 'AGENDADO',
+      slotPasseio: { id: 179, titulo: 'Passeio 08:00', valor: '30', capacidade: 5, status: 'DISPONIVEL', usuarioId: null },
+      atribuicoes: [],
+    });
+    // passeio.findFirst por slotInstanciaId não encontra → cria novo
+    prisma.model.passeio.findFirst.mockResolvedValue(null);
+    prisma.model.passeio.create.mockResolvedValue({
+      id: 2956, usuarioId: null, preco: '30', capacidade: 5,
+      data: new Date('2099-01-01T03:00:00.000Z'), horario: '08:00', status: 'CONFIRMADO', ativo: true, slotInstanciaId: 179,
+    });
+    prisma.model.clientes.findFirst.mockResolvedValue(null);
+    prisma.model.clientes.create.mockResolvedValue({ id: 5, nome: 'Maria', telefone: '999', email: 'maria@x.com', cpf: 'T123' });
+    prisma.model.agendamento.findFirst.mockResolvedValue(null);
+    prisma.model.agendamento.create.mockResolvedValue({
+      id: 20, clienteId: 5, passeioId: 2956, promocao: false, notificacao: false, ciente: true, acompanhantes: 0,
+      passeio: { id: 2956, data: new Date('2099-01-01T03:00:00.000Z'), horario: '08:00', preco: '30' },
+    });
+
+    const res = await request(app)
+      .post('/agendamentos/publico')
+      .send({ instanciaId: 179, nome: 'Maria', telefone: '999', email: 'maria@x.com', acompanhantes: 0 });
+
+    expect(res.status).toBe(201);
+    // passeio criado SEM vagoneteiro (usuarioId null) — regra Uber
+    expect(prisma.model.passeio.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ usuarioId: null }) })
+    );
+  });
+
+
   it('GET /agendamentos/consulta/:id/:documento consulta agendamento', async () => {
     prisma.model.agendamento.findFirst.mockResolvedValue({
       id: 10, status: 'CONFIRMADO', acompanhantes: 1,
