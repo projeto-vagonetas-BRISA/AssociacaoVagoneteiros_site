@@ -396,11 +396,6 @@ associacao-site/
 
 ## 🔮 Próximos Passos
 
-- [x] **Task 2 — Auto-Atribuição (modelo Uber)**
-  - Frontend: Feed de passeios disponíveis
-  - Vagoneteiro se auto-atribui a slots
-  - Notificações em tempo real
-- [x] Testes unitários — **Vitest** (`npm test` no backend e frontend)
 - [ ] Deploy em produção
 - [ ] CI/CD
 
