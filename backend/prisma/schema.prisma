@@ -23,6 +23,7 @@ model Usuario {
   senha           String
   perfil          Perfil   @default(USUARIO)
   ativo           Boolean  @default(true)
+  anonimizado     Boolean  @default(false)
   data_associacao DateTime @default(now())
   foto            Bytes?
   passeios        Passeio[]
@@ -63,6 +64,7 @@ model Clientes {
   cpf                String              @unique
   telefone           String
   email              String?             @unique
+  anonimizado        Boolean             @default(false)
   agendamentos       Agendamento[]
   avaliacoes         Avaliacao[]
   pushSubscriptions  PushSubscription[]

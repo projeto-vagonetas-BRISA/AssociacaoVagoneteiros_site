@@ -24,6 +24,7 @@ function payloadToUser(payload: TokenPayload): Omit<Usuario, 'senha'> {
     historico: null,
     experiencia: null,
     ativo: true,
+    anonimizado: false,
     data_associacao: new Date(),
     foto: null,
     createdAt: new Date(),

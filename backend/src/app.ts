@@ -10,6 +10,7 @@ import usuarioRoutes from './routes/usuarioRoutes';
 import slotRoutes from './routes/slotRoutes';
 import atribuicaoRoutes from './routes/atribuicaoRoutes';
 import suspensaoRoutes from './routes/suspensaoRoutes';
+import anonimizacaoRoutes from './routes/anonimizacaoRoutes';
 import { listarFotosGaleria, servirImagemGaleria } from './controllers/galeriaController';
 import { metricas, picosDemanda, faturamento } from './controllers/dashboardController';
 import prisma from './lib/prisma';
@@ -51,6 +52,7 @@ app.use('/usuarios', usuarioRoutes);
 app.use('/slots', slotRoutes);
 app.use('/atribuicoes', atribuicaoRoutes);
 app.use('/suspensoes', suspensaoRoutes);
+app.use('/anonimizacao', anonimizacaoRoutes);
 
 // Dashboard
 app.get('/dashboard/metricas', metricas);
