@@ -1,7 +1,7 @@
 # 🚂 Vagoneteiros dos Molhes da Barra — Manual do Usuário
 
-> **Versão:** 1.2
-> **Última atualização:** 06/08/2026
+> **Versão:** 1.3
+> **Última atualização:** 09/08/2026
 > **Baseado na branch:** `release/v1.1`
 
 ---
@@ -80,7 +80,25 @@ Ao acessar o sistema, você vê a **Home** com:
 2. Informe seu **CPF** ou o **número do agendamento (ID)**
 3. O sistema exibirá os detalhes do seu passeio agendado
 
-### 2.4 Galeria de Fotos
+### 2.4 Cancelando um Agendamento (pelo Turista)
+
+Agora o próprio turista pode **cancelar** seu passeio, sem precisar falar com o administrador:
+
+1. Acesse a página **"Consulta Agendamento"**
+2. Informe seu **CPF** ou o **número do agendamento**
+3. No detalhe do agendamento, clique em **"Cancelar"**
+4. Informe o **motivo do cancelamento** (opcional, mas recomendado)
+5. Confirme
+
+**Regras do cancelamento:**
+- ✅ A vaga é **liberada automaticamente** para outro turista
+- ✅ O motivo fica registrado para análise da associação
+- ✅ O cancelamento é registrado com seu **CPF** (auditoria)
+- ❌ O botão **desabilita** (não some) quando o passeio já está **CANCELADO** ou **REALIZADO** — nesses casos não é mais possível cancelar
+
+> **Exemplo:** se você não pode ir no dia, cancele com antecedência pelo próprio site. A vaga volta para o feed e outro turista pode aproveitar. Isso evita "no-shows" e melhora a ocupação.
+
+### 2.5 Galeria de Fotos
 
 1. Clique em **"Galeria"** no menu
 2. Navegue pelas fotos dos passeios (atualmente 90 fotos carregadas via Google Drive)
@@ -90,7 +108,7 @@ Ao acessar o sistema, você vê a **Home** com:
 
 > **Novidade v1.1:** Galeria com fotos reais armazenadas no Google Drive, integrada via API Google Drive.
 
-### 2.5 Localização
+### 2.6 Localização
 
 Na Home, a seção **"LOCALIZAÇÃO"** mostra:
 
@@ -121,6 +139,10 @@ Na Home, a seção **"LOCALIZAÇÃO"** mostra:
 - ✅ O sistema verifica **conflitos de horário**
 - ✅ Verifica **capacidade** do slot
 - ✅ Verifica se você já não está atribuído àquele slot
+- ✅ **1 passeio por vez** — você só pode ficar com **um passeio pendente (ATRIBUIDO)** de cada vez. Para pegar outro, primeiro **conclua** ou **cancele** o que está em andamento
+- 🚗 **Passeio sem vagoneteiro é normal** (modelo Uber): slots podem ficar abertos aguardando que um vagoneteiro pegue. Eles aparecem igualmente como vagas disponíveis
+
+> 💡 **Por que "1 passeio por vez"?** Parecido com o Uber: você embarca uma viagem, termina, e só então pega a próxima. Isso evita que um vagoneteiro acumule vários passeios ao mesmo horário e garante disponibilidade para os demais. Se tentar pegar um novo passeio com outro pendente, o sistema mostra: *"Você já está atribuído a <passeio> (<data>). Conclua-o antes de se atribuir a um novo passeio."*
 
 ### 3.3 Minhas Atribuições
 
@@ -186,17 +208,49 @@ Cada slot tem: data/horário, duração, capacidade (default 5), título, status
 | **LOTE** 📦 | Range de datas com intervalo | Criar vários slots de uma vez |
 | **INDIVIDUAL** 🎯 | Slot único que não se repete | Passeio específico sem recorrência |
 
-### 4.4 Gestão de Passeios (Legado)
+### 4.4 Cancelamento em Massa (Administrador)
+
+O administrador pode **cancelar vários agendamentos de uma vez**, evitando trabalho manual repetitivo. Útil em situações como:
+
+- 🚧 Obra ou manutenção no molhe
+- 🌦️ Previsão de tempo ruim para vários horários
+- 📅 Feriado que para as operações
+
+**Como usar:**
+1. No painel, acesse a opção de **cancelamento em massa**
+2. Selecione o **passeio** e/ou **período** (datas de início e fim)
+3. Informe o **motivo** do cancelamento
+4. Confirme — todos os agendamentos do período são cancelados e as vagas liberadas
+
+> ⚠️ Ação **privativa de ADMIN**. Cada agendamento cancelado mantém o registro e o motivo para auditoria.
+
+### 4.5 Suspensão de Atividades (Administrador)
+
+O administrador pode **suspender atividades** em determinadas datas, sem precisar cancelar nada permanentemente — é temporário e reversível.
+
+**Como funciona:**
+1. No painel, na caixa **"Suspensão de Atividades"**, limite as datas/horários que ficarão suspensos
+2. Ao suspender, os **slots nessas datas são bloqueados** (status SUSPENSO) e as vagas somem do feed — ninguém agenda
+3. A suspensão pode ser **removida** depois, restaurando os slots ao estado anterior
+
+**Filtro rápido:**
+- **Somente ativas** (padrão) — mostra só as suspensões em vigor
+- **Todas** — inclui suspensões já removidas
+- **Somente removidas** — histórico
+
+> 💡 **Exemplo:** a associação pode deixar uma suspensão **"Natal" (25-26/12)** ativa como modelo, bloqueando os passeios nesses dias e reabrindo automaticamente se/quando removida.
+
+### 4.6 Gestão de Passeios (Legado)
 
 > ⚠️ Substituído por **Gerenciar Slots**. Passeios existentes continuam funcionais para consulta.
 
-### 4.5 Gestão de Clientes
+### 4.7 Gestão de Clientes
 
 - Cadastrar: nome, CPF, telefone (obrigatórios), email (opcional)
 - Busca automática por CPF/CNPJ no agendamento público
 - Apenas ADMIN e REDATOR podem cadastrar, editar e excluir
 
-### 4.6 Gestão de Agendamentos
+### 4.8 Gestão de Agendamentos
 
 **Status do Agendamento:**
 
@@ -210,7 +264,7 @@ Cada slot tem: data/horário, duração, capacidade (default 5), título, status
 
 > **Novidade v1.1:** Adicionado status **REALIZADO** para agendamentos concluídos.
 
-### 4.7 Gestão de Avaliações
+### 4.9 Gestão de Avaliações
 
 **Funcionalidades:**
 - Listar todas as avaliações
@@ -221,7 +275,7 @@ Cada slot tem: data/horário, duração, capacidade (default 5), título, status
 
 > **Novidade v1.1:** Avaliação do Google é armazenada em cache no banco (tabela `AvaliacaoCache`). O administrador pode atualizar manualmente quando quiser através do botão no card do painel. A nota aparece automaticamente na página inicial.
 
-### 4.8 Gestão de Usuários e Vagoneteiros
+### 4.10 Gestão de Usuários e Vagoneteiros
 
 - Apenas **ADMIN** lista todos os usuários
 - Listagem paginada (9 por página)
@@ -229,7 +283,26 @@ Cada slot tem: data/horário, duração, capacidade (default 5), título, status
 - Perfil completo com foto e slots vinculados
 - Campo perfil no cadastro e edição
 
-### 4.9 Seção de Investimento
+### 4.11 Exclusão de Dados (LGPD)
+
+Em cumprimento à **Lei Geral de Proteção de Dados (LGPD)**, quando um titular solicitar a exclusão dos seus dados (ex.: enviando um e-mail para a associação), o administrador pode **anonimizar** o cadastro — sem apagar o histórico e quebrar os relatórios.
+
+**Como anonimizar (privativo de ADMIN):**
+1. No painel, na seção **"Exclusão de dados (LGPD)"**, digite o **CPF** ou **e-mail** do titular
+2. Clique em **"Buscar"** — o sistema identifica se é **cliente** ou **usuário** (ex.: vagoneteiro)
+3. Confira os dados exibidos e clique em **"Anonimizar dados"**
+4. Confirme a ação no aviso
+
+**O que acontece ao anonimizar:**
+- Nome, CPF, telefone e e-mail são **substituídos por marcadores** (ex.: "Usuário anônimo", CPF ``00000000040``)
+- Senha e foto são **removidos**; o acesso ao login é **bloqueado** (`ativo = false`)
+- Passeios e slots do vagoneteiro são **desvinculados** (mantidos para estatísticas, mas sem apontar para dados pessoais)
+- Comentários de avaliações são anonimizados
+- **Relatórios e contagens continuam intactos** (receita, passeios, agendamentos)
+
+> ⚠️ Ação **irreversível** e **privativa de ADMIN** (não existe botão de anonimizar no perfil do próprio usuário/cliente). A anonimização é feita apenas pelo administrador, a partir da solicitação recebida por e-mail.
+
+### 4.12 Seção de Investimento
 
 Exibe informações sobre preços e valores dos passeios para turistas.
 
@@ -380,7 +453,9 @@ O e-mail tem o mesmo layout visual do sistema (fundo escuro, cores Vagoneteiros)
 
 ### 7.4 Posso cancelar um agendamento?
 
-Sim, o administrador pode alterar para **CANCELADO** ou **REMARCADO**.
+**Sim, de duas formas:**
+- **Pelo próprio turista** (recomendado): na página **Consulta Agendamento**, informando CPF ou número do agendamento, se o passeio ainda estiver aberto (não CANCELADO nem REALIZADO)
+- **Pelo administrador:** altera para **CANCELADO** ou **REMARCADO** no painel, inclusive em massa
 
 ### 7.5 O que significa "ativo" e "inativo" para vagoneteiros?
 

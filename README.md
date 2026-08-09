@@ -207,8 +207,10 @@ DELETE /clientes/:id          Deletar                   [ADMIN/REDATOR]
 ### Agendamentos
 
 ```
-GET    /agendamentos/vagas-disponiveis    Passeios com vagas (público)
+GET    /agendamentos/vagas-disponiveis    Passios com vagas (público)
 POST   /agendamentos/publico              Agendamento público (autocadastro)
+POST   /agendamentos/cancelar/:id         Cancelamento pelo turista (público)
+POST   /agendamentos/cancelar-em-massa    Cancelamento em massa               [ADMIN]
 GET    /agendamentos                      Listar                      [auth]
 GET    /agendamentos/:id                  Detalhe                     [auth]
 POST   /agendamentos                      Criar                       [ADMIN/REDATOR]
@@ -224,6 +226,31 @@ GET    /usuarios                 Listar todos                   [ADMIN/REDATOR]
 GET    /usuarios/:id             Buscar por ID                  [auth]
 PUT    /usuarios/:id             Atualizar                      [auth]
 DELETE /usuarios/:id             Deletar                        [ADMIN]
+```
+
+### Atribuições (Auto-Atribuição / Modelo Uber)
+
+```
+GET    /atribuicoes                    Listar atribuições                [auth]
+POST   /atribuicoes/auto               Auto-atribuir vagoneteiro a slot  [VAGONETEIRO]
+PATCH  /atribuicoes/:id/realizar       Marcar atribuição como REALIZADO   [auth]
+DELETE /atribuicoes/:id                Cancelar atribuição                [auth]
+```
+
+### Suspensão de Atividades
+
+```
+GET    /suspensoes            Listar suspensões (filtro: ativa)   [ADMIN]
+POST   /suspensoes            Criar suspensão                     [ADMIN]
+PUT    /suspensoes/:id        Atualizar suspensão                 [ADMIN]
+DELETE /suspensoes/:id        Remover suspensão                   [ADMIN]
+```
+
+### Anonimização (LGPD)
+
+```
+GET    /anonimizacao/buscar?identificador=   Consultar titular por CPF/e-mail   [ADMIN]
+POST   /anonimizacao                         Anonimizar dados pessoais          [ADMIN]
 ```
 
 ### Galeria
@@ -298,15 +325,23 @@ associacao-site/
 │   └── src/
 │       ├── controllers/
 │       │   ├── slotController.ts      ← CRUD de slots (Composite)
-│       │   ├── agendamentoController.ts
+│       │   ├── agendamentoController.ts  ← cancelar (turista + em massa)
+│       │   ├── atribuicaoController.ts   ← auto-atribuição (1 passeio por vez)
+│       │   ├── suspensaoController.ts    ← suspensão de atividades
+│       │   ├── anonimizacaoController.ts ← anonimização LGPD [ADMIN]
 │       │   ├── authController.ts
 │       │   ├── passeioController.ts
 │       │   └── ...
 │       ├── services/
 │       │   ├── recorrencia.service.ts ← Engine de recorrência
-│       │   └── agendamento.service.ts ← Composite + Conflitos
+│       │   ├── agendamento.service.ts ← Composite + Conflitos
+│       │   ├── anonimizacao.service.ts ← substitui dados pessoais (LGPD)
+│       │   └── ...
 │       ├── routes/
 │       │   ├── slotRoutes.ts          ← Rotas de slots
+│       │   ├── atribuicaoRoutes.ts
+│       │   ├── suspensaoRoutes.ts
+│       │   ├── anonimizacaoRoutes.ts
 │       │   └── ...
 │       └── middlewares/
 │           └── auth.ts
@@ -336,6 +371,16 @@ associacao-site/
 | `a83091d` | Merge funcionalidades de dev-release |
 | `142d422` | Validação de datas passadas (backend + frontend) |
 | `48b70a6` | Fix criação de agendamentos em datas passadas |
+| … | … |
+| `ed1d343` | Fix: slots livres aparecem como vagas |
+| `74ed6af` | Regra Uber: passeio sem vagoneteiro é válido |
+| `7ac3aa1` | Fix fuso dos slots gerados em lote |
+| `1303d9f` | Filtro de suspensões no PainelAdm |
+| `7183948` | Regra "1 passeio por vez" (auto-atribuição) |
+| `c93a368` | Testes de conclusão de atribuição (183/183) |
+| `9b97adf` | LGPD: anonimização backend (anonimizado em Usuario/Clientes) |
+| `1376773` | LGPD: seção no PainelAdm (admin anonimiza por CPF/e-mail) |
+| `357acbf` | LGPD: testes (5 service + 6 integração, 194/194) |
 
 ---
 
