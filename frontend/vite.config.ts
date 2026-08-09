@@ -22,6 +22,7 @@ export default defineConfig({
       '/usuarios': { target: 'http://localhost:3000', changeOrigin: true },
       '/slots': { target: 'http://localhost:3000', changeOrigin: true },
       '/suspensoes': { target: 'http://localhost:3000', changeOrigin: true },
+      '/anonimizacao': { target: 'http://localhost:3000', changeOrigin: true },
       '/dashboard': { target: 'http://localhost:3000', changeOrigin: true },
       '/galeria': { target: 'http://localhost:3000', changeOrigin: true },
       '/painel': { target: 'http://localhost:3000', changeOrigin: true },

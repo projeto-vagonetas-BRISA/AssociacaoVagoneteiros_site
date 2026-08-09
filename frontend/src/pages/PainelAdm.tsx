@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, DollarSign, Star, BarChart3,
   Plus, Pencil, Trash2, Filter, ChevronLeft,
   ChevronRight, ChevronsRight, UserCheck, Ticket, Power, PowerOff,
-  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal, X, CalendarX2, Loader2, PauseCircle, PlayCircle, Ban
+  RefreshCw, Calendar, CalendarDays, LineChart, SlidersHorizontal, X, CalendarX2, Loader2, PauseCircle, PlayCircle, Ban, ShieldCheck, Search, UserX
 } from "lucide-react";
 import { api } from "../services/api";
 import { DashboardProvider } from "../components/dashboard/DashboardProvider";
@@ -319,6 +319,57 @@ export const PainelAdmin: React.FC = () => {
     const d = new Date(iso);
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   };
+
+  // ---- Anonimização de dados (LGPD) ----
+  const [lgpdIdentificador, setLgpdIdentificador] = useState('');
+  const [lgpdBusca, setLgpdBusca] = useState<{ encontrado: boolean; tipo?: string; registro?: any } | null>(null);
+  const [lgpdBuscando, setLgpdBuscando] = useState(false);
+  const [lgpdAnonimizando, setLgpdAnonimizando] = useState(false);
+  const [lgpdResultado, setLgpdResultado] = useState<string | null>(null);
+  const [lgpdErro, setLgpdErro] = useState<string | null>(null);
+
+  const buscarParaAnonimizar = async () => {
+    if (!lgpdIdentificador.trim()) return;
+    setLgpdBuscando(true);
+    setLgpdErro(null);
+    setLgpdResultado(null);
+    setLgpdBusca(null);
+    try {
+      const resp = await api.request<{ encontrado: boolean; tipo?: string; registro?: any }>(
+        `/anonimizacao/buscar?identificador=${encodeURIComponent(lgpdIdentificador.trim())}`
+      );
+      setLgpdBusca(resp);
+    } catch (e: any) {
+      setLgpdErro(e?.message || 'Erro ao buscar identificador.');
+    } finally {
+      setLgpdBuscando(false);
+    }
+  };
+
+  const confirmarAnonimizacao = async () => {
+    if (!lgpdBusca?.encontrado || !lgpdBusca.registro?.id) return;
+    const rotulo = lgpdBusca.tipo === 'USUARIO' ? lgpdBusca.registro.name : lgpdBusca.registro.nome;
+    if (!window.confirm(
+      `Anonimizar os dados de "${rotulo}" (LGPD)?\n\nOs dados pessoais serão substituídos por placeholders e o acesso será bloqueado. Histórico e relatórios são preservados. Essa ação não pode ser desfeita.`
+    )) return;
+    setLgpdAnonimizando(true);
+    setLgpdErro(null);
+    setLgpdResultado(null);
+    try {
+      const resp = await api.request<{ message: string }>('/anonimizacao', {
+        method: 'POST',
+        body: JSON.stringify({ identificador: lgpdIdentificador.trim() }),
+      });
+      setLgpdResultado(resp.message);
+      setLgpdBusca(null);
+      setLgpdIdentificador('');
+    } catch (e: any) {
+      setLgpdErro(e?.message || 'Erro ao anonimizar.');
+    } finally {
+      setLgpdAnonimizando(false);
+    }
+  };
+
 
   useEffect(() => {
     carregarVagoneteiros(1);
@@ -828,6 +879,68 @@ export const PainelAdmin: React.FC = () => {
               </ul>
               );
             })()}
+          </div>
+        </section>
+
+        {/* Anonimização de dados (LGPD) */}
+        <section className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-border flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="text-red-600" size={20} strokeWidth={1.8} />
+              <h2 className="font-bold text-base text-text-dark">Exclusão de dados (LGPD)</h2>
+            </div>
+            <span className="text-xs text-text-secondary">por e-mail do titular</span>
+          </div>
+
+          <div className="px-6 py-4 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                value={lgpdIdentificador}
+                onChange={e => { setLgpdIdentificador(e.target.value); setLgpdBusca(null); setLgpdResultado(null); setLgpdErro(null); }}
+                placeholder="CPF ou e-mail do titular"
+                className="flex-1 text-sm rounded-lg border border-border px-3 py-2 text-text-dark focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                onKeyDown={e => { if (e.key === 'Enter') buscarParaAnonimizar(); }}
+              />
+              <button
+                onClick={buscarParaAnonimizar}
+                disabled={lgpdBuscando || !lgpdIdentificador.trim()}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-dark hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {lgpdBuscando ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />} Buscar
+              </button>
+            </div>
+
+            {lgpdErro && <p className="text-sm text-red-600">{lgpdErro}</p>}
+            {lgpdResultado && <p className="text-sm text-green-600">{lgpdResultado}</p>}
+
+            {lgpdBusca && (
+              <div className="rounded-lg border border-border bg-bg-light-1 p-4 flex flex-col gap-3">
+                {lgpdBusca.encontrado ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <UserX size={18} className="text-red-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-text-dark">
+                          {lgpdBusca.tipo === 'USUARIO' ? lgpdBusca.registro.name : lgpdBusca.registro.nome}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {lgpdBusca.tipo === 'USUARIO' ? 'Usuário' : 'Cliente'} · id {lgpdBusca.registro.id}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={confirmarAnonimizacao}
+                      disabled={lgpdAnonimizando}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      {lgpdAnonimizando ? <Loader2 size={15} className="animate-spin" /> : <UserX size={15} />} Anonimizar dados
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-sm text-text-secondary">Nenhum usuário ou cliente encontrado para esse CPF/e-mail.</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
