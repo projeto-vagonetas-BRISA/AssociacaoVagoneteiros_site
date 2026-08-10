@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useCpfField, useEmailField } from "../utils/formValidations.ts";
+import logo from "../assets/logo.png";
 
 interface LoginPopUpProps {
     onClose: () => void;
@@ -157,7 +158,7 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                     <div className="mx-auto flex h-30 w-30 items-center justify-center rounded-full bg-white">
                         <img
                             alt="Logo"
-                            src="/src/assets/logo.png"
+                            src={logo}
                             className="w-auto object-contain" />
                     </div>
                     <h2 className="mt-6 text-center text-xl font-semibold tracking-tight text-slate-100">

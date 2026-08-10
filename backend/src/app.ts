@@ -39,8 +39,8 @@ app.use(cors({
 }));
 
 // ─── Rotas da API ──────────────────────────────────────────────
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'API Vagoneteiros rodando!' });
+app.get('/health', (req: Request, res: Response) => {
+    res.json({ message: 'API Vagoneteiros rodando!' });
 });
 
 app.use('/auth', authRoutes);
