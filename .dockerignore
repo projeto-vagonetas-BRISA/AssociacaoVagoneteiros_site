@@ -6,8 +6,10 @@ node_modules
 
 **/.env
 **/.env.*
-
 !**/.env.example
+!frontend/.env
+
+secrets/
 
 **/dist
 **/.vite
@@ -16,10 +18,8 @@ backend/tests
 backend/test-scripts
 backend/playwright-report
 backend/test-results
-
 frontend/tests
 
 .vscode
 .idea
-
 *.md

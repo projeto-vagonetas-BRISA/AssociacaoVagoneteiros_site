@@ -6,7 +6,8 @@
 
 # Secrets and service accounts
 SYSTEM.md
-secrets/
+secrets/*
+!secrets/.gitkeep
 serviceAccountKey.json
 backend/serviceAccountKey.json
 backend/gcp-service-account.json
