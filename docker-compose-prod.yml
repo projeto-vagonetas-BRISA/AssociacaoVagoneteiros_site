@@ -8,26 +8,29 @@ services:
     restart: unless-stopped
 
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
     environment:
       NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=256
       PORT: 3000
 
       DATABASE_URL: ${DATABASE_URL}
-
       FRONTEND_URL: ${FRONTEND_URL}
-
       JWT_SECRET: ${JWT_SECRET}
 
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
-      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON}
+      FIREBASE_SERVICE_ACCOUNT_PATH: /run/secrets/fcm-serviceAccountKey.json
 
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
 
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google-serviceAccountKey.json
       GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID}
+
+    volumes:
+      - ./secrets/fcm-serviceAccountKery.json:/run/secrets/fcm-serviceAccountKey.json:ro
+      - ./secrets/google-serviceAccountKey.json:/run/secrets/google-serviceAccountKey.json:ro
 
     depends_on:
       postgres:
