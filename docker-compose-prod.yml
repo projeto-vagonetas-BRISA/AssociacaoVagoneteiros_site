@@ -29,7 +29,7 @@ services:
       GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID}
 
     volumes:
-      - ./secrets/fcm-serviceAccountKery.json:/run/secrets/fcm-serviceAccountKey.json:ro
+      - ./secrets/fcm-serviceAccountKey.json:/run/secrets/fcm-serviceAccountKey.json:ro
       - ./secrets/google-serviceAccountKey.json:/run/secrets/google-serviceAccountKey.json:ro
 
     depends_on:
