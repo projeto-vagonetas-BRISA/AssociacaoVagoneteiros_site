@@ -8,7 +8,12 @@ import { cleanCPF, isValidEmail } from '../utils/documento';
 
 export async function cadastro(req: Request, res: Response): Promise<void> {
   try {
-    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto, perfil } = req.body;
+    // NOTA DE SEGURANÇA: o perfil do usuário NUNCA deve vir do cliente no registro
+    // público. O endpoint /register é aberto (sem autenticação) e aceitar um `perfil`
+    // arbitrário permitiria escalada de privilégio (ex.: registrar um ADMIN deslogado).
+    // Por isso o perfil é forçado como 'VAGONETEIRO' no servidor.
+    // (Cadastros de administrador passam exclusivamente por /register/admin, protegido.)
+    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto } = req.body;
 
     // Validar campos obrigatórios
     if (!name || !cpf || !senha || !telefone) {
@@ -92,7 +97,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
         experiencia: experiencia || null,
         data_associacao: parsedDataAssociacao,
         foto: fotoBuffer,
-        perfil: perfil || 'VAGONETEIRO',
+        perfil: 'VAGONETEIRO',
       },
     });
 

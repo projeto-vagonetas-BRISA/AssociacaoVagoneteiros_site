@@ -1,5 +1,5 @@
 import Vagonetas from "./Vagonetas_nos_Molhes_da_Barra_em_Rio_Grande_-_RS.jpg";
-import RecorteJornal from "./ recorte-jornal-vagoneteiros-cassino-1999.jpg";
+import RecorteJornal from "./recorte-jornal-vagoneteiros-cassino-1999.jpg";
 import MolhesBarra from "./Molhes_da_Barra_Rio_Grande-RS-02.jpg";
 import Vagoneta from "./vagoneta.jpg";
 import VagoneteirosImg from "./vagoneteiros.jpg";
