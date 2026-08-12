@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/projeto-vagonetas-brisa/associacaovagoneteiros_site:latest
 
     container_name: vagoneteiros-app
     restart: unless-stopped
