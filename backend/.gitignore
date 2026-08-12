@@ -20,3 +20,6 @@ google-service-account.json
 # Playwright (E2E)
 playwright-report/
 test-results/
+
+# Coverage reports (vitest v8)
+coverage/
