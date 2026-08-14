@@ -1,19 +1,59 @@
 services:
+  app:
+    image: ghcr.io/projeto-vagonetas-brisa/associacaovagoneteiros_site:latest
+
+    container_name: vagoneteiros-app
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=256
+      PORT: 3000
+
+      DATABASE_URL: ${DATABASE_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_SERVICE_ACCOUNT_PATH: /run/secrets/fcm-serviceAccountKey.json
+
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google-serviceAccountKey.json
+      GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID}
+
+    volumes:
+      - ./secrets/fcm-serviceAccountKey.json:/run/secrets/fcm-serviceAccountKey.json:ro
+      - ./secrets/google-serviceAccountKey.json:/run/secrets/google-serviceAccountKey.json:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
+
     container_name: vagoneteiros-db
     restart: unless-stopped
-    ports:
-      - "5432:5432"
+
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: vagoneteiros_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       TZ: America/Sao_Paulo
+
     volumes:
       - vagoneteiros-pgdata:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   vagoneteiros-pgdata:
-    name: vagoneteiros-pgdata
-    external: true
