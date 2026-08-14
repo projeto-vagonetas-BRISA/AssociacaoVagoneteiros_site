@@ -1,10 +1,23 @@
 import { Request, Response } from 'express';
+import { Prisma, StatusAgendamento } from '@prisma/client';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { parseFiltroData } from '../utils/filtroData';
 import { enviarEmailConfirmacaoAgendamento } from '../utils/email';
 import { calculateNotificationTimes } from '../utils/notificationUtils';
 import { calcularVagasDisponiveis } from '../services/vagas.service';
+import {
+  limparTelefone,
+  limparEmail,
+  limparDocumento,
+  ehDocumentoValido,
+  parseIdOpcional,
+  validarCamposObrigatoriosPublico,
+  validarIds,
+  assertPasseioNaoPassado,
+  validarCapacidade,
+  responderSeFalhar,
+} from '../utils/agendamentoValidation';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
   // Check (FCM token)
@@ -126,23 +139,12 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Validar que o passeio não é no passado
-    const agora = new Date();
-    const dataPasseio = new Date(passeio.data);
-    const fimDoDia = new Date(dataPasseio);
-    fimDoDia.setHours(23, 59, 59, 999);
-    if (fimDoDia < agora) {
-      res.status(400).json({ message: 'Não é possível agendar para uma data passada' });
-      return;
-    }
+    if (responderSeFalhar(res, assertPasseioNaoPassado(new Date(passeio.data)))) return;
 
     // Verificar capacidade
     const { disponiveis } = await calcularVagasDisponiveis(parsedPasseioId);
-    const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
-    if (vagasSolicitadas > disponiveis) {
-      res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
-      return;
-    }
+    const vagasSolicitadas = calcularVagasSolicitadas(acompanhantes);
+    if (responderSeFalhar(res, validarCapacidade(disponiveis, vagasSolicitadas))) return;
 
     // Verificar se cliente já tem agendamento neste passeio
     const jaAgendado = await prisma.agendamento.findFirst({
@@ -318,106 +320,35 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
   try {
     const { nome, telefone, email, documento, passeioId, instanciaId, promocao, notificacao, ciente, acompanhantes } = req.body;
 
-    if (!nome || !telefone || (!passeioId && !instanciaId)) {
-      res.status(400).json({ message: 'nome, telefone e instanciaId ou passeioId são obrigatórios' });
-      return;
-    }
+    if (responderSeFalhar(res, validarCamposObrigatoriosPublico(nome, telefone, passeioId, instanciaId))) return;
+    if (responderSeFalhar(res, validarIds(passeioId, instanciaId))) return;
 
-    const parsedInstanciaId = instanciaId ? Number(instanciaId) : undefined;
-    const parsedPasseioId = passeioId ? Number(passeioId) : undefined;
+    const parsedInstanciaId = parseIdOpcional(instanciaId);
+    const parsedPasseioId = parseIdOpcional(passeioId);
 
-    if (parsedInstanciaId !== undefined && isNaN(parsedInstanciaId)) {
-      res.status(400).json({ message: 'instanciaId inválido' });
-      return;
-    }
-    if (parsedPasseioId !== undefined && isNaN(parsedPasseioId)) {
-      res.status(400).json({ message: 'passeioId inválido' });
-      return;
-    }
+    const passeio = await resolverPasseio(parsedInstanciaId, parsedPasseioId, res);
+    if (!passeio) return;
 
-    let passeio: any = null;
-    if (parsedInstanciaId !== undefined) {
-      try {
-        passeio = await obterOuCriarPasseioParaInstancia(parsedInstanciaId);
-      } catch (err) {
-        res.status(400).json({ message: err instanceof Error ? err.message : 'Instância de slot inválida' });
-        return;
-      }
-      if (!passeio) {
-        res.status(404).json({ message: 'Instância de slot não encontrada' });
-        return;
-      }
-    } else if (parsedPasseioId !== undefined) {
-      passeio = await prisma.passeio.findUnique({
-        where: { id: parsedPasseioId, ativo: true },
-      });
-      if (!passeio) {
-        res.status(404).json({ message: 'Passeio não encontrado ou inativo' });
-        return;
-      }
-    }
-
-    if (!passeio) {
-      res.status(400).json({ message: 'Passeio inválido' });
-      return;
-    }
-
-    // Validar que o passeio não é no passado
-    const agora = new Date();
-    const dataPasseio = new Date(passeio.data);
-    const fimDoDia = new Date(dataPasseio);
-    fimDoDia.setHours(23, 59, 59, 999);
-    if (fimDoDia < agora) {
-      res.status(400).json({ message: 'Não é possível agendar para uma data passada' });
-      return;
-    }
+    if (responderSeFalhar(res, assertPasseioNaoPassado(new Date(passeio.data)))) return;
 
     // Verificar capacidade
     const { disponiveis } = await calcularVagasDisponiveis(passeio.id);
-    const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
-    if (vagasSolicitadas > disponiveis) {
-      res.status(400).json({ message: 'Passeio lotado. Vagas insuficientes' });
-      return;
-    }
+    const vagasSolicitadas = calcularVagasSolicitadas(acompanhantes);
+    if (responderSeFalhar(res, validarCapacidade(disponiveis, vagasSolicitadas))) return;
 
-    // Buscar cliente existente por documento, telefone ou email
-    const cleanedTel = telefone.replace(/\D/g, '');
-    const cleanedEmail = email ? email.trim().toLowerCase() : '';
-    const cleanedDoc = documento ? documento.replace(/\D/g, '') : '';
+    // Buscar cliente existente por documento, telefone ou email, criando se necessário
+    const cleanedTel = limparTelefone(telefone as string);
+    const cleanedEmail = limparEmail(email as string | undefined);
+    const cleanedDoc = limparDocumento(documento as string | undefined);
+    let cliente = await buscarClientePorContato(cleanedTel, cleanedEmail, cleanedDoc, nome as string, res);
+    if (!cliente) return;
 
-    const whereOR: any[] = [
-      { telefone: cleanedTel },
-      ...(cleanedEmail ? [{ email: cleanedEmail }] : []),
-    ];
-    if (cleanedDoc && (cleanedDoc.length === 11 || cleanedDoc.length === 14)) {
-      whereOR.push({ cpf: cleanedDoc });
-    }
-
-    let cliente = await prisma.clientes.findFirst({
-      where: { OR: whereOR },
-    });
-
-    // Se não encontrou, cria novo cliente
-    if (!cliente) {
-      const cpDoc = cleanedDoc && (cleanedDoc.length === 11 || cleanedDoc.length === 14)
-        ? cleanedDoc
-        : `T${Date.now()}`;
-      cliente = await prisma.clientes.create({
-        data: {
-          nome: nome.trim(),
-          cpf: cpDoc,
-          telefone: cleanedTel,
-          email: cleanedEmail || null,
-        },
+    // Atualizar nome se o cliente existente não tiver nome ou for fornecido
+    if (nome && nome.trim() !== cliente.nome) {
+      cliente = await prisma.clientes.update({
+        where: { id: cliente.id },
+        data: { nome: nome.trim() },
       });
-    } else {
-      // Atualizar nome se o cliente existente não tiver nome ou se foi fornecido
-      if (nome && nome.trim() !== cliente.nome) {
-        cliente = await prisma.clientes.update({
-          where: { id: cliente.id },
-          data: { nome: nome.trim() },
-        });
-      }
     }
 
     // Verificar se já tem agendamento neste passeio
@@ -680,7 +611,7 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
     }
 
     // Auditoria: ao cancelar, registra quem (CPF do admin) e quando
-    const dadosAtualizacao: any = { status };
+    const dadosAtualizacao: Prisma.AgendamentoUpdateInput = { status: status as StatusAgendamento };
     if (status === 'CANCELADO' && agendamentoExistente.status !== 'CANCELADO') {
       dadosAtualizacao.canceladoEm = new Date();
       if (req.user?.cpf) dadosAtualizacao.canceladoPor = req.user.cpf;
@@ -785,4 +716,71 @@ export async function cancelarPublico(req: Request, res: Response): Promise<void
     console.error('Erro ao cancelar agendamento:', error);
     res.status(500).json({ message: 'Erro ao cancelar agendamento' });
   }
+}
+
+/**
+ * Resolve o passeio a partir de instanciaId (via slot) ou passeioId.
+ * Em caso de erro/ausência, responde no `res` e retorna null.
+ */
+async function resolverPasseio(parsedInstanciaId: number | null | undefined, parsedPasseioId: number | null | undefined, res: Response) {
+  if (parsedInstanciaId !== undefined && parsedInstanciaId !== null) {
+    try {
+      const passeio = await obterOuCriarPasseioParaInstancia(parsedInstanciaId);
+      if (!passeio) {
+        res.status(404).json({ message: 'Instância de slot não encontrada' });
+        return null;
+      }
+      return passeio;
+    } catch (err) {
+      res.status(400).json({ message: err instanceof Error ? err.message : 'Instância de slot inválida' });
+      return null;
+    }
+  }
+
+  if (parsedPasseioId !== undefined && parsedPasseioId !== null) {
+    const passeio = await prisma.passeio.findUnique({
+      where: { id: parsedPasseioId, ativo: true },
+    });
+    if (!passeio) {
+      res.status(404).json({ message: 'Passeio não encontrado ou inativo' });
+      return null;
+    }
+    return passeio;
+  }
+
+  res.status(400).json({ message: 'Passeio inválido' });
+  return null;
+}
+
+/** Calcula o total de vagas solicitadas (1 cliente + acompanhantes). */
+function calcularVagasSolicitadas(acompanhantes: unknown): number {
+  return 1 + (acompanhantes ? Number(acompanhantes) : 0);
+}
+
+/**
+ * Busca um cliente por telefone/email/cpf; cria um novo se não existir.
+ * Em caso de erro, responde no `res` e retorna null.
+ */
+async function buscarClientePorContato(cleanedTel: string, cleanedEmail: string, cleanedDoc: string, nome: string, res: Response) {
+  const whereOR: Array<Record<string, unknown>> = [
+    { telefone: cleanedTel },
+    ...(cleanedEmail ? [{ email: cleanedEmail }] : []),
+  ];
+  if (cleanedDoc && ehDocumentoValido(cleanedDoc)) {
+    whereOR.push({ cpf: cleanedDoc });
+  }
+
+  let cliente = await prisma.clientes.findFirst({ where: { OR: whereOR } });
+  if (!cliente) {
+    const cpDoc = cleanedDoc && ehDocumentoValido(cleanedDoc) ? cleanedDoc : `T${Date.now()}`;
+    cliente = await prisma.clientes.create({
+      data: {
+        nome: nome.trim(),
+        cpf: cpDoc,
+        telefone: cleanedTel,
+        email: cleanedEmail || null,
+      },
+    });
+  }
+  return cliente;
 }
