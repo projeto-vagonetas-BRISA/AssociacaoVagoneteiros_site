@@ -55,3 +55,64 @@ jobs:
 
           cache-from: type=gha
           cache-to: type=gha,mode=max
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM_HOST: ${{ vars.VM_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy to Oracle VM
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VM_HOST: ${{ vars.VM_HOST }}
+          VM_USER: ${{ vars.VM_USER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$VM_USER@$VM_HOST" "
+            set -e
+
+            trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+
+            docker login ghcr.io \
+              -u '${{ github.actor }}' \
+              --password-stdin
+
+            cd ~/AssociacaoVagoneteiros_site
+
+            git pull --ff-only origin main
+
+            APP_TAG='$IMAGE_TAG' docker compose pull app
+
+            docker compose up -d postgres
+
+            APP_TAG='$IMAGE_TAG' docker compose run \
+              --rm \
+              --no-deps \
+              app \
+              npx prisma migrate deploy
+
+            APP_TAG='$IMAGE_TAG' docker compose up -d app
+
+            docker image prune -f
+          "
+
+      - name: Check production
+        run: |
+          curl \
+            --fail \
+            --retry 10 \
+            --retry-delay 3 \
+            https://vagoneteiros.online/health

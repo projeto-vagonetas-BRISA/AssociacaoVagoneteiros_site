@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/projeto-vagonetas-brisa/associacaovagoneteiros_site:latest
+    image: ghcr.io/projeto-vagonetas-brisa/associacaovagoneteiros_site:${APP_TAG:-latest}
 
     container_name: vagoneteiros-app
     restart: unless-stopped
