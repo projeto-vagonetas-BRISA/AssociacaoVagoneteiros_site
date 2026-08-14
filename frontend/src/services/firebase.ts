@@ -46,13 +46,13 @@ async function ensureServiceWorkerRegistration() {
   let registration = await navigator.serviceWorker.getRegistration('/');
 
   if (!registration) {
-    registration = await navigator.serviceWorker.register(
+    await navigator.serviceWorker.register(
       '/firebase-messaging-sw.js',
       { scope: '/' }
     );
   }
 
-  await navigator.serviceWorker.ready;
+  registration = await navigator.serviceWorker.ready;
 
   return registration;
 }
