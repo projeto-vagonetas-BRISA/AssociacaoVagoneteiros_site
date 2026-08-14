@@ -2,13 +2,22 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { conflitoService } from '../services/agendamento.service';
+import * as atribuicaoService from '../services/atribuicao.service';
 import { StatusAtribuicao, Prisma } from '@prisma/client';
-
-// ─── AUTO-ATRIBUIÇÃO (modelo Uber) ────────────────────────────────
+import {
+  parseIdRota,
+  validarDataNaoPassada,
+  instanciaImpedeAtribuicao,
+  mensagemInstanciaIndisponivel,
+  calcularPaginacao,
+  contarPessoasAgendadas,
+  agruparPorData,
+  formatarDataLocal,
+} from '../utils/atribuicaoValidation';
 
 /**
  * POST /atribuicoes/auto-atribuir
- * Vagoneteiro se auto-atribui a uma instância de slot
+ * Vagoneteiro se auto-atribui a uma instância de slot (modelo Uber).
  */
 export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -20,161 +29,31 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    // Verificar se a instância existe e está disponível
-    const instancia = await prisma.slotInstancia.findUnique({
-      where: { id: parseInt(instanciaId, 10) },
-      include: {
-        slotPasseio: {
-          include: { _count: { select: { atribuicoes: true } } },
-        },
-      },
-    });
+    const instancia = await buscarInstanciaElegivel(instanciaId, res);
+    if (!instancia) return;
 
-    if (!instancia) {
-      res.status(404).json({ message: 'Instância não encontrada' });
+    const erro = await validarPodeAutoAtribuir(instancia, vagoneteiroId);
+    if (erro) {
+      res.status(erro.status).json(erro.body);
       return;
     }
 
-    if (instancia.status === 'CANCELADO' || instancia.status === 'REALIZADO') {
-      res.status(400).json({ message: `Instância está ${instancia.status === 'CANCELADO' ? 'cancelada' : 'realizada'}` });
+    const conflito = await validarConflitoDeHorario(instancia, vagoneteiroId);
+    if (conflito) {
+      res.status(409).json(conflito);
       return;
     }
 
-    // Verificar se a data já passou
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataInstancia = new Date(instancia.data);
-    dataInstancia.setHours(0, 0, 0, 0);
-    if (dataInstancia < hoje) {
-      res.status(400).json({ message: 'Não é possível se atribuir a uma instância passada' });
-      return;
-    }
-
-    // Verificar se a instância já tem um vagoneteiro
-    const totalAtribuicoesInstancia = await prisma.slotAtribuicao.count({
-      where: {
-        instanciaId: instancia.id,
-        status: { in: ['ATRIBUIDO', 'REALIZADO'] },
-      },
-    });
-
-    if (totalAtribuicoesInstancia >= 1) {
-      res.status(400).json({ message: 'Este passeio já foi pego por outro vagoneteiro' });
-      return;
-    }
-
-    // Verificar se o vagoneteiro já está atribuído a esta instância
-    const jaAtribuido = await prisma.slotAtribuicao.findFirst({
-      where: {
-        vagoneteiroId,
-        instanciaId: instancia.id,
-        status: { not: 'CANCELADO' },
-      },
-    });
-
-    if (jaAtribuido) {
-      res.status(400).json({ message: 'Você já está atribuído a esta instância' });
-      return;
-    }
-
-    // Regra: enquanto o vagoneteiro estiver ATRIBUIDO a um passeio pendente,
-    // não pode se atribuir a um novo — deve concluir o atual antes.
-    const pendente = await prisma.slotAtribuicao.findFirst({
-      where: {
-        vagoneteiroId,
-        status: 'ATRIBUIDO',
-        instanciaId: { not: instancia.id },
-      },
-      select: {
-        id: true,
-        instancia: {
-          select: { data: true, horaInicio: true },
-        },
-        slotPasseio: {
-          select: { titulo: true },
-        },
-      },
-    });
-
-    if (pendente) {
-      const tituloPendente = pendente.slotPasseio?.titulo || 'um passeio';
-      const dataPendente = pendente.instancia?.data
-        ? new Date(pendente.instancia.data).toLocaleDateString('pt-BR')
-        : '';
-      res.status(409).json({
-        message: `Você já está atribuído a ${tituloPendente}${dataPendente ? ` (${dataPendente})` : ''}. Conclua-o antes de se atribuir a um novo passeio.`,
-        atribuicaoPendenteId: pendente.id,
-      });
-      return;
-    }
-
-    // Verificar conflito de horário com outras atribuições do vagoneteiro
-    const conflitos = await conflitoService.verificarConflitoVagoneteiro(
+    const atribuicao = await criarAtribuicao(instancia, vagoneteiroId);
+    await marcarInstanciaAgendada(instancia.id);
+    await atribuicaoService.sincronizarAposAtribuicao({
+      instanciaId: instancia.id,
       vagoneteiroId,
-      instancia.data,
-      instancia.horaInicio,
-      instancia.horaFim
-    );
-
-    if (conflitos.length > 0) {
-      res.status(409).json({
-        message: 'Conflito de horário detectado',
-        conflitos: conflitos.map(c => c.mensagem),
-      });
-      return;
-    }
-
-    // Criar atribuição
-    const atribuicao = await prisma.slotAtribuicao.create({
-      data: {
-        slotPasseioId: instancia.slotPasseioId,
-        instanciaId: instancia.id,
-        vagoneteiroId,
-        status: 'ATRIBUIDO',
-      },
-      include: {
-        slotPasseio: {
-          select: { id: true, titulo: true, horaInicio: true, horaFim: true },
-        },
-        instancia: {
-          select: { id: true, data: true, horaInicio: true, horaFim: true },
-        },
-      },
+      valor: instancia.slotPasseio.valor,
+      capacidade: instancia.slotPasseio.capacidade,
+      data: instancia.data,
+      horaInicio: instancia.horaInicio,
     });
-
-    // Atualizar status da instância pois já atingiu a capacidade de 1 vagoneteiro
-    await prisma.slotInstancia.update({
-      where: { id: instancia.id },
-      data: { status: 'AGENDADO' },
-    });
-
-    // Sincroniza a capacidade com o passeio público equivalente
-    const passeioExistente = await prisma.passeio.findFirst({
-      where: {
-        slotInstanciaId: instancia.id,
-        ativo: true,
-        status: { not: 'CANCELADO' }
-      }
-    });
-
-    if (passeioExistente) {
-      await prisma.passeio.update({
-        where: { id: passeioExistente.id },
-        data: { capacidade: passeioExistente.capacidade + instancia.slotPasseio.capacidade }
-      });
-    } else {
-      const passeioData: any = {
-        usuarioId: vagoneteiroId,
-        preco: instancia.slotPasseio.valor,
-        capacidade: instancia.slotPasseio.capacidade,
-        data: instancia.data,
-        horario: instancia.horaInicio,
-        ativo: true,
-        status: 'CONFIRMADO',
-        slotInstanciaId: instancia.id
-      };
-      await prisma.passeio.create({ data: passeioData });
-    }
 
     res.status(201).json({
       message: 'Atribuído com sucesso! 🚂',
@@ -187,18 +66,158 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
   }
 }
 
+// ─── helpers de autoAtribuir ─────────────────────────────────────
+
+/** Busca a instância e valida que existe e está em status atribuível. */
+async function buscarInstanciaElegivel(instanciaId: unknown, res: Response) {
+  const instancia = await prisma.slotInstancia.findUnique({
+    where: { id: parseInt(instanciaId as string, 10) },
+    include: {
+      slotPasseio: {
+        include: { _count: { select: { atribuicoes: true } } },
+      },
+    },
+  });
+
+  if (!instancia) {
+    res.status(404).json({ message: 'Instância não encontrada' });
+    return null;
+  }
+
+  if (instanciaImpedeAtribuicao(instancia.status)) {
+    res.status(400).json({ message: mensagemInstanciaIndisponivel(instancia.status) });
+    return null;
+  }
+
+  return instancia;
+}
+
+/**
+ * Valida as regras de elegibilidade para auto-atribuição:
+ * data não passada, sem vagoneteiro dono, vagoneteiro não re-atribuído,
+ * e sem atribuição pendente em outro passeio.
+ */
+async function validarPodeAutoAtribuir(
+  instancia: NonNullable<Awaited<ReturnType<typeof buscarInstanciaElegivel>>>,
+  vagoneteiroId: number,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  if (!validarDataNaoPassada(instancia.data).ok) {
+    return { status: 400, body: { message: 'Não é possível se atribuir a uma instância passada' } };
+  }
+
+  const totalAtribuicoes = await prisma.slotAtribuicao.count({
+    where: {
+      instanciaId: instancia.id,
+      status: { in: ['ATRIBUIDO', 'REALIZADO'] },
+    },
+  });
+
+  if (totalAtribuicoes >= 1) {
+    return { status: 400, body: { message: 'Este passeio já foi pego por outro vagoneteiro' } };
+  }
+
+  const jaAtribuido = await prisma.slotAtribuicao.findFirst({
+    where: {
+      vagoneteiroId,
+      instanciaId: instancia.id,
+      status: { not: 'CANCELADO' },
+    },
+  });
+
+  if (jaAtribuido) {
+    return { status: 400, body: { message: 'Você já está atribuído a esta instância' } };
+  }
+
+  // Regra: enquanto estiver ATRIBUIDO a um passeio pendente, deve concluí-lo antes.
+  const pendente = await prisma.slotAtribuicao.findFirst({
+    where: {
+      vagoneteiroId,
+      status: 'ATRIBUIDO',
+      instanciaId: { not: instancia.id },
+    },
+    select: {
+      id: true,
+      instancia: { select: { data: true, horaInicio: true } },
+      slotPasseio: { select: { titulo: true } },
+    },
+  });
+
+  if (pendente) {
+    const tituloPendente = pendente.slotPasseio?.titulo || 'um passeio';
+    const dataPendente = formatarDataLocal(pendente.instancia?.data);
+    return {
+      status: 409,
+      body: {
+        message: `Você já está atribuído a ${tituloPendente}${dataPendente ? ` (${dataPendente})` : ''}. Conclua-o antes de se atribuir a um novo passeio.`,
+        atribuicaoPendenteId: pendente.id,
+      },
+    };
+  }
+
+  return null;
+}
+
+/** Verifica conflito de horário com outras atribuições do vagoneteiro. */
+async function validarConflitoDeHorario(
+  instancia: NonNullable<Awaited<ReturnType<typeof buscarInstanciaElegivel>>>,
+  vagoneteiroId: number,
+) {
+  const conflitos = await conflitoService.verificarConflitoVagoneteiro(
+    vagoneteiroId,
+    instancia.data,
+    instancia.horaInicio,
+    instancia.horaFim,
+  );
+
+  if (conflitos.length > 0) {
+    return {
+      message: 'Conflito de horário detectado',
+      conflitos: conflitos.map((c) => c.mensagem),
+    };
+  }
+  return null;
+}
+
+/** Cria a atribuição e retorna com dados do slot/instância. */
+async function criarAtribuicao(
+  instancia: NonNullable<Awaited<ReturnType<typeof buscarInstanciaElegivel>>>,
+  vagoneteiroId: number,
+) {
+  return prisma.slotAtribuicao.create({
+    data: {
+      slotPasseioId: instancia.slotPasseioId,
+      instanciaId: instancia.id,
+      vagoneteiroId,
+      status: 'ATRIBUIDO',
+    },
+    include: {
+      slotPasseio: {
+        select: { id: true, titulo: true, horaInicio: true, horaFim: true },
+      },
+      instancia: {
+        select: { id: true, data: true, horaInicio: true, horaFim: true },
+      },
+    },
+  });
+}
+
+/** Marca a instância como AGENDADO (capacidade de 1 vagoneteiro atingida). */
+async function marcarInstanciaAgendada(instanciaId: number) {
+  await prisma.slotInstancia.update({
+    where: { id: instanciaId },
+    data: { status: 'AGENDADO' },
+  });
+}
+
 /**
  * GET /atribuicoes/minhas
- * Lista atribuições do vagoneteiro logado
+ * Lista atribuições do vagoneteiro logado, com vagas ocupadas por passeio.
  */
 export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const vagoneteiroId = req.user!.id;
-    const { status, page, limit } = req.query;
-
-    const pagina = Math.max(1, parseInt(page as string) || 1);
-    const limite = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
-    const skip = (pagina - 1) * limite;
+    const { status } = req.query;
+    const { pagina, limite, skip } = calcularPaginacao(req.query.page, req.query.limit);
 
     const where: Prisma.SlotAtribuicaoWhereInput = { vagoneteiroId };
     if (status && Object.values(StatusAtribuicao).includes(status as StatusAtribuicao)) {
@@ -234,33 +253,11 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
       prisma.slotAtribuicao.count({ where }),
     ]);
 
-    // Calcular vagas ocupadas por instância
     const atribuicoesCompletas = await Promise.all(
       atribuicoes.map(async (attr) => {
-        const passeio = await prisma.passeio.findFirst({
-          where: { 
-            slotInstanciaId: attr.instanciaId,
-            ativo: true,
-            status: { not: 'CANCELADO' }
-          },
-          include: {
-            agendamentos: {
-              where: {
-                status: { notIn: ['CANCELADO'] }
-              }
-            }
-          }
-        });
-
-        const totalVagas = passeio 
-          ? passeio.agendamentos.reduce((acc, a) => acc + 1 + (a.acompanhantes || 0), 0)
-          : 0;
-
-        return {
-          ...attr,
-          vagasOcupadas: totalVagas,
-        };
-      })
+        const vagasOcupadas = await atribuicaoService.contarVagasOcupadasDoPasseio(attr.instanciaId);
+        return { ...attr, vagasOcupadas };
+      }),
     );
 
     res.json({
@@ -278,14 +275,14 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
 
 /**
  * PATCH /atribuicoes/:id/cancelar
- * Vagoneteiro cancela sua atribuição
+ * Vagoneteiro (ou admin) cancela sua atribuição.
  */
 export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const vagoneteiroId = req.user!.id;
-    const id = Number(req.params.id);
+    const id = parseIdRota(req.params.id);
 
-    if (isNaN(id)) {
+    if (id === null) {
       res.status(400).json({ message: 'ID inválido' });
       return;
     }
@@ -293,7 +290,13 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
     const atribuicao = await prisma.slotAtribuicao.findUnique({
       where: { id },
       include: {
-        instancia: { select: { data: true, horaInicio: true, slotPasseio: { select: { capacidade: true } } } },
+        instancia: {
+          select: {
+            data: true,
+            horaInicio: true,
+            slotPasseio: { select: { capacidade: true } },
+          },
+        },
       },
     });
 
@@ -302,8 +305,8 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
       return;
     }
 
-    // Verificar se a atribuição é do vagoneteiro logado
-    if (atribuicao.vagoneteiroId !== vagoneteiroId && req.user!.perfil !== 'ADMIN') {
+    const podeCancelar = atribuicao.vagoneteiroId === vagoneteiroId || req.user!.perfil === 'ADMIN';
+    if (!podeCancelar) {
       res.status(403).json({ message: 'Você não pode cancelar a atribuição de outro vagoneteiro' });
       return;
     }
@@ -318,47 +321,21 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
       return;
     }
 
-    // Verificar se a data já passou
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataInstancia = new Date(atribuicao.instancia!.data);
-    dataInstancia.setHours(0, 0, 0, 0);
-    if (dataInstancia < hoje) {
+    if (validarDataNaoPassada(atribuicao.instancia!.data).ok === false) {
       res.status(400).json({ message: 'Não é possível cancelar atribuição de uma data passada' });
       return;
     }
 
     const atualizada = await prisma.slotAtribuicao.update({
       where: { id },
-      data: {
-        status: 'CANCELADO',
-        canceladoEm: new Date(),
-      },
+      data: { status: 'CANCELADO', canceladoEm: new Date() },
     });
 
-    // Reduz a capacidade do passeio público equivalente ou cancela o passeio
-    const passeioExistente = await prisma.passeio.findFirst({
-      where: { slotInstanciaId: atribuicao.instanciaId }
-    });
-
-    if (passeioExistente && atribuicao.instancia) {
-      const capacidadeSlot = atribuicao.instancia.slotPasseio.capacidade;
-      const novaCapacidade = passeioExistente.capacidade - capacidadeSlot;
-      if (novaCapacidade <= 0) {
-        await prisma.passeio.update({
-          where: { id: passeioExistente.id },
-          data: { capacidade: 0, status: 'CANCELADO' }
-        });
-        await prisma.agendamento.updateMany({
-          where: { passeioId: passeioExistente.id, status: { not: 'CANCELADO' } },
-          data: { status: 'CANCELADO' },
-        });
-      } else {
-        await prisma.passeio.update({
-          where: { id: passeioExistente.id },
-          data: { capacidade: novaCapacidade }
-        });
-      }
+    if (atribuicao.instancia) {
+      await atribuicaoService.sincronizarAposCancelamento({
+        instanciaId: atribuicao.instanciaId,
+        capacidadeSlot: atribuicao.instancia.slotPasseio.capacidade,
+      });
     }
 
     res.json({ message: 'Atribuição cancelada', atribuicao: atualizada });
@@ -370,13 +347,13 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
 
 /**
  * PATCH /atribuicoes/:id/realizar
- * Marca atribuição como realizada (admin/vagoneteiro)
+ * Marca atribuição como realizada (admin/vagoneteiro) e propaga ao passeio público.
  */
 export async function realizarAtribuicao(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const id = Number(req.params.id);
+    const id = parseIdRota(req.params.id);
 
-    if (isNaN(id)) {
+    if (id === null) {
       res.status(400).json({ message: 'ID inválido' });
       return;
     }
@@ -384,8 +361,8 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
     const atribuicao = await prisma.slotAtribuicao.findUnique({
       where: { id },
       include: {
-        instancia: { select: { data: true, horaInicio: true } }
-      }
+        instancia: { select: { data: true, horaInicio: true } },
+      },
     });
 
     if (!atribuicao) {
@@ -403,58 +380,16 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
       data: { status: 'REALIZADO' },
     });
 
-    // Verificar se todas as atribuições da instância foram realizadas
     if (atualizada.instanciaId) {
-      const pendentes = await prisma.slotAtribuicao.count({
-        where: {
-          instanciaId: atualizada.instanciaId,
-          status: 'ATRIBUIDO',
-        },
-      });
-
-      if (pendentes === 0) {
-        await prisma.slotInstancia.update({
-          where: { id: atualizada.instanciaId },
-          data: { status: 'REALIZADO' },
-        });
-      }
+      await marcarInstanciaSeCompleta(atualizada.instanciaId);
     }
 
-    // Marca o passeio público equivalente e seus agendamentos como REALIZADO
-    let passeioExistente = null;
-    if (atribuicao.instanciaId) {
-      passeioExistente = await prisma.passeio.findFirst({
-        where: { slotInstanciaId: atribuicao.instanciaId }
-      });
-    }
-
-    if (!passeioExistente) {
-      // Fallback: se não achar por slotInstanciaId, tenta pela data e horário
-      if (atribuicao.instancia) {
-        passeioExistente = await prisma.passeio.findFirst({
-          where: {
-            data: atribuicao.instancia.data,
-            horario: atribuicao.instancia.horaInicio,
-            usuarioId: atribuicao.vagoneteiroId,
-            ativo: true,
-            status: { not: 'CANCELADO' }
-          }
-        });
-      }
-    }
-
-    if (passeioExistente) {
-      await prisma.passeio.update({
-        where: { id: passeioExistente.id },
-        data: { status: 'REALIZADO' }
-      });
-
-      await prisma.agendamento.updateMany({
-        where: {
-          passeioId: passeioExistente.id,
-          status: { not: 'CANCELADO' }
-        },
-        data: { status: 'REALIZADO' }
+    if (atribuicao.instancia) {
+      await atribuicaoService.sincronizarAposRealizacao({
+        instanciaId: atribuicao.instanciaId,
+        vagoneteiroId: atribuicao.vagoneteiroId,
+        data: atribuicao.instancia.data,
+        horaInicio: atribuicao.instancia.horaInicio,
       });
     }
 
@@ -465,45 +400,44 @@ export async function realizarAtribuicao(req: AuthenticatedRequest, res: Respons
   }
 }
 
+/** Marca a instância como REALIZADO quando não há mais atribuições ATRIBUIDO. */
+async function marcarInstanciaSeCompleta(instanciaId: number) {
+  const pendentes = await prisma.slotAtribuicao.count({
+    where: { instanciaId, status: 'ATRIBUIDO' },
+  });
+
+  if (pendentes === 0) {
+    await prisma.slotInstancia.update({
+      where: { id: instanciaId },
+      data: { status: 'REALIZADO' },
+    });
+  }
+}
+
 /**
  * GET /atribuicoes/feed
- * Feed estilo Uber: instâncias disponíveis para auto-atribuição
+ * Feed estilo Uber: instâncias ainda sem vagoneteiro, disponíveis para auto-atribuição.
  */
 export async function feedDisponiveis(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const vagoneteiroId = req.user?.id;
     const { data } = req.query;
-
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const dataFim = data
-      ? new Date(data as string)
-      : new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    const dataFim = data ? new Date(data as string) : fimDoMesAtual(hoje);
 
-    // Buscar instâncias disponíveis com slots ativos
     const instancias = await prisma.slotInstancia.findMany({
       where: {
         data: { gte: hoje, lte: dataFim },
         status: 'AGENDADO',
-        slotPasseio: {
-          status: 'DISPONIVEL',
-        },
+        slotPasseio: { status: 'DISPONIVEL' },
       },
       include: {
         slotPasseio: {
           select: {
-            id: true,
-            titulo: true,
-            descricao: true,
-            horaInicio: true,
-            horaFim: true,
-            duracaoMinutos: true,
-            capacidade: true,
-            valor: true,
-            diaSemana: true,
-            usuario: {
-              select: { id: true, name: true },
-            },
+            id: true, titulo: true, descricao: true,
+            horaInicio: true, horaFim: true, duracaoMinutos: true,
+            capacidade: true, valor: true, diaSemana: true,
+            usuario: { select: { id: true, name: true } },
             _count: { select: { atribuicoes: true } },
           },
         },
@@ -515,29 +449,47 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
       orderBy: [{ data: 'asc' }, { slotPasseio: { horaInicio: 'asc' } }],
     });
 
-    // Processar: calcular vagas e verificar se o vagoneteiro já está atribuído
-    const instanciasSemVagoneteiro = instancias.filter(inst => inst.atribuicoes.length === 0);
+    const semVagoneteiro = instancias.filter((inst) => inst.atribuicoes.length === 0);
+    const feed = await montarFeed(semVagoneteiro);
 
-    const feed = await Promise.all(instanciasSemVagoneteiro.map(async (inst) => {
-      // Buscar passeio público equivalente para contar turistas já agendados
-      const passeio = await prisma.passeio.findFirst({
-        where: {
-          data: inst.data,
-          horario: inst.slotPasseio.horaInicio,
-          ativo: true,
-          status: { not: 'CANCELADO' }
-        },
-        include: {
-          agendamentos: {
-            where: { status: { notIn: ['CANCELADO'] } }
-          }
-        }
-      });
+    res.json({
+      total: feed.length,
+      dias: Object.keys(agruparPorData(feed)).length,
+      data: agruparPorData(feed),
+      flat: feed,
+    });
+  } catch (error) {
+    console.error('Erro ao carregar feed:', error);
+    res.status(500).json({ message: 'Erro ao carregar feed de passeios' });
+  }
+}
 
-      const vagasOcupadas = passeio 
-        ? passeio.agendamentos.reduce((acc, a) => acc + 1 + (a.acompanhantes || 0), 0)
-        : 0;
+// ─── helpers de feedDisponiveis ──────────────────────────────────
 
+/** Último dia do mês corrente (para o feed sem filtro de data). */
+function fimDoMesAtual(referencia: Date): Date {
+  return new Date(referencia.getFullYear(), referencia.getMonth() + 1, 0);
+}
+
+type InstanciaFeed = Prisma.SlotInstanciaGetPayload<{
+  include: {
+    slotPasseio: {
+      select: {
+        id: true; titulo: true; descricao: true; horaInicio: true; horaFim: true;
+        duracaoMinutos: true; capacidade: true; valor: true; diaSemana: true;
+        usuario: { select: { id: true; name: true } };
+        _count: { select: { atribuicoes: true } };
+      };
+    };
+    atribuicoes: { where: { status: 'ATRIBUIDO' }; select: { id: true; vagoneteiroId: true } };
+  };
+}>;
+
+/** Monta cada item do feed com contagem de vagas carregada do passeio público. */
+async function montarFeed(instancias: InstanciaFeed[]) {
+  return Promise.all(
+    instancias.map(async (inst) => {
+      const vagasOcupadas = await atribuicaoService.contarVagasOcupadasDoPasseio(inst.id);
       return {
         instanciaId: inst.id,
         data: inst.data,
@@ -559,24 +511,6 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
         jaPeguei: false,
         podePegar: true,
       };
-    }));
-
-    // Agrupar por data
-    const agrupado: Record<string, typeof feed> = {};
-    for (const item of feed) {
-      const chave = new Date(item.data).toISOString().split('T')[0];
-      if (!agrupado[chave]) agrupado[chave] = [];
-      agrupado[chave].push(item);
-    }
-
-    res.json({
-      total: feed.length,
-      dias: Object.keys(agrupado).length,
-      data: agrupado,
-      flat: feed,
-    });
-  } catch (error) {
-    console.error('Erro ao carregar feed:', error);
-    res.status(500).json({ message: 'Erro ao carregar feed de passeios' });
-  }
+    }),
+  );
 }
