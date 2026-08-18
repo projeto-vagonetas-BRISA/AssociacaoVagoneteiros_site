@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { formatBRL } from '../../utils/format';
+import { exportarCSV } from '../../utils/csv';
 
 interface PasseioItem {
   titulo: string;
@@ -106,6 +107,22 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
     doc.save(`faturamento_${periodo.inicio.slice(0, 10)}_${periodo.fim.slice(0, 10)}.pdf`);
   }
 
+  function gerarCSV() {
+    const linhas: unknown[][] = [
+      ['RELATÓRIO DE FATURAMENTO - VAGONETEIROS'],
+      ['Período', `${periodo.inicio.slice(0, 10)} a ${periodo.fim.slice(0, 10)}`],
+      [],
+      ['Vagoneteiro', 'Qtd Passeios', 'Valor Arrecadado'],
+    ];
+    ordenados.forEach((v) => {
+      linhas.push([v.nome, v.passeios.length, formatBRL(v.total)]);
+    });
+    linhas.push([]);
+    linhas.push(['Total Geral', ordenados.reduce((s, v) => s + v.passeios.length, 0), formatBRL(totalGeral)]);
+
+    exportarCSV(`faturamento_${periodo.inicio.slice(0, 10)}_${periodo.fim.slice(0, 10)}.csv`, linhas);
+  }
+
   const thClass = 'px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-blue-accent select-none';
   const tdClass = 'px-4 py-3 text-sm text-text-dark';
 
@@ -113,11 +130,18 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
     <div className="bg-white rounded-xl border border-border overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-border">
         <h3 className="font-semibold text-text-dark">Relatório de Faturamento</h3>
-        <button
-          onClick={gerarPDF}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-dark hover:bg-red-hover text-white text-xs font-semibold transition-colors cursor-pointer">
-          Imprimir PDF
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={gerarCSV}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-light-2 hover:bg-border text-text-dark text-xs font-semibold border border-border transition-colors cursor-pointer">
+            Exportar CSV
+          </button>
+          <button
+            onClick={gerarPDF}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-dark hover:bg-red-hover text-white text-xs font-semibold transition-colors cursor-pointer">
+            Imprimir PDF
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

@@ -12,6 +12,7 @@ import { AdminQuickActions } from "../components/AdminQuickActions";
 import { AdminVagoneteiros } from "../components/AdminVagoneteiros";
 import { PasseiosTable } from "../components/PasseiosTable";
 import { formatBRL } from "../utils/format";
+import { exportarCSV } from "../utils/csv";
 
 const MAX_PAG_VISIVEIS = 20;
 
@@ -714,6 +715,82 @@ export const PainelAdmin: React.FC = () => {
     doc.save(`relatorio_${suffix}.pdf`);
   }
 
+  // Exporta o relatório geral em CSV (mesmos dados/seções do PDF)
+  async function gerarRelatorioCSV(inicio?: string, fim?: string) {
+    const [resumo, passeiosList, vagoneteirosList, agendamentosList, avaliacaoResult] = await Promise.all([
+      api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>(
+        inicio && fim ? `/painel/resumo?inicio=${inicio}&fim=${fim}` : '/painel/resumo'
+      ),
+      api.request<any>(inicio && fim ? `/passeios?limit=200&inicio=${inicio}&fim=${fim}` : '/passeios?limit=200'),
+      api.request<any>('/usuarios/vagoneteiros?limit=200'),
+      api.request<any[]>(
+        inicio && fim ? `/agendamentos?inicio=${inicio}&fim=${fim}` : '/agendamentos'
+      ),
+      api.request<{ avaliacaoMedia: number }>('/painel/avaliacao'),
+    ]);
+
+    const totalTuristasRel = resumo?.totalTuristas ?? 0;
+    const passeiosRealizadosRel = resumo?.passeiosRealizados ?? 0;
+    const receitaEstimadaRel = resumo?.receitaEstimada ?? 0;
+    const avaliacaoMediaRel = (avaliacaoResult?.avaliacaoMedia ?? 0).toFixed(1);
+    const todosPasseiosRel = passeiosList?.data ?? [];
+    const allVagRel = vagoneteirosList?.data ?? [];
+    const agendamentosRel = agendamentosList ?? [];
+
+    const linhas: unknown[][] = [];
+
+    // Estatísticas Gerais
+    linhas.push(['RELATÓRIO — VAGONETEIROS DOS MOLHES DA BARRA']);
+    linhas.push(['Período', inicio && fim ? `${inicio} a ${fim}` : 'Geral (todo período)']);
+    linhas.push(['Gerado em', new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })]);
+    linhas.push([]);
+    linhas.push(['ESTATÍSTICAS GERAIS', '']);
+    linhas.push(['Total de Turistas', totalTuristasRel]);
+    linhas.push(['Passeios Realizados', passeiosRealizadosRel]);
+    linhas.push(['Receita Estimada', formatBRL(receitaEstimadaRel)]);
+    linhas.push(['Avaliação Média', `${avaliacaoMediaRel} / 5`]);
+    linhas.push([]);
+
+    // Passeios Cadastrados
+    linhas.push(['PASSEIOS CADASTRADOS', '', '', '', '']);
+    linhas.push(['Data', 'Horário', 'Valor (R$)', 'Capacidade', 'Vagoneteiro']);
+    todosPasseiosRel.forEach((p: any) => {
+      linhas.push([
+        formatData(p.data),
+        p.horario,
+        Number(p.preco).toFixed(2),
+        p.capacidade,
+        p.usuario?.name || '—',
+      ]);
+    });
+    linhas.push([]);
+
+    // Vagoneteiros
+    linhas.push(['VAGONETEIROS', '', '', '']);
+    linhas.push(['Nome', 'CPF', 'Telefone', 'Status']);
+    allVagRel.forEach((v: any) => {
+      linhas.push([v.name, v.cpf || '—', v.telefone || '—', v.ativo ? 'Ativo' : 'Inativo']);
+    });
+    linhas.push([]);
+
+    // Histórico de Agendamentos
+    linhas.push(['HISTÓRICO DE AGENDAMENTOS', '', '', '', '', '']);
+    linhas.push(['Passeio', 'Data', 'Horário', 'Cliente', 'Acomp.', 'Status']);
+    agendamentosRel.forEach((a: any) => {
+      linhas.push([
+        `#${a.passeio?.id}`,
+        formatData(a.passeio?.data),
+        a.passeio?.horario,
+        a.cliente?.nome || `#${a.cliente?.id}`,
+        a.acompanhantes || 0,
+        statusConfig[a.status]?.label || a.status,
+      ]);
+    });
+
+    const suffix = inicio && fim ? `${inicio}_a_${fim}` : 'geral';
+    exportarCSV(`relatorio_${suffix}.csv`, linhas);
+  }
+
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-8 py-10 flex flex-col gap-8">
@@ -1081,7 +1158,7 @@ export const PainelAdmin: React.FC = () => {
       {/* Modal de filtro do relatório */}
       {modalRelatorio.open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalRelatorio({ ...modalRelatorio, open: false })}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-lg text-text-dark mb-4">Exportar Relatório</h3>
             <p className="text-sm text-text-secondary mb-4">Selecione o período do relatório:</p>
             <div className="flex flex-col gap-2">
@@ -1121,18 +1198,32 @@ export const PainelAdmin: React.FC = () => {
                   onClick: () => setModalRelatorio(m => ({ ...m, preset: 'custom' })),
                 },
               ].map(({ label, preset, get, onClick }) => (
-                <button
-                  key={preset}
-                  onClick={async () => {
-                    if (onClick) { onClick(); return; }
-                    const { inicio, fim } = get();
-                    setModalRelatorio({ ...modalRelatorio, open: false });
-                    await gerarRelatorioGeral(inicio, fim);
-                  }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-bg-light-1 text-sm font-semibold text-text-primary transition-colors cursor-pointer text-left"
-                >
-                  {label}
-                </button>
+                <div key={preset} className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      if (onClick) { onClick(); return; }
+                      const { inicio, fim } = get();
+                      setModalRelatorio({ ...modalRelatorio, open: false });
+                      await gerarRelatorioGeral(inicio, fim);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-bg-light-1 text-sm font-semibold text-text-primary transition-colors cursor-pointer text-left"
+                  >
+                    {label}
+                    <span className="ml-auto text-[10px] font-bold text-[#7a8392] uppercase">PDF</span>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (onClick) { onClick(); return; }
+                      const { inicio, fim } = get();
+                      setModalRelatorio({ ...modalRelatorio, open: false });
+                      await gerarRelatorioCSV(inicio, fim);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-blue-accent/25 bg-blue-accent/5 hover:bg-blue-accent/10 text-sm font-semibold text-blue-accent transition-colors cursor-pointer text-left"
+                  >
+                    {label}
+                    <span className="ml-auto text-[10px] font-bold uppercase">CSV</span>
+                  </button>
+                </div>
               ))}
             </div>
             {modalRelatorio.preset === 'custom' && (
@@ -1150,7 +1241,18 @@ export const PainelAdmin: React.FC = () => {
                   }}
                   className="px-4 py-2 rounded-lg bg-blue-accent text-white text-sm font-semibold hover:bg-blue-dark mt-1 transition-colors cursor-pointer"
                 >
-                  Gerar Relatório
+                  Gerar PDF
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!modalRelatorio.inicio || !modalRelatorio.fim) return;
+                    const { inicio, fim } = { inicio: modalRelatorio.inicio, fim: modalRelatorio.fim };
+                    setModalRelatorio({ ...modalRelatorio, open: false });
+                    await gerarRelatorioCSV(inicio, fim);
+                  }}
+                  className="px-4 py-2 rounded-lg border border-blue-accent/25 bg-blue-accent/5 text-blue-accent text-sm font-semibold hover:bg-blue-accent/10 mt-1 transition-colors cursor-pointer"
+                >
+                  Gerar CSV
                 </button>
               </div>
             )}
