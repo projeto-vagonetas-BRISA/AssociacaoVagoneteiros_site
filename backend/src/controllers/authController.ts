@@ -3,21 +3,12 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
 import { generateToken } from '../utils/jwt';
-
-// Helper para limpar formatação de CPF (remover pontos e traço)
-function cleanCPF(cpf: string): string {
-  return cpf.replace(/\D/g, '');
-}
-
-// Helper para validar e-mail simples
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
+import { parseBase64Image } from '../utils/image';
+import { cleanCPF, isValidEmail } from '../utils/documento';
 
 export async function cadastro(req: Request, res: Response): Promise<void> {
   try {
-    const { name, cpf, senha, email, telefone, historico } = req.body;
+    const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto, perfil } = req.body;
 
     // Validar campos obrigatórios
     if (!name || !cpf || !senha || !telefone) {
@@ -67,6 +58,28 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
     const saltRounds = 10;
     const hashedSenha = await bcrypt.hash(senha, saltRounds);
 
+    // Validar data_associacao se fornecida
+    let parsedDataAssociacao = undefined;
+    if (data_associacao) {
+      parsedDataAssociacao = new Date(data_associacao);
+      if (isNaN(parsedDataAssociacao.getTime())) {
+        res.status(400).json({ message: 'Data de associação inválida' });
+        return;
+      }
+    }
+
+    // Processar foto (base64 → Buffer)
+    let fotoBuffer: Buffer | undefined = undefined;
+    if (foto) {
+      try {
+        const buf = parseBase64Image(foto);
+        if (buf) fotoBuffer = buf;
+      } catch (err: any) {
+        res.status(400).json({ message: err.message });
+        return;
+      }
+    }
+
     // Criar o usuário
     const novoUsuario = await prisma.usuario.create({
       data: {
@@ -76,7 +89,10 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
         email: email || null,
         telefone,
         historico: historico || null,
-        perfil: 'USUARIO', // Cadastro padrão como USUARIO
+        experiencia: experiencia || null,
+        data_associacao: parsedDataAssociacao,
+        foto: fotoBuffer,
+        perfil: perfil || 'VAGONETEIRO',
       },
     });
 
@@ -86,10 +102,11 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       cpf: novoUsuario.cpf,
       email: novoUsuario.email,
       perfil: novoUsuario.perfil,
+      tokenVersion: novoUsuario.tokenVersion,
     });
 
-    // Retornar usuário sem a senha
-    const { senha: _, ...usuarioSemSenha } = novoUsuario;
+    // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
+    const { senha: _, foto: _foto, ...usuarioSemSenha } = novoUsuario;
 
     res.status(201).json({
       message: 'Usuário cadastrado com sucesso',
@@ -140,16 +157,23 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Verificar se a conta está ativa
+    if (!usuario.ativo) {
+      res.status(403).json({ message: 'Conta desativada. Entre em contato com um administrador.' });
+      return;
+    }
+
     // Gerar token
     const token = generateToken({
       id: usuario.id,
       cpf: usuario.cpf,
       email: usuario.email,
       perfil: usuario.perfil,
+      tokenVersion: usuario.tokenVersion,
     });
 
-    // Retornar usuário sem a senha
-    const { senha: _, ...usuarioSemSenha } = usuario;
+    // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
+    const { senha: _, foto: _foto, ...usuarioSemSenha } = usuario;
 
     res.status(200).json({
       message: 'Login realizado com sucesso',
@@ -159,6 +183,82 @@ export async function login(req: Request, res: Response): Promise<void> {
   } catch (error) {
     console.error('Erro no login:', error);
     res.status(500).json({ message: 'Erro interno ao realizar o login' });
+  }
+}
+
+export async function cadastroAdmin(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { name, cpf, senha, email, telefone } = req.body;
+
+    if (!name || !cpf || !senha || !email || !telefone) {
+      res.status(400).json({ message: 'Nome, CPF, Senha, E-mail e Telefone são obrigatórios' });
+      return;
+    }
+
+    const cleanedCpf = cleanCPF(cpf);
+    if (cleanedCpf.length !== 11) {
+      res.status(400).json({ message: 'CPF inválido. Deve conter 11 dígitos' });
+      return;
+    }
+
+    if (senha.length < 6) {
+      res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres' });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({ message: 'Formato de e-mail inválido' });
+      return;
+    }
+
+    const existingCpf = await prisma.usuario.findUnique({ where: { cpf: cleanedCpf } });
+    if (existingCpf) {
+      res.status(400).json({ message: 'Este CPF já está cadastrado' });
+      return;
+    }
+
+    const existingEmail = await prisma.usuario.findUnique({ where: { email } });
+    if (existingEmail) {
+      res.status(400).json({ message: 'Este E-mail já está cadastrado' });
+      return;
+    }
+
+    const hashedSenha = await bcrypt.hash(senha, 10);
+
+    // aceitar foto opcional (base64) semelhante ao cadastro normal
+    let fotoBuffer: Buffer | undefined = undefined;
+    const { foto } = req.body as any;
+    if (foto) {
+      try {
+        const buf = parseBase64Image(foto);
+        if (buf) fotoBuffer = buf;
+      } catch (err: any) {
+        res.status(400).json({ message: err.message });
+        return;
+      }
+    }
+
+    const admin = await prisma.usuario.create({
+      data: {
+        name,
+        cpf: cleanedCpf,
+        senha: hashedSenha,
+        email,
+        telefone,
+        foto: fotoBuffer,
+        perfil: 'ADMIN',
+      },
+    });
+
+    const { senha: _, foto: _foto, ...adminSemSenha } = admin;
+
+    res.status(201).json({
+      message: 'Administrador cadastrado com sucesso',
+      user: adminSemSenha,
+    });
+  } catch (error) {
+    console.error('Erro ao cadastrar admin:', error);
+    res.status(500).json({ message: 'Erro interno ao cadastrar administrador' });
   }
 }
 

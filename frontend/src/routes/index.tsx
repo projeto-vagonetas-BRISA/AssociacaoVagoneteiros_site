@@ -3,9 +3,19 @@ import { Home } from "../pages/Home";
 import { Layout } from "../components/Layout";
 import { Galeria } from "../pages/Galeria";
 import { Cadastro } from "../pages/Cadastro";
+import { RedefinirSenha } from "../pages/RedefinirSenha";
 import { Agendamento } from "../pages/Agendamento";
-import { PainelAdm } from "../pages/PainelAdm";
 import { Historia } from "../pages/Historia";
+import { PainelAdmin } from "../pages/PainelAdm";
+import { CadastroPasseio } from "../pages/CadastroPasseio";
+import { EditarPasseio } from "../pages/EditarPasseio";
+import { Investimento } from "../pages/Investimento";
+import { VagoneteiroPerfil } from "../pages/admin/VagoneteiroPerfil";
+import { ResetRequests } from "../pages/admin/ResetRequests";
+import { FeedVagoneteiro } from "../pages/FeedVagoneteiro";
+import { ConsultaAgendamento } from "../pages/ConsultaAgendamento";
+import { MinhasAtribuicoes } from "../pages/MinhasAtribuicoes";
+import { AdminSlots } from "../pages/admin/AdminSlots";
 
 export const router = createBrowserRouter([
   {
@@ -27,14 +37,54 @@ export const router = createBrowserRouter([
       {
         path: "/agendamento",
         element: <Agendamento />
-      },
-            {
-        path: "/admin",
-        element: <PainelAdm />
       },      
       {
         path: "/historia",
         element: <Historia />
+      },
+      {
+        path: "/investimento",
+        element: <Investimento />
+      },
+      {
+        path: "/painel-admin",
+        element: <PainelAdmin />
+      },
+      {
+        path: "/cadastro-passeio",
+        element: <CadastroPasseio />
+      },
+      {
+        path: "/editar-passeio/:id",
+        element: <EditarPasseio />
+      },
+      {
+        path: "/redefinir-senha",
+        element: <RedefinirSenha />
+      },
+      {
+        path: "/consulta-agendamento",
+        element: <ConsultaAgendamento />
+      },
+      {
+        path: "/admin/vagoneteiros/:id",
+        element: <VagoneteiroPerfil />
+      },
+      {
+        path: "/admin/reset-requests",
+        element: <ResetRequests />
+      },
+      {
+        path: "/feed-vagoneteiro",
+        element: <FeedVagoneteiro />
+      },
+      {
+        path: "/minhas-atribuicoes",
+        element: <MinhasAtribuicoes />
+      },
+      {
+        path: "/admin/slots",
+        element: <AdminSlots />
       }
     ]
   }

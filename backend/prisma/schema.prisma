@@ -16,44 +16,59 @@ model Usuario {
   name            String
   cpf             String   @unique
   historico       String?
+  experiencia     String?  // tempo de experiência: "Menos de 1 ano", "1 a 3 anos", etc.
   email           String?  @unique
+  tokenVersion    Int      @default(0)
   telefone        String
   senha           String
   perfil          Perfil   @default(USUARIO)
+  ativo           Boolean  @default(true)
+  anonimizado     Boolean  @default(false)
   data_associacao DateTime @default(now())
   foto            Bytes?
   passeios        Passeio[]
+  slotPasseios    SlotPasseio[]       @relation("UsuarioSlots")
+  slotAtribuicoes SlotAtribuicao[]    @relation("VagoneteiroAtribuicoes")
+  resetTokens     ResetToken[]
   createdAt       DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt       DateTime @updatedAt
 }
 
 enum Perfil {
   USUARIO
+  VAGONETEIRO
   ADMIN
   REDATOR
 }
 
 model Passeio {
   id           Int           @id @default(autoincrement())
-  usuarioId   Int
-  usuario     Usuario       @relation(fields: [usuarioId], references: [id])
-  valor        Decimal       @db.Decimal(10, 2)
+  usuarioId   Int?
+  usuario     Usuario?      @relation(fields: [usuarioId], references: [id])
+  preco        Decimal       @db.Decimal(10, 2)
   capacidade   Int
   data         DateTime
+  horario      String        @default("08:00")
+  status       StatusPasseio @default(CONFIRMADO)
+  ativo        Boolean       @default(true)
   agendamentos Agendamento[]
   avaliacoes   Avaliacao[]  
+  slotAtribuicaoId Int?      @unique
+  slotInstanciaId Int?      @unique
   createdAt    DateTime      @default(now())
 }
 
 model Clientes {
-  id           Int           @id @default(autoincrement())
-  nome         String
-  cpf          String        @unique
-  telefone     String
-  email        String?       @unique
-  agendamentos Agendamento[] 
-  avaliacoes   Avaliacao[]   
-  createdAt    DateTime      @default(now())
+  id                 Int                 @id @default(autoincrement())
+  nome               String
+  cpf                String              @unique
+  telefone           String
+  email              String?             @unique
+  anonimizado        Boolean             @default(false)
+  agendamentos       Agendamento[]
+  avaliacoes         Avaliacao[]
+  pushSubscriptions  PushSubscription[]
+  createdAt          DateTime            @default(now())
 }
 
 model Avaliacao {
@@ -68,14 +83,62 @@ model Avaliacao {
 }
 
 model Agendamento {
-  id        Int               @id @default(autoincrement())
-  clienteId Int               
-  cliente   Clientes          @relation(fields: [clienteId], references: [id])
-  passeioId Int
-  passeio   Passeio           @relation(fields: [passeioId], references: [id])
-  status    StatusAgendamento @default(PENDENTE)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id                 Int                        @id @default(autoincrement())
+  clienteId          Int
+  cliente            Clientes                   @relation(fields: [clienteId], references: [id])
+  passeioId          Int
+  passeio            Passeio                    @relation(fields: [passeioId], references: [id])
+  status             StatusAgendamento          @default(PENDENTE)
+  promocao           Boolean                    @default(false)
+  notificacao        Boolean                    @default(false)
+  ciente             Boolean                    @default(false)
+  acompanhantes       Int                        @default(0)
+  canceladoEm         DateTime?
+  canceladoPor        String?
+  motivoCancelamento  String?
+  notificacoes       NotificacaoAgendamento[]   
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  // Suspensão de atividades
+  suspensaoId         Int?
+  suspensao           Suspensao?                 @relation("SuspensaoAgendamentos", fields: [suspensaoId], references: [id], onDelete: SetNull)
+  statusAnterior      StatusAgendamento?
+}
+
+model NotificacaoAgendamento {
+  id                 Int                            @id @default(autoincrement())
+  agendamentoId      Int
+  agendamento        Agendamento                    @relation(fields: [agendamentoId], references: [id])
+  pushSubscriptionId Int?
+  pushSubscription   PushSubscription?             @relation(fields: [pushSubscriptionId], references: [id])
+  tipo               TipoNotificacaoAgendamento
+  enviarEm           DateTime
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+}
+
+model PushSubscription {
+  id            Int                 @id @default(autoincrement())
+  clienteId     Int
+  cliente       Clientes            @relation(fields: [clienteId], references: [id])
+  token         String              
+  userAgent     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  notificacoes  NotificacaoAgendamento[]
+}
+
+enum TipoNotificacaoAgendamento {
+  ONE_WEEK
+  THREE_DAYS
+  ONE_DAY
+  TWELVE_HOURS
+  SIX_HOURS
+  THREE_HOURS
+  ONE_HOUR
+  THIRTY_MINUTES
+  TEN_MINUTES
 }
 
 enum StatusAgendamento {
@@ -83,4 +146,175 @@ enum StatusAgendamento {
   CONFIRMADO
   CANCELADO
   REMARCADO
+  REALIZADO
+  SUSPENSO
+}
+
+// ─── NOVOS MODELOS: Sistema de Agendamento (Composite Pattern) ─────
+
+enum TipoSlot {
+  FIXO
+  LOTE
+  INDIVIDUAL
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+  DOMINGO
+}
+
+enum StatusSlot {
+  DISPONIVEL
+  ATRIBUIDO
+  CANCELADO
+  REALIZADO
+}
+
+enum StatusInstancia {
+  AGENDADO
+  EM_ANDAMENTO
+  REALIZADO
+  CANCELADO
+  SUSPENSO
+}
+
+enum StatusPasseio {
+  CONFIRMADO
+  REALIZADO
+  CANCELADO
+}
+
+enum StatusAtribuicao {
+  ATRIBUIDO
+  REALIZADO
+  CANCELADO
+}
+
+model SlotPasseio {
+  id             Int       @id @default(autoincrement())
+  tipo           TipoSlot
+  titulo         String
+  descricao      String?
+
+  // Horário
+  horaInicio     String       // "08:00"
+  horaFim        String       // "09:30"
+  duracaoMinutos Int
+
+  // Recorrência (FIXO)
+  diaSemana      DiaSemana?
+  dataInicio     DateTime?    // quando começa a valer
+  dataFim        DateTime?    // quando termina (opcional)
+  intervaloDias  Int?         // a cada N dias
+
+  // Lote
+  loteId         String?      // UUID pra agrupar slots do mesmo lote
+
+  // Capacidade
+  capacidade     Int          @default(1)
+  valor          Decimal      @db.Decimal(10, 2)
+
+  // Vagoneteiro fixo (opcional)
+  usuarioId      Int?
+  usuario        Usuario?     @relation("UsuarioSlots", fields: [usuarioId], references: [id])
+
+  // Status
+  status         StatusSlot   @default(DISPONIVEL)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  instancias     SlotInstancia[]
+  atribuicoes    SlotAtribuicao[]
+}
+
+model SlotInstancia {
+  id             Int           @id @default(autoincrement())
+  slotPasseioId  Int
+  slotPasseio    SlotPasseio   @relation(fields: [slotPasseioId], references: [id], onDelete: Cascade)
+  data           DateTime
+  horaInicio     String
+  horaFim        String
+  status         StatusInstancia @default(AGENDADO)
+  createdAt      DateTime      @default(now())
+
+  // Suspensão de atividades
+  suspensaoId    Int?
+  suspensao      Suspensao?    @relation("SuspensaoInstancias", fields: [suspensaoId], references: [id], onDelete: SetNull)
+  statusAnterior StatusInstancia?
+
+  atribuicoes    SlotAtribuicao[]
+
+  @@unique([slotPasseioId, data, horaInicio])
+}
+
+model SlotAtribuicao {
+  id              Int               @id @default(autoincrement())
+  slotPasseioId   Int
+  slotPasseio     SlotPasseio       @relation(fields: [slotPasseioId], references: [id], onDelete: Cascade)
+  instanciaId     Int?
+  instancia       SlotInstancia?    @relation(fields: [instanciaId], references: [id], onDelete: SetNull)
+  vagoneteiroId   Int
+  vagoneteiro     Usuario           @relation("VagoneteiroAtribuicoes", fields: [vagoneteiroId], references: [id])
+  status          StatusAtribuicao  @default(ATRIBUIDO)
+  atribuidoEm     DateTime          @default(now())
+  canceladoEm     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([slotPasseioId, instanciaId, vagoneteiroId])
+}
+
+model AvaliacaoCache {
+  id Int @id @default(autoincrement())
+  avaliacaoMedia Decimal @map("avaliacaoMedia")
+  totalAvaliacoes Int @map("totalAvaliacoes")
+  atualizadaEm DateTime @map("atualizadaEm") @default(now())
+  criadaEm DateTime @map("criadaEm") @default(now())
+
+  @@map("AvaliacaoCache")
+}
+
+model ResetToken {
+  id            Int               @id @default(autoincrement())
+  email         String
+  usuarioId     Int?
+  usuario       Usuario?          @relation(fields: [usuarioId], references: [id])
+  perfil        Perfil
+  status        ResetTokenStatus  @default(PENDING_APPROVAL)
+  token         String?           @unique
+  usado         Boolean           @default(false)
+  expiraEm      DateTime?
+  criadoEm      DateTime          @default(now())
+  aprovadoPorId Int?
+  aprovadoEm    DateTime?
+
+  @@map("ResetToken")
+}
+
+enum ResetTokenStatus {
+  PENDING_APPROVAL
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+model Suspensao {
+  id            Int       @id @default(autoincrement())
+  dataInicio    DateTime
+  dataFim       DateTime
+  motivo        String?
+  criadoPorId   Int?
+  criadoEm      DateTime  @default(now())
+  ativa         Boolean   @default(true)
+  removidaEm    DateTime?
+  removidaPorId Int?
+
+  instancias   SlotInstancia[] @relation("SuspensaoInstancias")
+  agendamentos Agendamento[]   @relation("SuspensaoAgendamentos")
 }

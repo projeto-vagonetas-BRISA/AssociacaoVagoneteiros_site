@@ -6,7 +6,7 @@ interface SectionHeaderProps {
   labelColor?: string;
 }
 
-export function SectionHeader({ label, title, description, titleSize = 'medium', labelColor = '#b61722' }: SectionHeaderProps) {
+export function SectionHeader({ label, title, description, titleSize = 'medium', labelColor = 'var(--color-red-dark)' }: SectionHeaderProps) {
   return (
     <div className="flex flex-col gap-4 items-start w-full">
       {label && (
@@ -19,7 +19,7 @@ export function SectionHeader({ label, title, description, titleSize = 'medium',
       )}
 
       <h2 
-        className={`font-bold text-[#005f9d] uppercase ${
+        className={`font-bold text-blue uppercase ${
           titleSize === 'large' 
             ? 'text-5xl tracking-tighter leading-none' 
             : 'text-4xl tracking-tight leading-10'
@@ -29,7 +29,7 @@ export function SectionHeader({ label, title, description, titleSize = 'medium',
       </h2>
 
       {description && (
-        <p className="text-lg text-[#414752] leading-relaxed max-w-3xl">
+        <p className="text-lg text-text-primary leading-relaxed max-w-3xl text-justify md:text-left">
           {description}
         </p>
       )}

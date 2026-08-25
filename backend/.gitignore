@@ -6,4 +6,17 @@ dist/
 # Keep environment variables out of version control
 .env
 
+# FCM keys
+serviceAccountKey.json
+
 /src/generated/prisma
+
+secretsbackend/*
+!secretsbackend/.gitkeep
+
+# Google service account
+google-service-account.json
+
+# Playwright (E2E)
+playwright-report/
+test-results/

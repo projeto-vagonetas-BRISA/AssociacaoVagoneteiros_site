@@ -1,0 +1,333 @@
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../middlewares/auth';
+import prisma from '../lib/prisma';
+import { parseFiltroData } from '../utils/filtroData';
+import { StatusPasseio, Prisma } from '@prisma/client';
+
+export async function listar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const skip = (page - 1) * limit;
+
+    const { inicio, fim } = req.query;
+
+    const where: Prisma.PasseioWhereInput = { ativo: true };
+    const filtroDate = parseFiltroData(inicio as string, fim as string);
+    if (filtroDate) {
+      where.data = filtroDate;
+    }
+
+    const [passeios, total] = await Promise.all([
+      prisma.passeio.findMany({
+        where,
+        include: {
+          usuario: { select: { id: true, name: true } },
+          _count: { select: { agendamentos: true, avaliacoes: true } },
+        },
+        orderBy: { data: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.passeio.count({ where }),
+    ]);
+
+    res.json({
+      data: passeios,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    console.error('Erro ao listar passeios:', error);
+    res.status(500).json({ message: 'Erro ao listar passeios' });
+  }
+}
+
+export async function buscarPorId(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const passeio = await prisma.passeio.findUnique({
+      where: { id },
+      include: {
+        usuario: { select: { id: true, name: true } },
+        agendamentos: { include: { cliente: { select: { id: true, nome: true } } } },
+        avaliacoes: { include: { cliente: { select: { id: true, nome: true } } } },
+      },
+    });
+
+    if (!passeio) {
+      res.status(404).json({ message: 'Passeio não encontrado' });
+      return;
+    }
+
+    res.json(passeio);
+  } catch (error) {
+    console.error('Erro ao buscar passeio:', error);
+    res.status(500).json({ message: 'Erro ao buscar passeio' });
+  }
+}
+
+export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { preco, capacidade, data, horario } = req.body;
+
+    if (!preco || !capacidade || !data) {
+      res.status(400).json({ message: 'Preço, capacidade e data são obrigatórios' });
+      return;
+    }
+
+    const parsedPreco = parseFloat(preco);
+    const parsedCapacidade = parseInt(capacidade, 10);
+    // Força parse sem conversão de timezone: interpreta a data como UTC noon
+    // para evitar off-by-one quando o servidor está em fuso negativo (ex: UTC-3)
+    const parsedData = new Date(`${String(data).split('T')[0]}T12:00:00.000Z`);
+    const parsedHorario = horario || "08:00";
+
+    if (isNaN(parsedPreco) || parsedPreco <= 0) {
+      res.status(400).json({ message: 'Preço inválido' });
+      return;
+    }
+    if (isNaN(parsedCapacidade) || parsedCapacidade <= 0) {
+      res.status(400).json({ message: 'Capacidade inválida' });
+      return;
+    }
+    if (isNaN(parsedData.getTime())) {
+      res.status(400).json({ message: 'Data inválida' });
+      return;
+    }
+
+    // 🛑 Validar que a data não é no passado
+    const fimDoDia = new Date(parsedData);
+    fimDoDia.setHours(23, 59, 59, 999);
+    if (fimDoDia < new Date()) {
+      res.status(400).json({ message: 'Não é possível criar passeio para uma data passada' });
+      return;
+    }
+
+    // O vagoneteiro logado (USUARIO comum) pode criar passeio vinculado a ele;
+    // ADMIN/REDATOR podem criar para qualquer usuarioId ou para si mesmos.
+    const usuarioId = req.body.usuarioId
+      ? (req.user!.perfil === 'ADMIN' || req.user!.perfil === 'REDATOR'
+          ? Number(req.body.usuarioId)
+          : req.user!.id)
+      : req.user!.id;
+
+    const passeio = await prisma.passeio.create({
+      data: {
+        preco: parsedPreco,
+        capacidade: parsedCapacidade,
+        data: parsedData,
+        horario: parsedHorario,
+        usuarioId,
+      },
+      include: {
+        usuario: { select: { id: true, name: true } },
+      },
+    });
+
+    res.status(201).json(passeio);
+  } catch (error) {
+    console.error('Erro ao criar passeio:', error);
+    res.status(500).json({ message: 'Erro ao criar passeio' });
+  }
+}
+
+export async function atualizar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const passeioExistente = await prisma.passeio.findUnique({ where: { id } });
+    if (!passeioExistente) {
+      res.status(404).json({ message: 'Passeio não encontrado' });
+      return;
+    }
+
+    // Apenas ADMIN/REDATOR ou o dono do passeio podem atualizar
+    if (req.user!.perfil === 'USUARIO' && passeioExistente.usuarioId !== req.user!.id) {
+      res.status(403).json({ message: 'Você só pode editar seus próprios passeios' });
+      return;
+    }
+
+    const { preco, capacidade, data, horario } = req.body;
+    const dataAtualizada: any = {};
+
+    if (preco !== undefined) {
+      const parsed = parseFloat(preco);
+      if (isNaN(parsed) || parsed <= 0) {
+        res.status(400).json({ message: 'Preço inválido' });
+        return;
+      }
+      dataAtualizada.preco = parsed;
+    }
+    if (capacidade !== undefined) {
+      const parsed = parseInt(capacidade, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        res.status(400).json({ message: 'Capacidade inválida' });
+        return;
+      }
+      dataAtualizada.capacidade = parsed;
+    }
+    if (data !== undefined) {
+      // Força parse sem conversão de timezone (UTC noon) para evitar off-by-one
+      const parsed = new Date(`${String(data).split('T')[0]}T12:00:00.000Z`);
+      if (isNaN(parsed.getTime())) {
+        res.status(400).json({ message: 'Data inválida' });
+        return;
+      }
+      // 🛑 Validar que a data não é no passado
+      const fimDoDia = new Date(parsed);
+      fimDoDia.setHours(23, 59, 59, 999);
+      if (fimDoDia < new Date()) {
+        res.status(400).json({ message: 'Não é possível agendar para uma data passada' });
+        return;
+      }
+      dataAtualizada.data = parsed;
+    }
+    if (horario !== undefined) {
+      dataAtualizada.horario = horario;
+    }
+
+    const passeio = await prisma.passeio.update({
+      where: { id },
+      data: dataAtualizada,
+      include: {
+        usuario: { select: { id: true, name: true } },
+      },
+    });
+
+    res.json(passeio);
+  } catch (error) {
+    console.error('Erro ao atualizar passeio:', error);
+    res.status(500).json({ message: 'Erro ao atualizar passeio' });
+  }
+}
+
+export async function atualizarStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const { status } = req.body;
+    if (!status || ![StatusPasseio.CONFIRMADO, StatusPasseio.REALIZADO, StatusPasseio.CANCELADO].includes(status)) {
+      res.status(400).json({ message: 'Status inválido. Valores: CONFIRMADO, REALIZADO, CANCELADO' });
+      return;
+    }
+
+    const passeio = await prisma.passeio.findUnique({ where: { id } });
+    if (!passeio) {
+      res.status(404).json({ message: 'Passeio não encontrado' });
+      return;
+    }
+
+    // Só ADMIN/REDATOR ou o dono podem alterar status
+    if (req.user!.perfil === 'USUARIO' && passeio.usuarioId !== req.user!.id) {
+      res.status(403).json({ message: 'Você só pode alterar status dos seus próprios passeios' });
+      return;
+    }
+
+    const atualizado = await prisma.passeio.update({
+      where: { id },
+      data: { status },
+      include: { usuario: { select: { id: true, name: true } } },
+    });
+
+    if (status === StatusPasseio.REALIZADO || status === StatusPasseio.CANCELADO) {
+      const agora = new Date();
+      const motivo = (req.body?.motivo as string)?.trim();
+      await prisma.agendamento.updateMany({
+        where: { passeioId: id, status: { not: 'CANCELADO' } },
+        data: {
+          status,
+          ...(status === StatusPasseio.CANCELADO
+            ? {
+                canceladoEm: agora,
+                canceladoPor: req.user?.cpf ?? null,
+                ...(motivo ? { motivoCancelamento: motivo } : {}),
+              }
+            : {}),
+        },
+      });
+
+      // Se o passeio estiver vinculado a um slotInstancia, propaga o status
+      if (passeio.slotInstanciaId) {
+        await prisma.slotInstancia.update({
+          where: { id: passeio.slotInstanciaId },
+          data: { status },
+        });
+
+        await prisma.slotAtribuicao.updateMany({
+          where: { instanciaId: passeio.slotInstanciaId },
+          data: { status: status === StatusPasseio.REALIZADO ? 'REALIZADO' : 'CANCELADO' },
+        });
+      }
+    }
+
+    res.json(atualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar status do passeio:', error);
+    res.status(500).json({ message: 'Erro ao atualizar status' });
+  }
+}
+
+export async function deletar(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+
+    const passeioExistente = await prisma.passeio.findUnique({ where: { id } });
+    if (!passeioExistente) {
+      res.status(404).json({ message: 'Passeio não encontrado' });
+      return;
+    }
+
+    if (req.user!.perfil === 'USUARIO' && passeioExistente.usuarioId !== req.user!.id) {
+      res.status(403).json({ message: 'Você só pode deletar seus próprios passeios' });
+      return;
+    }
+
+    await prisma.passeio.update({ where: { id }, data: { status: 'CANCELADO' } });
+
+    // Auditoria: registra quem cancelou o passeio (CPF do admin) e o motivo (se informado, ex: condição climática)
+    const motivo = (req.body?.motivo as string)?.trim() || null;
+    await prisma.agendamento.updateMany({
+      where: { passeioId: id, status: { not: 'CANCELADO' } },
+      data: {
+        status: StatusPasseio.CANCELADO,
+        canceladoEm: new Date(),
+        canceladoPor: req.user?.cpf ?? null,
+        ...(motivo ? { motivoCancelamento: motivo } : {}),
+      },
+    });
+
+    // Cancela a instância de slot vinculada para que não apareça mais
+    // como disponível para novos agendamentos
+    if (passeioExistente.slotInstanciaId) {
+      await prisma.slotInstancia.update({
+        where: { id: passeioExistente.slotInstanciaId },
+        data: { status: 'CANCELADO' },
+      });
+    }
+
+    res.json({ message: 'Passeio cancelado com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao cancelar passeio:', error);
+    res.status(500).json({ message: 'Erro ao cancelar passeio' });
+  }
+}
