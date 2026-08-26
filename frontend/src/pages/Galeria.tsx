@@ -96,16 +96,25 @@ export const Galeria: React.FC = () => {
     document.getElementById("galeria-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  // Gera array de páginas com reticências para muitas páginas
-  const getPageNumbers = (): (number | "...")[] => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  // Gera array de páginas com reticências
+  const getPageNumbers = (compact = false): (number | "...")[] => {
+    const maxVisible = compact ? 3 : 5;
+    if (totalPages <= (compact ? 5 : 7)) return Array.from({ length: totalPages }, (_, i) => i + 1);
     const pages: (number | "...")[] = [];
-    if (currentPage <= 4) {
-      pages.push(1, 2, 3, 4, 5, "...", totalPages);
-    } else if (currentPage >= totalPages - 3) {
-      pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+    if (currentPage <= (compact ? 2 : 4)) {
+      const end = compact ? 3 : 5;
+      for (let i = 1; i <= end; i++) pages.push(i);
+      pages.push("...", totalPages);
+    } else if (currentPage >= totalPages - (compact ? 1 : 3)) {
+      pages.push(1, "...");
+      const start = totalPages - (compact ? 2 : 4);
+      for (let i = start; i <= totalPages; i++) pages.push(i);
     } else {
-      pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+      pages.push(1, "...");
+      if (!compact) pages.push(currentPage - 1);
+      pages.push(currentPage);
+      if (!compact) pages.push(currentPage + 1);
+      pages.push("...", totalPages);
     }
     return pages;
   };
@@ -219,43 +228,63 @@ export const Galeria: React.FC = () => {
                   </p>
 
                   {/* Botões de página */}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
                     {/* Anterior */}
                     <button
                       onClick={() => goToPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium border border-[#dde2ea] bg-white text-text-primary hover:bg-blue-accent hover:text-white hover:border-blue-accent transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-text-primary disabled:hover:border-[#dde2ea]"
+                      className="flex items-center gap-1 px-2.5 py-2 rounded-xl text-sm font-medium border border-[#dde2ea] bg-white text-text-primary hover:bg-blue-accent hover:text-white hover:border-blue-accent transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-text-primary disabled:hover:border-[#dde2ea]"
                     >
-                      ‹ Anterior
+                      <span>‹</span>
+                      <span className="hidden sm:inline">Anterior</span>
                     </button>
 
-                    {/* Números */}
-                    {getPageNumbers().map((page, idx) =>
-                      page === "..." ? (
-                        <span key={`ellipsis-${idx}`} className="px-2 py-2 text-sm text-text-primary select-none">
-                          …
-                        </span>
-                      ) : (
-                        <button
-                          key={page}
-                          onClick={() => goToPage(page)}
-                          className={`w-9 h-9 rounded-xl text-sm font-medium border transition-all duration-200 ${currentPage === page
-                            ? "bg-blue-accent text-white border-blue-accent shadow-sm"
-                            : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
-                            }`}
-                        >
-                          {page}
-                        </button>
-                      )
-                    )}
+                    <div className="flex sm:hidden items-center gap-1">
+                      {getPageNumbers(true).map((page, idx) =>
+                        page === "..." ? (
+                          <span key={`ellipsis-m-${idx}`} className="px-1 py-2 text-sm text-text-primary select-none">…</span>
+                        ) : (
+                          <button
+                            key={page}
+                            onClick={() => goToPage(page)}
+                            className={`w-8 h-9 rounded-xl text-sm font-medium border transition-all duration-200 ${currentPage === page
+                                ? "bg-blue-accent text-white border-blue-accent shadow-sm"
+                                : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
+                              }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    <div className="hidden sm:flex items-center gap-1">
+                      {getPageNumbers(false).map((page, idx) =>
+                        page === "..." ? (
+                          <span key={`ellipsis-${idx}`} className="px-2 py-2 text-sm text-text-primary select-none">…</span>
+                        ) : (
+                          <button
+                            key={page}
+                            onClick={() => goToPage(page)}
+                            className={`w-9 h-9 rounded-xl text-sm font-medium border transition-all duration-200 ${currentPage === page
+                                ? "bg-blue-accent text-white border-blue-accent shadow-sm"
+                                : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
+                              }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
+                    </div>
 
                     {/* Próximo */}
                     <button
                       onClick={() => goToPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium border border-[#dde2ea] bg-white text-text-primary hover:bg-blue-accent hover:text-white hover:border-blue-accent transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-text-primary disabled:hover:border-[#dde2ea]"
+                      className="flex items-center gap-1 px-2.5 py-2 rounded-xl text-sm font-medium border border-[#dde2ea] bg-white text-text-primary hover:bg-blue-accent hover:text-white hover:border-blue-accent transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-text-primary disabled:hover:border-[#dde2ea]"
                     >
-                      Próximo ›
+                      <span className="hidden sm:inline">Próximo</span>
+                      <span>›</span>
                     </button>
                   </div>
                 </div>

@@ -132,13 +132,28 @@ export const ConsultaAgendamento: React.FC = () => {
 
     setIsDownloading(true);
     try {
-      const dataUrl = await toPng(element, { cacheBust: true, quality: 1, pixelRatio: 2 });
+      const CAPTURE_WIDTH = 400;
+      const scale = CAPTURE_WIDTH / element.offsetWidth;
+
+      const dataUrl = await toPng(element, {
+        cacheBust: true,
+        quality: 1,
+        pixelRatio: 2,
+        canvasWidth: CAPTURE_WIDTH * 2,
+        canvasHeight: element.offsetHeight * scale * 2,
+        style: {
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          width: `${element.offsetWidth}px`,
+          height: `${element.offsetHeight}px`,
+        },
+      });
+
       const pdf = new jsPDF("p", "mm", "a4");
-      
-      const imgProps = pdf.getImageProperties(dataUrl);
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(dataUrl);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
+
       pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Resumo_Agendamento_${consulta?.id}.pdf`);
     } catch (error: any) {
@@ -196,7 +211,7 @@ export const ConsultaAgendamento: React.FC = () => {
           </h1>
         </div>
         <p className="mt-3 max-w-2xl text-sm md:text-base text-text-secondary leading-relaxed">
-          Consulte a situação do agendamento informando o ID e o CPF. 
+          Consulte a situação do agendamento informando o ID e o CPF.
         </p>
       </div>
 
@@ -272,15 +287,15 @@ export const ConsultaAgendamento: React.FC = () => {
                   <div className="flex gap-3 items-start">
                     <SectionIcon icon={<Users className="size-4" strokeWidth={2} />} />
                     <div>
-                        <p className="font-semibold text-[10px] text-[#7a8392] uppercase tracking-widest">
-                            Responsável
-                        </p>
-                        <p className="font-bold text-lg text-text-primary mt-0.5">
-                            {consulta.cliente}
-                        </p>
-                        <p className="font-semibold text-sm text-text-primary mt-0.5">
-                            {formatarCpf(consulta.cpf)}
-                        </p>
+                      <p className="font-semibold text-[10px] text-[#7a8392] uppercase tracking-widest">
+                        Responsável
+                      </p>
+                      <p className="font-bold text-lg text-text-primary mt-0.5">
+                        {consulta.cliente}
+                      </p>
+                      <p className="font-semibold text-sm text-text-primary mt-0.5">
+                        {formatarCpf(consulta.cpf)}
+                      </p>
                     </div>
                   </div>
 
@@ -358,7 +373,7 @@ export const ConsultaAgendamento: React.FC = () => {
                       <span className="font-bold text-xl text-red-dark">{formatBRL(consulta.total)}</span>
                     </div>
                   </div>
-                
+
                   {/* Botão de Download PDF */}
                   <div className="pt-2">
                     <button

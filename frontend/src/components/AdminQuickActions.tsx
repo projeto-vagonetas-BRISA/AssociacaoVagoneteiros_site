@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, ShieldCheck, CalendarDays } from "lucide-react";
+import { UserPlus, ShieldPlus, ShieldCheck, CalendarDays } from "lucide-react";
 import { authService } from "../services/auth";
 
 export const AdminQuickActions: React.FC = () => {
@@ -24,13 +24,13 @@ export const AdminQuickActions: React.FC = () => {
                 to="/cadastro?tipo=vagoneteiro"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-accent hover:bg-blue-dark text-white text-sm font-semibold transition-colors cursor-pointer"
             >
-                <Plus size={15} /> Cadastrar Vagoneteiro
+                <UserPlus size={15} /> Cadastrar Vagoneteiro
             </Link>
             <Link
                 to="/cadastro?tipo=administrador"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-white hover:bg-bg-light-1 text-text-dark text-sm font-semibold transition-colors cursor-pointer"
             >
-                <Plus size={15} /> Cadastrar Administrador
+                <ShieldPlus size={15} /> Cadastrar Administrador
             </Link>
             <Link
                 to="/admin/slots"
