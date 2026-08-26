@@ -59,6 +59,13 @@ const experienciaOptions = [
 
 const inputClass = "text-sm font-medium text-text-dark bg-bg-light-2 border border-border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-accent/30 focus:border-blue-accent transition placeholder:text-text-secondary";
 
+const perfilLabel: Record<string, string> = {
+  ADMIN: "Admin",
+  REDATOR: "Redator",
+  VAGONETEIRO: "Vagoneteiro",
+};
+const getPerfilLabel = (perfil?: string) => perfilLabel[perfil ?? ""] ?? "Usuário";
+
 export const VagoneteiroPerfil: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -172,7 +179,7 @@ export const VagoneteiroPerfil: React.FC = () => {
   if (!vagoneteiro) {
     return (
       <div className="min-h-screen bg-bg-light-1 flex flex-col items-center justify-center gap-4">
-        <p className="text-text-primary">Vagoneteiro não encontrado</p>
+        <p className="text-text-primary">Usuário não encontrado</p>
         <Link to="/painel-admin" className="text-blue-accent hover:underline text-sm">Voltar ao painel</Link>
       </div>
     );
@@ -192,7 +199,7 @@ export const VagoneteiroPerfil: React.FC = () => {
             </div>
             <div>
               <h1 className="font-bold text-2xl md:text-3xl text-text-dark tracking-tight">
-                {editando ? "Editando Vagoneteiro" : "Perfil do Vagoneteiro"}
+                {editando ? `Editando ${getPerfilLabel(vagoneteiro.perfil)}` : `Perfil do ${getPerfilLabel(vagoneteiro.perfil)}`}
               </h1>
               <p className="text-sm text-text-secondary mt-0.5">
                 Gerencie as informações do associado

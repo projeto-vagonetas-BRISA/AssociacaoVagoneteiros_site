@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/auth";
 import { useNameField, useCpfField, useTelField, useEmailField, usePasswordField, field, fieldBase } from "../utils/formValidations";
+import { User, Briefcase, Camera, Lock, Eye, EyeOff } from "lucide-react";
 
 export function Registration_Vagoneteiro() {
     const nameField     = useNameField();
@@ -84,7 +85,7 @@ export function Registration_Vagoneteiro() {
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                                    <img className="w-4" src="/src/assets/icons/user-24.png" alt="Ícone de usuário" />
+                                    <User size={16} className="text-blue-600" />
                                 </div>
                                 <h2 className="font-semibold text-gray-900">Informações Pessoais</h2>
                             </div>
@@ -138,7 +139,7 @@ export function Registration_Vagoneteiro() {
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600 text-sm">
-                                    <img className="w-4" src="/src/assets/icons/briefcase-24.png" alt="Ícone de uma pasta" />
+                                    <Briefcase size={16} className="text-green-600" />
                                 </div>
                                 <h2 className="font-semibold text-gray-900">Informações Profissionais</h2>
                             </div>
@@ -197,9 +198,7 @@ export function Registration_Vagoneteiro() {
                                         <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
                                     ) : (
                                         <>
-                                            <span className="text-2xl text-gray-400">
-                                                <img src="/src/assets/icons/camera-24.png" alt="câmera" />
-                                            </span>
+                                            <Camera size={24} className="text-gray-400" />
                                             <span className="text-xs text-gray-400 font-medium">Upload</span>
                                         </>
                                     )}
@@ -212,7 +211,7 @@ export function Registration_Vagoneteiro() {
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-500 text-sm">
-                                    <img className="w-4" src="/src/assets/icons/lock-24.png" alt="cadeado" />
+                                    <Lock size={16} className="text-red-500" />
                                 </div>
                                 <h2 className="font-semibold text-gray-900">Segurança</h2>
                             </div>
@@ -232,8 +231,8 @@ export function Registration_Vagoneteiro() {
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                                         >
                                             {passwordField.showPassword
-                                                ? <img className="w-4" src="/src/assets/icons/eye-16.png" alt="senha visível" />
-                                                : <img className="w-4" src="/src/assets/icons/crossedEye-16.png" alt="senha oculta" />}
+                                                ? <Eye size={16} />
+                                                : <EyeOff size={16} />}
                                         </button>
                                     </div>
                                     {passwordField.passwordError && <p className="mt-1 text-xs text-red-500">{passwordField.passwordError}</p>}

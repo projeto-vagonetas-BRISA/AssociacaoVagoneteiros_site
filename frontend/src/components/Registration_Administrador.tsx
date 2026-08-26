@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNameField, useCpfField, useTelField, useEmailField, usePasswordField, field } from "../utils/formValidations";
 import { authService } from "../services/auth";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 export function Registration_Administrador() {
     const navigate = useNavigate();
@@ -136,8 +137,8 @@ export function Registration_Administrador() {
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                                 >
                                     {passwordField.showPassword
-                                        ? <img className="w-4" src="/src/assets/icons/eye-16.png" alt="senha visível" />
-                                        : <img className="w-4" src="/src/assets/icons/crossedEye-16.png" alt="senha oculta" />}
+                                        ? <Eye size={16} />
+                                        : <EyeOff size={16} />}
                                 </button>
                             </div>
                             {passwordField.passwordError && <p className="mt-1 text-xs text-red-500">{passwordField.passwordError}</p>}
@@ -182,7 +183,7 @@ export function Registration_Administrador() {
                             {profileImage ? (
                                 <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
                             ) : (
-                                <img className="w-10" src="/src/assets/icons/userAdm-32.png" alt="Ícone de administrador" />
+                                <ShieldCheck size={40} className="text-white/60" />
                             )}
                         </button>
                         <input ref={fileInputRef} type="file" accept="image/jpg,image/png" onChange={handleImageUpload} className="hidden" />
