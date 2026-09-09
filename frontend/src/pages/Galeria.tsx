@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "../components/Button";
 import conteudo from "../assets/conteudo.json";
 import { GalleryThumbnailsIcon } from "lucide-react";
 import { api } from "../services/api";
@@ -248,8 +247,8 @@ export const Galeria: React.FC = () => {
                             key={page}
                             onClick={() => goToPage(page)}
                             className={`w-8 h-9 rounded-xl text-sm font-medium border transition-all duration-200 ${currentPage === page
-                                ? "bg-blue-accent text-white border-blue-accent shadow-sm"
-                                : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
+                              ? "bg-blue-accent text-white border-blue-accent shadow-sm"
+                              : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
                               }`}
                           >
                             {page}
@@ -267,8 +266,8 @@ export const Galeria: React.FC = () => {
                             key={page}
                             onClick={() => goToPage(page)}
                             className={`w-9 h-9 rounded-xl text-sm font-medium border transition-all duration-200 ${currentPage === page
-                                ? "bg-blue-accent text-white border-blue-accent shadow-sm"
-                                : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
+                              ? "bg-blue-accent text-white border-blue-accent shadow-sm"
+                              : "bg-white text-text-primary border-[#dde2ea] hover:bg-blue-accent hover:text-white hover:border-blue-accent"
                               }`}
                           >
                             {page}
@@ -326,27 +325,6 @@ export const Galeria: React.FC = () => {
           </button>
         </div>
       )}
-
-      {/* envie sua foto */}
-      <section className="bg-[#eef0f8] py-12 md:py-20 w-full">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
-          <div className="flex flex-col items-center gap-4 max-w-xl mx-auto">
-            <h2 className="font-bold text-2xl md:text-4xl text-black tracking-tighter">
-              {galeria?.upload?.titulo ?? "Envie sua foto"}
-            </h2>
-            <p className="font-normal text-sm md:text-base text-text-primary leading-relaxed text-justify md:text-left">
-              {galeria?.upload?.descricao ?? "Foi em um dos nossos passeios e quer compartilhar o momento? Envie sua foto e ela pode aparecer aqui!"}
-            </p>
-            <div className="pt-2">
-              <Button
-                text="Fazer Upload"
-                icon="upload"
-                variant="secondary"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
 
     </div>
   );
