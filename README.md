@@ -1,10 +1,10 @@
-# 🚂 Associação dos Vagoneteiros dos Molhes da Barra do Rio Grande
+# Associação dos Vagoneteiros dos Molhes da Barra do Rio Grande
 
 Sistema de gestão de passeios, agendamentos e vagoneteiros para a Associação dos Vagoneteiros dos Molhes da Barra, Rio Grande — RS.
 
 ---
 
-## 📋 Índice
+## Índice
 
 - [Stack](#-stack)
 - [Arquitetura](#-arquitetura)
@@ -17,7 +17,7 @@ Sistema de gestão de passeios, agendamentos e vagoneteiros para a Associação 
 
 ---
 
-## 🛠 Stack
+## Stack
 
 | Camada | Tecnologia |
 |--------|-----------|
@@ -31,7 +31,7 @@ Sistema de gestão de passeios, agendamentos e vagoneteiros para a Associação 
 
 ---
 
-## 🏗 Arquitetura
+## Arquitetura
 
 ```
 Frontend (Vite + React) ──http──▶ Backend (Express 5) ──prisma──▶ PostgreSQL
@@ -46,15 +46,30 @@ Frontend (Vite + React) ──http──▶ Backend (Express 5) ──prisma─�
 
 ### Ambiente Atual
 
+O sistema está hospedado em produção na **Oracle Cloud**, com domínio próprio.
+
 | Serviço | Acesso |
 |---------|--------|
-| **Frontend** | `http://177.153.194.118:5173` |
-| **API** | `http://177.153.194.118:3000` |
+| **Sistema** | [https://vagoneteiros.online](https://vagoneteiros.online) |
 | **Banco** | PostgreSQL via Docker (`pg-vagon:5432`) |
+
+### Deploy
+
+O deploy da aplicação foi realizado em uma instância da **Oracle Cloud**, com o sistema disponibilizado através do domínio:
+
+**https://vagoneteiros.online**
+
+A aplicação utiliza:
+- **Oracle Cloud** para hospedagem;
+- **PostgreSQL** para persistência dos dados;
+- **Node.js + Express** no backend;
+- **React + Vite** no frontend.
+
+O ambiente local continua disponível para desenvolvimento e testes, conforme as instruções de configuração abaixo.
 
 ---
 
-## 🚀 Primeiros Passos
+## Primeiros Passos
 
 ### 1. Subir PostgreSQL
 
@@ -79,7 +94,7 @@ npx prisma migrate dev
 npm run dev
 ```
 
-#### 📧 SMTP do Gmail (e-mails)
+#### SMTP do Gmail (e-mails)
 
 O backend usa o Gmail para e-mails de **redefinição de senha** e **confirmação de agendamento** (`backend/src/utils/email.ts`, via Nodemailer).
 
@@ -90,7 +105,7 @@ EMAIL_USER=seu-email@gmail.com
 EMAIL_PASS=xxxx xxxx xxxx xxxx
 ```
 
-> ⚠️ **`EMAIL_PASS` é uma Senha de Aplicativo (App Password), NÃO a senha normal do Gmail.**
+> **`EMAIL_PASS` é uma Senha de Aplicativo (App Password), NÃO a senha normal do Gmail.**
 > Usar a senha normal + SMTP do Google resulta em erro `535 5.7.8 Username and Password not accepted`.
 
 **Passo a passo para gerar a App Password:**
@@ -123,7 +138,7 @@ npm run dev
 
 ---
 
-## 🧪 População do Banco
+## População do Banco
 
 O projeto conta com dois scripts de seed:
 
@@ -135,9 +150,9 @@ npm run seed
 ```
 
 Cria:
-- 👑 **Admin:** CPF `127.389.852-46` / senha `admin123`
-- ✏️ **Redator:** CPF `732.299.287-33` / senha `redator123`
-- 👤 **Vagoneteiro:** CPF `879.129.164-07` / senha `vaga123`
+- **Admin:** CPF `127.389.852-46` / senha `admin123`
+- **Redator:** CPF `732.299.287-33` / senha `redator123`
+- **Vagoneteiro:** CPF `879.129.164-07` / senha `vaga123`
 
 ### Seed completo (dados massivos)
 
@@ -150,15 +165,15 @@ Popula automaticamente:
 
 | Entidade | Quantidade |
 |----------|-----------|
-| 👑 Admin | 1 |
-| 🚂 Vagoneteiros | **35** |
-| 👥 Clientes (turistas + agências) | **500** |
-| 🗓️ Passeios (~20/dia até 31/12) | **~3.120** |
-| 📋 Agendamentos (~metade preenchidos) | **~4.700** |
+| Admin | 1 |
+| Vagoneteiros | **35** |
+| Clientes (turistas + agências) | **500** |
+| Passeios (~20/dia até 31/12) | **~3.120** |
+| Agendamentos (~metade preenchidos) | **~4.700** |
 
 ---
 
-## 📡 API REST
+## API REST
 
 ### Autenticação
 
@@ -262,7 +277,7 @@ GET    /galeria/imagem/:id   Servir imagem
 
 ---
 
-## 🧩 Sistema de Agendamento (Composite Pattern)
+## Sistema de Agendamento (Composite Pattern)
 
 O coração do sistema novo. Substitui o modelo antigo de `Passeio` por um sistema flexível baseado no padrão **Composite**.
 
@@ -312,7 +327,7 @@ ConflitoService.verificarCapacidade(slotPasseioId)
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 associacao-site/
@@ -361,7 +376,7 @@ associacao-site/
 
 ---
 
-## 📜 Commits
+## Commits
 
 | Commit | Descrição |
 |--------|-----------|
@@ -384,20 +399,13 @@ associacao-site/
 
 ---
 
-## 👥 Credenciais de Teste
+## Credenciais de Teste
 
 | Perfil | CPF | Email | Senha |
 |--------|-----|-------|-------|
-| 👑 **Admin** | `127.389.852-46` | `admin@vagoneteiros.com` | `admin123` |
-| ✏️ **Redator** | `732.299.287-33` | `redator@vagoneteiros.com` | `redator123` |
-| 👤 **Vagoneteiro** | `879.129.164-07` | `vagoneteiro@vagoneteiros.com` | `vaga123` |
-
----
-
-## 🔮 Próximos Passos
-
-- [ ] Deploy em produção
-- [ ] CI/CD
+| **Admin** | `127.389.852-46` | `admin@vagoneteiros.com` | `admin123` |
+| **Redator** | `732.299.287-33` | `redator@vagoneteiros.com` | `redator123` |
+| **Vagoneteiro** | `879.129.164-07` | `vagoneteiro@vagoneteiros.com` | `vaga123` |
 
 ---
 

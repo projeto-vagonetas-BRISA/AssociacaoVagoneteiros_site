@@ -1,17 +1,17 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { listar, buscarPorId, buscarPorDocumento, criar, atualizar, deletar } from '../controllers/clienteController';
 import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
-// Rota pública de busca por documento (CPF/CNPJ) — antes de /:id pra evitar conflito
+// rota pública de busca por documento (cpf/cnpj) — antes de /:id pra evitar conflito
 router.get('/busca/:documento', buscarPorDocumento);
 
-// Qualquer usuário autenticado pode listar e buscar clientes
+// qualquer usuário autenticado pode listar e buscar clientes
 router.get('/', listar);
 router.get('/:id', buscarPorId);
 
-// Apenas ADMIN e REDATOR podem criar/editar/deletar
+// apenas admin e redator podem criar/editar/deletar
 router.post('/', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), criar);
 router.put('/:id', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), atualizar);
 router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN', 'REDATOR']), deletar);

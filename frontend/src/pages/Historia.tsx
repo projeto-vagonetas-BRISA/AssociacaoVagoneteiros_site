@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { SectionHeader } from "../components/SectionHeader";
@@ -11,8 +11,6 @@ import Logo from "../assets/logo.png";
 export const Historia: React.FC = () => {
   return (
     <div className="flex flex-col items-start w-full">
-
-      {/* Header */}
       <section
         className="relative flex items-end justify-center min-h-[480px] w-full bg-slate-900 bg-cover bg-center"
         style={{
@@ -41,8 +39,6 @@ export const Historia: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* História */}
       <section className="bg-[#f2f3fb] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
@@ -105,8 +101,6 @@ export const Historia: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Linha do Tempo */}
       <section className="bg-[#f2f3fb] pb-16 md:pb-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-10">
@@ -133,8 +127,6 @@ export const Historia: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Os Vagoneteiros */}
       <section className="bg-[#005f9d] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
@@ -186,8 +178,6 @@ export const Historia: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Referências */}
       <section className="bg-[#f2f3fb] pb-6 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="border-t border-[#dde2ea] pt-6">
@@ -211,8 +201,6 @@ export const Historia: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Agende Um Passeio */}
       <section className="bg-[#f8f9ff] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
           <div className="flex flex-col items-center gap-5 max-w-xl mx-auto">

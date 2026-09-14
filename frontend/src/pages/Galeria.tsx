@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import conteudo from "../assets/conteudo.json";
 import { GalleryThumbnailsIcon } from "lucide-react";
 import { api } from "../services/api";
@@ -83,7 +83,7 @@ export const Galeria: React.FC = () => {
 
   const displayPhotos = photos.length > 0 ? photos : fallbackPhotos;
 
-  // Paginação
+  // paginação
   const totalPages = Math.ceil(displayPhotos.length / PHOTOS_PER_PAGE);
   const pageStart = (currentPage - 1) * PHOTOS_PER_PAGE;
   const pageEnd = pageStart + PHOTOS_PER_PAGE;
@@ -91,11 +91,11 @@ export const Galeria: React.FC = () => {
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
-    // Rola suavemente até o topo da galeria
+    // rola suavemente até o topo da galeria
     document.getElementById("galeria-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  // Gera array de páginas com reticências
+  // gera array de páginas com reticências
   const getPageNumbers = (compact = false): (number | "...")[] => {
     const maxVisible = compact ? 3 : 5;
     if (totalPages <= (compact ? 5 : 7)) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -118,7 +118,7 @@ export const Galeria: React.FC = () => {
     return pages;
   };
 
-  // Lightbox usa índice global dentro de displayPhotos
+  // lightbox usa índice global dentro de displayphotos
   const openLightbox = (globalIndex: number) => setLightbox(globalIndex);
   const closeLightbox = () => setLightbox(null);
   const prev = () => setLightbox((i) => (i !== null && i > 0 ? i - 1 : displayPhotos.length - 1));
@@ -127,8 +127,6 @@ export const Galeria: React.FC = () => {
   const galeria = conteudo.galeria_fotos;
   return (
     <div className="flex flex-col items-start w-full">
-
-      {/* header */}
       <section className="bg-bg-light-1 py-10 w-full border-b border-[#dde2ea]">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-2">
@@ -144,8 +142,6 @@ export const Galeria: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* grid de fotos */}
       <section id="galeria-grid" className="bg-bg-light-1 py-8 md:py-16 w-full scroll-mt-4">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
 
@@ -165,7 +161,6 @@ export const Galeria: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Mobile: lista vertical */}
               <div className="flex flex-col gap-4 md:hidden">
                 {pagePhotos.map((photo, i) => (
                   <div
@@ -182,8 +177,6 @@ export const Galeria: React.FC = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Desktop: grid 3 colunas */}
               <div className="hidden md:grid grid-cols-3 gap-4">
                 {pagePhotos.length > 0 && (
                   <div
@@ -214,21 +207,15 @@ export const Galeria: React.FC = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Controles de paginação */}
               {totalPages > 1 && (
                 <div className="mt-10 flex flex-col items-center gap-4">
-                  {/* Indicador */}
                   <p className="text-sm text-text-primary">
                     Mostrando{" "}
                     <span className="font-semibold text-black">{pageStart + 1}–{Math.min(pageEnd, displayPhotos.length)}</span>
                     {" "}de{" "}
                     <span className="font-semibold text-black">{displayPhotos.length}</span>{" "}fotos
                   </p>
-
-                  {/* Botões de página */}
                   <div className="flex flex-wrap items-center justify-center gap-1.5">
-                    {/* Anterior */}
                     <button
                       onClick={() => goToPage(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -275,8 +262,6 @@ export const Galeria: React.FC = () => {
                         )
                       )}
                     </div>
-
-                    {/* Próximo */}
                     <button
                       onClick={() => goToPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
@@ -292,8 +277,6 @@ export const Galeria: React.FC = () => {
           )}
         </div>
       </section>
-
-      {/* ver foto (lightbox — navegação pelo conjunto completo) */}
       {lightbox !== null && displayPhotos[lightbox] && (
         <div
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+﻿import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import {
   anonimizarUsuario,
@@ -8,10 +8,10 @@ import {
 } from '../services/anonimizacao.service';
 
 /**
- * POST /anonimizacao
- * Anonimiza um usuário ou cliente por CPF ou email (ADMIN).
+ * post /anonimizacao
+ * anonimiza um usuário ou cliente por cpf ou email (admin).
  *
- * Body: { identificador: "<cpf ou email>" }
+ * body: { identificador: "<cpf ou email>" }
  * - identifica automaticamente se é USUARIO ou CLIENTE.
  */
 export async function anonimizar(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -24,7 +24,7 @@ export async function anonimizar(req: AuthenticatedRequest, res: Response): Prom
     }
     const valor = identificador.trim();
 
-    // 1) Procura como USUARIO (vagoneteiro/admin/etc)
+    // 1) procura como usuario (vagoneteiro/admin/etc)
     const usuario = await buscarUsuarioPorIdentificador(valor);
     if (usuario) {
       const resultado = await anonimizarUsuario(usuario.id);
@@ -36,7 +36,7 @@ export async function anonimizar(req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    // 2) Procura como CLIENTE (turista)
+    // 2) procura como cliente (turista)
     const cliente = await buscarClientePorIdentificador(valor);
     if (cliente) {
       const resultado = await anonimizarCliente(cliente.id);
@@ -56,8 +56,8 @@ export async function anonimizar(req: AuthenticatedRequest, res: Response): Prom
 }
 
 /**
- * GET /anonimizacao/buscar?identificador=<cpf ou email>
- * Busca um usuário/cliente por CPF ou email (ADMIN) — para o audit antes de anonimizar.
+ * get /anonimizacao/buscar?identificador=<cpf ou email>
+ * busca um usuário/cliente por cpf ou email (admin) — para o audit antes de anonimizar.
  */
 export async function buscar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {

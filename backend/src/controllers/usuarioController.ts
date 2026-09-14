@@ -1,4 +1,4 @@
-import { Response } from 'express';
+﻿import { Response } from 'express';
 import { Perfil } from '@prisma/client';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
@@ -73,7 +73,7 @@ export async function listarVagoneteiros(req: AuthenticatedRequest, res: Respons
       prisma.usuario.count({ where }),
     ]);
 
-    // Converter foto Bytes → string base64
+    // converter foto bytes → string base64
     const data = vagoneteiros.map(({ foto, ...rest }) => ({
       ...rest,
       foto: foto ? Buffer.from(foto).toString('base64') : null,
@@ -293,7 +293,7 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
       return;
     }
 
-    // Soft-delete: marcar como inativo em vez de remover do banco
+    // soft-delete: marcar como inativo em vez de remover do banco
     await prisma.usuario.update({
       where: { id },
       data: { ativo: false },

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import {
   autoAtribuir,
   minhasAtribuicoes,
@@ -10,16 +10,16 @@ import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
-// Feed público de instâncias disponíveis
+// feed público de instâncias disponíveis
 router.get('/feed', feedDisponiveis);
 
-// Auto-atribuição (vagoneteiro)
+// auto-atribuição (vagoneteiro)
 router.post('/auto-atribuir', authMiddleware, autoAtribuir);
 
-// Minhas atribuições (vagoneteiro)
+// minhas atribuições (vagoneteiro)
 router.get('/minhas', authMiddleware, minhasAtribuicoes);
 
-// Cancelar / realizar (vagoneteiro ou admin)
+// cancelar / realizar (vagoneteiro ou admin)
 router.patch('/:id/cancelar', authMiddleware, cancelarAtribuicao);
 router.patch('/:id/realizar', authMiddleware, realizarAtribuicao);
 

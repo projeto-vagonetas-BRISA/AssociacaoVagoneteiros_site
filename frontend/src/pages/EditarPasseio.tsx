@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Users, CheckCircle, UserCheck, MapPinPen, ArrowLeft } from "lucide-react";
 import { api } from "../services/api";
@@ -43,14 +43,14 @@ export const EditarPasseio: React.FC = () => {
           ativo: u.ativo,
         })));
 
-        // Preencher campos com dados do passeio
+        // preencher campos com dados do passeio
         const p = passeioBody;
         setPreco(String(Number(p.preco)));
         setCapacidade(String(p.capacidade));
         setHorario(p.horario || "08:00");
         setVagSelecionado(p.usuarioId);
 
-        // Formatar data para o input date (YYYY-MM-DD)
+        // formatar data para o input date (yyyy-mm-dd)
         if (p.data) {
           setData(String(p.data).split("T")[0]);
         }
@@ -100,8 +100,6 @@ export const EditarPasseio: React.FC = () => {
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 py-10 flex flex-col gap-0">
-
-        {/* Título */}
         <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => navigate("/painel-admin")}
@@ -115,8 +113,6 @@ export const EditarPasseio: React.FC = () => {
             Editar Passeio #{id}
           </h1>
         </div>
-
-        {/* Card: Informações do Passeio */}
         <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden mb-6">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="w-9 h-9 rounded-lg bg-blue-accent/10 flex items-center justify-center text-blue-accent">
@@ -193,8 +189,6 @@ export const EditarPasseio: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Card: Vagoneteiro Responsável */}
         <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="w-9 h-9 rounded-lg bg-green-timeline/10 flex items-center justify-center text-green-timeline">
@@ -216,8 +210,6 @@ export const EditarPasseio: React.FC = () => {
               onChange={setVagSelecionado}
             />
           </div>
-
-          {/* Ações */}
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-bg-light-2">
             {apiError && (
               <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg p-2 mr-auto">{apiError}</p>

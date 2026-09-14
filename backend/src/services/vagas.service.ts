@@ -7,8 +7,8 @@ export interface VagasInfo {
 }
 
 /**
- * Calcula quantas vagas estão ocupadas e disponíveis em um passeio.
- * Cada agendamento ativo conta como 1 (o cliente) + acompanhantes.
+ * calcula quantas vagas estão ocupadas e disponíveis em um passeio.
+ * cada agendamento ativo conta como 1 (o cliente) + acompanhantes.
  */
 export async function calcularVagasDisponiveis(passeioId: number): Promise<VagasInfo> {
   const [passeio, agendamentos] = await Promise.all([

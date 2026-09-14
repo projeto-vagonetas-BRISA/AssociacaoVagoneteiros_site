@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+﻿import crypto from 'crypto';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { PrismaClient, TipoSlot, DiaSemana, StatusSlot } from '@prisma/client';
@@ -7,7 +7,7 @@ import { recorrenciaService, horaParaMinutos, minutosParaHora, SlotComInstancias
 
 const prisma = new PrismaClient();
 
-// ─── HELPERS ────────────────────────────────────────────────────────
+// ─── helpers ────────────────────────────────────────────────────────
 
 function parseEnum<T extends Record<string, string>>(enumObj: T, value: string): T[keyof T] | null {
   const vals = Object.values(enumObj);
@@ -22,13 +22,13 @@ function calcularDuracao(horaInicio: string, horaFim: string): number {
 }
 
 /** Constrói data "YYYY-MM-DD" como MEIA-NOITE LOCAL (ex: 2026-12-14 em GMT-3 = 03:00Z no banco UTC),
- *  casando com o armazenamento dos Passeios/Slots — evita bug de fuso. */
+ *  casando com o armazenamento dos passeios/slots — evita bug de fuso. */
 function parseDataLocal(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
-// ─── CRUD ───────────────────────────────────────────────────────────
+// ─── crud ───────────────────────────────────────────────────────────
 
 export async function criar(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -39,7 +39,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       capacidade, valor, usuarioId, data,
     } = req.body;
 
-    // Validações básicas
+    // validações básicas
     if (!tipo || !titulo || !horaInicio || !horaFim || capacidade === undefined || valor === undefined) {
       res.status(400).json({ message: 'tipo, titulo, horaInicio, horaFim, capacidade e valor são obrigatórios' });
       return;
@@ -51,7 +51,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Validar diaSemana se for FIXO
+    // validar diasemana se for fixo
     let parsedDiaSemana: DiaSemana | undefined;
     if (parsedTipo === 'FIXO') {
       if (!diaSemana) {
@@ -71,8 +71,8 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
         res.status(400).json({ message: 'data é obrigatória para slots INDIVIDUAL' });
         return;
       }
-      // Constrói como meia-noite LOCAL (ex: 2026-12-20 em GMT-3 = 03:00Z) para
-      // casar com o armazenamento dos Passeios/Slots e evitar bug de fuso.
+      // constrói como meia-noite local (ex: 2026-12-20 em gmt-3 = 03:00z) para
+      // casar com o armazenamento dos passeios/slots e evitar bug de fuso.
       const dp = String(data).split('-').map(Number);
       parsedData = new Date(dp[0], dp[1] - 1, dp[2], 0, 0, 0, 0);
       if (Number.isNaN(parsedData.getTime())) {
@@ -85,7 +85,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
     const parsedCapacidade = parseInt(capacidade, 10);
     const parsedDuracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : calcularDuracao(horaInicio, horaFim);
 
-    // Se usuarioId foi passado explicitamente, valida que é VAGONETEIRO
+    // se usuarioid foi passado explicitamente, valida que é vagoneteiro
     const parsedUsuarioId: number | null = usuarioId ? parseInt(usuarioId, 10) : null;
     if (parsedUsuarioId) {
       const usuarioVinculado = await prisma.usuario.findUnique({
@@ -122,7 +122,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       include: { usuario: { select: { id: true, name: true } } },
     });
 
-    // Se for INDIVIDUAL, criar instância com data específica
+    // se for individual, criar instância com data específica
     if (parsedTipo === 'INDIVIDUAL' && parsedData) {
       await prisma.slotInstancia.create({
         data: {
@@ -134,7 +134,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       });
     }
 
-    // Se for FIXO, expandir automaticamente para as próximas semanas
+    // se for fixo, expandir automaticamente para as próximas semanas
     if (parsedTipo === 'FIXO') {
       const hoje = new Date();
       const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 3, 0);
@@ -276,7 +276,7 @@ export async function cancelar(req: AuthenticatedRequest, res: Response): Promis
       data: { status: 'CANCELADO' },
     });
 
-    // Cancelar instâncias futuras também
+    // cancelar instâncias futuras também
     const instanciasFuturas = await prisma.slotInstancia.findMany({
       where: { slotPasseioId: id, data: { gte: new Date() } },
       select: { id: true }
@@ -320,7 +320,7 @@ export async function cancelar(req: AuthenticatedRequest, res: Response): Promis
   }
 }
 
-// ─── EXPANSÃO ───────────────────────────────────────────────────────
+// ─── expansão ───────────────────────────────────────────────────────
 
 export async function expandir(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -373,7 +373,7 @@ export async function listarInstancias(req: AuthenticatedRequest, res: Response)
       return;
     }
 
-    // Usar Composite Pattern
+    // usar composite pattern
     const component = SlotFactory.criar(slot);
     const instancias = await component.getInstancias(periodo);
 
@@ -384,7 +384,7 @@ export async function listarInstancias(req: AuthenticatedRequest, res: Response)
   }
 }
 
-// ─── LOTE ───────────────────────────────────────────────────────────
+// ─── lote ───────────────────────────────────────────────────────────
 
 export async function gerarLote(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -395,7 +395,7 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
       return;
     }
 
-    // Calcula duracao se não veio
+    // calcula duracao se não veio
     const duracao = duracaoMinutos ? parseInt(duracaoMinutos, 10) : (horaFim ? calcularDuracao(horaInicio, horaFim) : 60);
 
     const parsedUsuarioId = usuarioId ? parseInt(usuarioId, 10) : null;
@@ -435,7 +435,7 @@ export async function gerarLote(req: AuthenticatedRequest, res: Response): Promi
   }
 }
 
-// ─── ATRIBUIÇÃO ─────────────────────────────────────────────────────
+// ─── atribuição ─────────────────────────────────────────────────────
 
 export async function listarDisponiveis(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {

@@ -1,7 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import { formatBRL } from "../utils/format";
 
-// Atualizado para a interface real do backend
+// atualizado para a interface real do backend
 interface Passeio {
   id: number;
   instanciaId: number;

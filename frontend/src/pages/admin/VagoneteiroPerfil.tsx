@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Phone, Calendar, Star, Clock, MapPin, Briefcase, Mail, Pencil, X, Check, Camera, UserCheck, AlertCircle, Loader2 } from "lucide-react";
 import { api } from "../../services/api";
@@ -76,7 +76,7 @@ export const VagoneteiroPerfil: React.FC = () => {
   const [erroSalvar, setErroSalvar] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
+  // form state
   const [formName, setFormName] = useState("");
   const [formTel, setFormTel] = useState("");
   const [formEmail, setFormEmail] = useState("");
@@ -187,7 +187,6 @@ export const VagoneteiroPerfil: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col items-start w-full">
-      {/* Topo / Cabeçalho */}
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -218,20 +217,14 @@ export const VagoneteiroPerfil: React.FC = () => {
       </div>
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 pb-16">
-        
-        {/* Erro */}
         {erroSalvar && (
           <div className="mb-5 flex items-center gap-3 px-4 py-3 rounded-xl bg-red/10 text-red border border-red/20 text-sm font-medium">
             <AlertCircle className="size-4 shrink-0" />
             {erroSalvar}
           </div>
         )}
-
-        {/* Card principal */}
         <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-          {/* Header com foto */}
           <div className="bg-gradient-to-r from-blue-accent/10 to-blue-accent/5 px-8 py-8 flex items-center gap-6 relative border-b border-border">
-            {/* Foto com hover para trocar (quando editando) */}
             <div className="relative shrink-0">
               {(editando && fotoAlterada && formFoto) ? (
                 <img src={formFoto} alt="Nova foto" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
@@ -282,17 +275,13 @@ export const VagoneteiroPerfil: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Corpo do perfil */}
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Coluna 1: Dados pessoais */}
             <div className="space-y-5">
               <h3 className="font-bold text-sm text-text-secondary uppercase tracking-widest flex items-center gap-2">
                 <User size={14} /> Dados Pessoais
               </h3>
 
               <div className="space-y-4">
-                {/* CPF (sempre somente leitura) */}
                 <div className="flex items-start gap-3">
                   <User size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
@@ -300,8 +289,6 @@ export const VagoneteiroPerfil: React.FC = () => {
                     <p className="text-sm font-medium text-text-dark">{formatCpf(vagoneteiro.cpf)}</p>
                   </div>
                 </div>
-
-                {/* Telefone */}
                 <div className="flex items-start gap-3">
                   <Phone size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
@@ -319,8 +306,6 @@ export const VagoneteiroPerfil: React.FC = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Email */}
                 <div className="flex items-start gap-3">
                   <Mail size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
@@ -338,8 +323,6 @@ export const VagoneteiroPerfil: React.FC = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Perfil */}
                 <div className="flex items-start gap-3">
                   <UserCheck size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
@@ -361,8 +344,6 @@ export const VagoneteiroPerfil: React.FC = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Data associação (só leitura) */}
                 <div className="flex items-start gap-3">
                   <Calendar size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
@@ -372,15 +353,12 @@ export const VagoneteiroPerfil: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Coluna 2: Profissional */}
             <div className="space-y-5">
               <h3 className="font-bold text-sm text-text-secondary uppercase tracking-widest flex items-center gap-2">
                 <Briefcase size={14} /> Dados Profissionais
               </h3>
 
               <div className="space-y-4">
-                {/* Experiência */}
                 <div className="flex items-start gap-3">
                   <Clock size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
@@ -402,8 +380,6 @@ export const VagoneteiroPerfil: React.FC = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Histórico */}
                 <div className="flex items-start gap-3">
                   <MapPin size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div className="flex-1">
@@ -422,8 +398,6 @@ export const VagoneteiroPerfil: React.FC = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Total passeios (só leitura) */}
                 <div className="flex items-start gap-3">
                   <Star size={16} className="text-blue-accent mt-0.5 shrink-0" />
                   <div>
@@ -436,8 +410,6 @@ export const VagoneteiroPerfil: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Passeios realizados */}
           {(vagoneteiro.passeios || []).length > 0 && (
             <div className="border-t border-border px-8 py-6">
               <h3 className="font-bold text-sm text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -466,8 +438,6 @@ export const VagoneteiroPerfil: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Ações Inferiores */}
         {editando && (
           <div className="mt-6 flex gap-3">
             <button

@@ -1,7 +1,7 @@
-import { SlotPasseio, SlotInstancia, TipoSlot } from '@prisma/client';
+﻿import { SlotPasseio, SlotInstancia, TipoSlot } from '@prisma/client';
 import { recorrenciaService } from './recorrencia.service';
 
-// ─── INTERFACE BASE (Component) ────────────────────────────────────
+// ─── interface base (component) ────────────────────────────────────
 
 export interface SlotComponent {
   getTipo(): TipoSlot;
@@ -18,7 +18,7 @@ export interface SlotDetalhes {
   vagasDisponiveis: number;
 }
 
-// ─── FACTORY ────────────────────────────────────────────────────────
+// ─── factory ────────────────────────────────────────────────────────
 
 export class SlotFactory {
   static criar(slot: SlotPasseio): SlotComponent {
@@ -35,7 +35,7 @@ export class SlotFactory {
   }
 }
 
-// ─── IMPLEMENTAÇÕES ─────────────────────────────────────────────────
+// ─── implementações ─────────────────────────────────────────────────
 
 class SlotBase implements SlotComponent {
   protected slot: SlotPasseio;
@@ -69,8 +69,8 @@ class SlotBase implements SlotComponent {
 }
 
 /**
- * SlotFixo — recorrência semanal/mensal
- * Expande datas recorrentes em instâncias via Engine de Recorrência
+ * slotfixo — recorrência semanal/mensal
+ * expande datas recorrentes em instâncias via engine de recorrência
  */
 class SlotFixo extends SlotBase {
   async getInstancias(periodo: { inicio: Date; fim: Date }): Promise<SlotInstancia[]> {
@@ -93,8 +93,8 @@ class SlotFixo extends SlotBase {
 }
 
 /**
- * SlotLote — grupo de slots gerados em lote
- * Retorna as instâncias existentes, sem expandir
+ * slotlote — grupo de slots gerados em lote
+ * retorna as instâncias existentes, sem expandir
  */
 class SlotLote extends SlotBase {
   async getInstancias(periodo: { inicio: Date; fim: Date }): Promise<SlotInstancia[]> {
@@ -125,8 +125,8 @@ class SlotLote extends SlotBase {
 }
 
 /**
- * SlotIndividual — slot avulso (manual)
- * Retorna sua única instância
+ * slotindividual — slot avulso (manual)
+ * retorna sua única instância
  */
 class SlotIndividual extends SlotBase {
   async getInstancias(periodo: { inicio: Date; fim: Date }): Promise<SlotInstancia[]> {
@@ -156,7 +156,7 @@ class SlotIndividual extends SlotBase {
   }
 }
 
-// ─── VALIDAÇÃO DE CONFLITOS ────────────────────────────────────────
+// ─── validação de conflitos ────────────────────────────────────────
 
 export interface Conflito {
   tipo: 'HORARIO' | 'CAPACIDADE' | 'VAGONETEIRO';
@@ -166,7 +166,7 @@ export interface Conflito {
 
 export class ConflitoService {
   /**
-   * Verifica se um vagoneteiro tem conflito de horário
+   * verifica se um vagoneteiro tem conflito de horário
    */
   async verificarConflitoVagoneteiro(
     vagoneteiroId: number,
@@ -177,7 +177,7 @@ export class ConflitoService {
     const { prisma } = await import('../lib/prisma');
     const conflitos: Conflito[] = [];
 
-    // Buscar atribuições do vagoneteiro na mesma data
+    // buscar atribuições do vagoneteiro na mesma data
     const atribuicoes = await prisma.slotAtribuicao.findMany({
       where: {
         vagoneteiroId,
@@ -196,7 +196,7 @@ export class ConflitoService {
     for (const attr of atribuicoes) {
       if (!attr.instancia) continue;
 
-      // Verificar sobreposição de horário
+      // verificar sobreposição de horário
       if (
         horaInicio < attr.instancia.horaFim &&
         horaFim > attr.instancia.horaInicio
@@ -213,7 +213,7 @@ export class ConflitoService {
   }
 
   /**
-   * Verifica se um slot tem capacidade disponível
+   * verifica se um slot tem capacidade disponível
    */
   async verificarCapacidade(slotPasseioId: number): Promise<Conflito[]> {
     const { prisma } = await import('../lib/prisma');

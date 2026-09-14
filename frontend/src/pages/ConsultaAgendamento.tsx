@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { Calendar, Clock, Search, ShieldCheck, Users, CircleAlert, MapPin, CheckCircle2, Download, XCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
@@ -73,7 +73,7 @@ const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
   </div>
 );
 
-// Monta o texto informativo de cancelamento: "Cancelado em dd/mm/aa - motivo/CPF"
+// monta o texto informativo de cancelamento: "cancelado em dd/mm/aa - motivo/cpf"
 function formatCancelamento(consulta: AgendamentoResponse): string {
   let texto = "Cancelado";
   if (consulta.canceladoEm) {
@@ -168,7 +168,7 @@ export const ConsultaAgendamento: React.FC = () => {
   const [cancelErro, setCancelErro] = useState("");
   const [cancelSucesso, setCancelSucesso] = useState(false);
 
-  // Pode cancelar apenas se estiver PENDENTE/CONFIRMADO (não cancelado/realizado)
+  // pode cancelar apenas se estiver pendente/confirmado (não cancelado/realizado)
   const podeCancelar =
     !!consulta &&
     !isCancelling &&
@@ -190,7 +190,7 @@ export const ConsultaAgendamento: React.FC = () => {
         }
       );
       setCancelSucesso(true);
-      // Atualiza a consulta local para refletir o cancelamento
+      // atualiza a consulta local para refletir o cancelamento
       setConsulta((prev) =>
         prev ? { ...prev, situacao: "CANCELADO" } : prev
       );
@@ -373,8 +373,6 @@ export const ConsultaAgendamento: React.FC = () => {
                       <span className="font-bold text-xl text-red-dark">{formatBRL(consulta.total)}</span>
                     </div>
                   </div>
-
-                  {/* Botão de Download PDF */}
                   <div className="pt-2">
                     <button
                       onClick={gerarPDF}
@@ -390,8 +388,6 @@ export const ConsultaAgendamento: React.FC = () => {
                         </>
                       )}
                     </button>
-
-                    {/* Botão de cancelamento (desabilitado quando já cancelado/realizado) */}
                     {consulta.situacao === "CANCELADO" || consulta.situacao === "REALIZADO" ? (
                       <>
                         <button
@@ -402,7 +398,6 @@ export const ConsultaAgendamento: React.FC = () => {
                           <XCircle className="size-4" strokeWidth={2.5} />
                           Cancelar passeio
                         </button>
-                        {/* Texto informativo de cancelamento */}
                         {consulta.situacao === "CANCELADO" && (
                           <p className="mt-2 text-xs text-[#7a8394] leading-relaxed">
                             {formatCancelamento(consulta)}
@@ -425,8 +420,6 @@ export const ConsultaAgendamento: React.FC = () => {
                         )}
                       </button>
                     )}
-
-                    {/* Feedback de erro/sucesso do cancelamento */}
                     {cancelErro && (
                       <p className="mt-2 text-xs font-semibold text-red-dark">{cancelErro}</p>
                     )}

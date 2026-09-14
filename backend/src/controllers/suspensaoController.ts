@@ -1,16 +1,16 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middlewares/auth';
 
-// Constrói a data como meia-noite LOCAL para casar com o armazenamento UTC
-// dos Passeio/SlotInstancia (ex: 2026-08-09 local = 03:00:00Z no banco UTC).
+// constrói a data como meia-noite local para casar com o armazenamento utc
+// dos passeio/slotinstancia (ex: 2026-08-09 local = 03:00:00z no banco utc).
 function parseDataLocal(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
-// Cria um período de suspensão (ADMIN).
-// Marca como SUSPENSO os slots e agendamentos do período, guardando o status
+// cria um período de suspensão (admin).
+// marca como suspenso os slots e agendamentos do período, guardando o status
 // anterior para permitir a restauração exata ao remover a suspensão.
 export async function criarSuspensao(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -34,7 +34,7 @@ export async function criarSuspensao(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // 1) Cria o registro do período
+    // 1) cria o registro do período
     const suspensao = await prisma.suspensao.create({
       data: {
         dataInicio: inicio,
@@ -44,7 +44,7 @@ export async function criarSuspensao(req: AuthenticatedRequest, res: Response): 
       },
     });
 
-    // 2) Suspende SLOT INSTÂNCIAS do período (slots/vagas) — guarda status anterior
+    // 2) suspende slot instâncias do período (slots/vagas) — guarda status anterior
     const instancias = await prisma.slotInstancia.findMany({
       where: {
         data: { gte: inicio, lte: fim },
@@ -63,7 +63,7 @@ export async function criarSuspensao(req: AuthenticatedRequest, res: Response): 
       });
     }
 
-    // 3) Suspende AGENDAMENTOS do período (passeios já agendados) — guarda status anterior
+    // 3) suspende agendamentos do período (passeios já agendados) — guarda status anterior
     const agendamentos = await prisma.agendamento.findMany({
       where: {
         passeio: { data: { gte: inicio, lte: fim } },
@@ -94,7 +94,7 @@ export async function criarSuspensao(req: AuthenticatedRequest, res: Response): 
   }
 }
 
-// Remove uma suspensão (ADMIN). Restaura slots e agendamentos ao status anterior.
+// remove uma suspensão (admin). restaura slots e agendamentos ao status anterior.
 export async function removerSuspensao(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const id = Number(req.params.id);
@@ -113,7 +113,7 @@ export async function removerSuspensao(req: AuthenticatedRequest, res: Response)
       return;
     }
 
-    // Restaura slot instâncias vinculadas a esta suspensão
+    // restaura slot instâncias vinculadas a esta suspensão
     const instanciasSuspensas = await prisma.slotInstancia.findMany({
       where: { suspensaoId: id },
       select: { id: true, statusAnterior: true },
@@ -129,7 +129,7 @@ export async function removerSuspensao(req: AuthenticatedRequest, res: Response)
       });
     }
 
-    // Restaura agendamentos vinculados a esta suspensão
+    // restaura agendamentos vinculados a esta suspensão
     const agendamentosSuspensos = await prisma.agendamento.findMany({
       where: { suspensaoId: id },
       select: { id: true, statusAnterior: true },
@@ -145,7 +145,7 @@ export async function removerSuspensao(req: AuthenticatedRequest, res: Response)
       });
     }
 
-    // Marca suspensão como removida
+    // marca suspensão como removida
     const atualizada = await prisma.suspensao.update({
       where: { id },
       data: {
@@ -167,7 +167,7 @@ export async function removerSuspensao(req: AuthenticatedRequest, res: Response)
   }
 }
 
-// Lista períodos de suspensão (ativos e removidos). ADMIN.
+// lista períodos de suspensão (ativos e removidos). admin.
 export async function listarSuspensoes(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const suspensoes = await prisma.suspensao.findMany({

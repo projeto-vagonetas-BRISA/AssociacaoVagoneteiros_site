@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
@@ -13,7 +13,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 
-// Tipos
+// tipos
 
 interface SlotInfo {
   id: number;
@@ -48,7 +48,7 @@ interface FeedResponse {
   flat: FeedItem[];
 }
 
-// Funções Auxiliares
+// funções auxiliares
 
 const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
   <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
@@ -56,7 +56,7 @@ const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
   </div>
 );
 
-// Componente Principal
+// componente principal
 
 export const FeedVagoneteiro: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -68,7 +68,7 @@ export const FeedVagoneteiro: React.FC = () => {
   const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
   const [filtro, setFiltro] = useState<string>('');
 
-  // Carregar dados do feed
+  // carregar dados do feed
 
   const carregarFeed = useCallback(async () => {
     setLoading(true);
@@ -91,7 +91,7 @@ export const FeedVagoneteiro: React.FC = () => {
     carregarFeed();
   }, [carregarFeed]);
 
-  // Atribuir passeio ao vagoneteiro
+  // atribuir passeio ao vagoneteiro
 
   const pegarPasseio = async (instanciaId: number) => {
     if (!isAuthenticated) {
@@ -117,7 +117,7 @@ export const FeedVagoneteiro: React.FC = () => {
     }
   };
 
-  // Helpers de formatação
+  // helpers de formatação
 
   const diasSemana = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
   const diasSemanaPt = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -134,7 +134,7 @@ export const FeedVagoneteiro: React.FC = () => {
     const idx = diasSemana.indexOf(diaSemana);
     const diaSemanaNome = diasSemanaPt[idx] || diaSemana;
     
-    // Capitalize first letter of diaSemanaNome
+    // capitalize first letter of diasemananome
     const diaCapitalizado = diaSemanaNome.charAt(0).toUpperCase() + diaSemanaNome.slice(1);
     
     return `${dia}/${mes}/${ano} - ${diaCapitalizado}`;
@@ -145,7 +145,7 @@ export const FeedVagoneteiro: React.FC = () => {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
-  // Renderização
+  // renderização
 
   if (!isAuthenticated) {
     return (
@@ -178,7 +178,6 @@ export const FeedVagoneteiro: React.FC = () => {
 
   return (
     <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
-      {/* Cabeçalho */}
       <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
@@ -212,7 +211,6 @@ export const FeedVagoneteiro: React.FC = () => {
       </div>
 
       <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pb-16 flex flex-col gap-5">
-        {/* Mensagem */}
         {mensagem && (
           <div
             className={`px-4 py-3 rounded-xl text-sm font-medium border ${
@@ -224,8 +222,6 @@ export const FeedVagoneteiro: React.FC = () => {
             {mensagem.texto}
           </div>
         )}
-
-        {/* Filtro */}
         <div className="bg-white rounded-xl shadow-sm border border-border p-4 flex items-center gap-4">
           <SectionIcon icon={<CalendarDays className="size-4" strokeWidth={2} />} />
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
@@ -248,16 +244,12 @@ export const FeedVagoneteiro: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-text-secondary">
             <Loader2 className="size-8 animate-spin text-blue-accent" />
             <p className="text-sm">Carregando passeios...</p>
           </div>
         )}
-
-        {/* Vazio */}
         {!loading && Object.keys(feed).length === 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-border py-16 flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-blue-accent/10 flex items-center justify-center">
@@ -267,8 +259,6 @@ export const FeedVagoneteiro: React.FC = () => {
             <p className="text-sm text-text-secondary">Não há passeios com vagas para este período.</p>
           </div>
         )}
-
-        {/* Feed por data */}
         {!loading && Object.entries(feed).map(([dataKey, items]) => (
           <div key={dataKey}>
             <div className="flex items-center gap-3 mb-3">
@@ -288,7 +278,6 @@ export const FeedVagoneteiro: React.FC = () => {
                   }`}
                 >
                   <div className="p-4 flex items-center justify-between gap-4">
-                    {/* Info do passeio */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold text-text-dark">{item.slot.titulo}</h3>
@@ -320,8 +309,6 @@ export const FeedVagoneteiro: React.FC = () => {
                         </p>
                       )}
                     </div>
-
-                    {/* Botão pegar */}
                     <div className="shrink-0">
                       {item.jaPeguei ? (
                         <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-timeline border border-green-timeline/30 rounded-lg text-sm font-medium">

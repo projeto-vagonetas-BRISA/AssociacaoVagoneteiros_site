@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+﻿import { NextFunction, Request, Response } from 'express';
 import { google, drive_v3 } from 'googleapis';
 import { Readable } from 'stream';
 import fs from 'fs';
@@ -24,7 +24,7 @@ const GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY_FILE =
 
 const LOCAL_GALLERY_DIR = path.join(__dirname, '..', '..', 'public', 'gallery');
 
-// Cache de fotos locais
+// cache de fotos locais
 let localPhotosCache: GalleryPhoto[] | null = null;
 
 function getLocalPhotos(): GalleryPhoto[] {
@@ -56,7 +56,7 @@ function getLocalPhotos(): GalleryPhoto[] {
   }
 }
 
-// --- Singleton do Google Drive Client ---
+// --- singleton do google drive client ---
 let driveClient: drive_v3.Drive | null = null;
 let driveClientPromise: Promise<drive_v3.Drive> | null = null;
 
@@ -72,7 +72,7 @@ const getDriveClient = async (): Promise<drive_v3.Drive> => {
 
       const client = google.drive({ version: 'v3', auth });
 
-      // Pré-aquecer o token
+      // pré-aquecer o token
       await auth.getClient();
 
       return client;
@@ -83,14 +83,14 @@ const getDriveClient = async (): Promise<drive_v3.Drive> => {
     driveClient = await driveClientPromise;
     return driveClient;
   } catch (error) {
-    // Se falhou (ex: OAuth intermitente), limpa a promise para
+    // se falhou (ex: oauth intermitente), limpa a promise para
     // que a próxima chamada tente novamente do zero
     driveClientPromise = null;
     throw error;
   }
 };
 
-// --- Handlers ---
+// --- handlers ---
 
 export const listarFotosGaleria = async (
   req: Request,
@@ -98,7 +98,7 @@ export const listarFotosGaleria = async (
   next: NextFunction,
 ) => {
   try {
-    // Tenta Google Drive primeiro
+    // tenta google drive primeiro
     if (GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY_FILE) {
       try {
         const drive = await getDriveClient();
@@ -126,14 +126,14 @@ export const listarFotosGaleria = async (
           return res.json({ photos, source: 'google-drive' });
         }
 
-        // Google Drive retornou vazio — fallback pra local
+        // google drive retornou vazio — fallback pra local
         console.log('Google Drive vazio, usando fallback local');
       } catch (driveError) {
         console.error('Erro ao acessar Google Drive, usando fallback local:', driveError);
       }
     }
 
-    // Fallback: galeria local
+    // fallback: galeria local
     const localPhotos = getLocalPhotos();
 
     if (localPhotos.length === 0) {
@@ -160,7 +160,7 @@ export const servirImagemGaleria = async (
       return res.status(400).json({ message: 'Informe o id da imagem.' });
     }
 
-    // Imagem local (prefixed with "local-")
+    // imagem local (prefixed with "local-")
     if (fileId.startsWith('local-')) {
       const idx = parseInt(fileId.replace('local-', ''), 10);
       const photos = getLocalPhotos();
@@ -172,7 +172,7 @@ export const servirImagemGaleria = async (
       const photoName = photos[idx].name;
       const galleryDir = LOCAL_GALLERY_DIR;
 
-      // Procurar o arquivo correspondente
+      // procurar o arquivo correspondente
       const files = fs.readdirSync(galleryDir);
       const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.jfif', '.gif'];
 
@@ -203,7 +203,7 @@ export const servirImagemGaleria = async (
       return res.sendFile(filePath);
     }
 
-    // Google Drive
+    // google drive
     if (!GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY_FILE) {
       return res.status(500).json({
         message: 'Google Drive não configurado e imagem não é local.',

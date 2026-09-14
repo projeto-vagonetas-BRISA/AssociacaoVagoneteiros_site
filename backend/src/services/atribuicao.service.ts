@@ -1,9 +1,9 @@
-/**
- * Serviço de atribuições de vagoneteiros — lógica de negócio reutilizável.
+﻿/**
+ * serviço de atribuições de vagoneteiros — lógica de negócio reutilizável.
  *
- * Encapsula a sincronização entre a "slot-instância" (modelo Uber de atribuição)
- * e o "passeio público" equivalente que os turistas agendam. Isso elimina a
- * duplicação de código entre os handlers do atribuicaoController e centraliza
+ * encapsula a sincronização entre a "slot-instância" (modelo uber de atribuição)
+ * e o "passeio público" equivalente que os turistas agendam. isso elimina a
+ * duplicação de código entre os handlers do atribuicaocontroller e centraliza
  * as regras de capacidade/status num único lugar.
  */
 import prisma from '../lib/prisma';
@@ -17,8 +17,8 @@ interface SlotBasico {
 }
 
 /**
- * Busca o passeio público equivalente a uma slot-instância.
- * Primeiro tenta por slotInstanciaId; se não achar, tenta por data+horário.
+ * busca o passeio público equivalente a uma slot-instância.
+ * primeiro tenta por slotinstanciaid; se não achar, tenta por data+horário.
  */
 export async function buscarPasseioPublico(instanciaId: number, vagoneteiroId?: number, slot?: SlotBasico) {
   const porInstancia = await prisma.passeio.findFirst({
@@ -41,7 +41,7 @@ export async function buscarPasseioPublico(instanciaId: number, vagoneteiroId?: 
 }
 
 /**
- * Ao atribuir um vagoneteiro, garante que existe um passeio público
+ * ao atribuir um vagoneteiro, garante que existe um passeio público
  * equivalente com a capacidade do slot somada (ou cria um novo).
  */
 export async function sincronizarAposAtribuicao(params: {
@@ -78,7 +78,7 @@ export async function sincronizarAposAtribuicao(params: {
 }
 
 /**
- * Ao cancelar uma atribuição, reduz a capacidade do passeio público
+ * ao cancelar uma atribuição, reduz a capacidade do passeio público
  * equivalente; se zerar, cancela o passeio e seus agendamentos.
  */
 export async function sincronizarAposCancelamento(params: {
@@ -111,8 +111,8 @@ export async function sincronizarAposCancelamento(params: {
 }
 
 /**
- * Ao realizar uma atribuição, marca o passeio público equivalente e seus
- * agendamentos como REALIZADO.
+ * ao realizar uma atribuição, marca o passeio público equivalente e seus
+ * agendamentos como realizado.
  */
 export async function sincronizarAposRealizacao(params: {
   instanciaId: number | null;
@@ -143,8 +143,8 @@ export async function sincronizarAposRealizacao(params: {
 }
 
 /**
- * Soma as vagas ocupadas de um passeio público (turistas + acompanhantes).
- * Retorna 0 se não houver passeio equivalente.
+ * soma as vagas ocupadas de um passeio público (turistas + acompanhantes).
+ * retorna 0 se não houver passeio equivalente.
  */
 export async function contarVagasOcupadasDoPasseio(instanciaId: number | null) {
   if (!instanciaId) return 0;

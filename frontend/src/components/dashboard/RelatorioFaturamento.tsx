@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { formatBRL } from '../../utils/format';
 import { exportarCSV } from '../../utils/csv';
 
@@ -54,15 +54,15 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Título
+    // título
     doc.setFontSize(16);
     doc.text('Relatório de Faturamento - Vagoneteiros', pageWidth / 2, 15, { align: 'center' });
 
-    // Período
+    // período
     doc.setFontSize(10);
     doc.text(`Período: ${periodo.inicio.slice(0, 10)} a ${periodo.fim.slice(0, 10)}`, pageWidth / 2, 22, { align: 'center' });
 
-    // Cabeçalho da tabela
+    // cabeçalho da tabela
     const headers = ['Vagoneteiro', 'Qtd Passeios', 'Valor Arrecadado'];
     const colW = [90, 50, 50];
     let y = 32;
@@ -75,12 +75,12 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
       x += colW[i];
     });
 
-    // Linha separadora
+    // linha separadora
     y += 3;
     doc.line(14, y, 14 + colW.reduce((a, b) => a + b, 0), y);
     y += 4;
 
-    // Dados
+    // dados
     doc.setFont('helvetica', 'normal');
     ordenados.forEach((v) => {
       if (y > 185) {
@@ -96,7 +96,7 @@ export const RelatorioFaturamento: React.FC<Props> = ({ vagoneteiros, totalGeral
       y += 7;
     });
 
-    // Total geral
+    // total geral
     y += 3;
     doc.line(14, y, 14 + colW.reduce((a, b) => a + b, 0), y);
     y += 5;

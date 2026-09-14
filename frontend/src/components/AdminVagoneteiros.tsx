@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
 import { UserCheck, PowerOff, Power } from "lucide-react";
 
@@ -65,7 +65,6 @@ export const AdminVagoneteiros: React.FC<Props> = ({
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden flex flex-col">
-      {/* Cabeçalho */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-border">
         <div className="flex items-center gap-2">
           <select
@@ -88,8 +87,6 @@ export const AdminVagoneteiros: React.FC<Props> = ({
           <UserCheck size={13} /> Cadastrar
         </Link>
       </div>
-
-      {/* Lista */}
       <div className="flex flex-col divide-y divide-border flex-1">
         {vagLoading ? (
           <div className="flex items-center justify-center py-10 text-sm text-[#7a8394]">
@@ -155,8 +152,6 @@ export const AdminVagoneteiros: React.FC<Props> = ({
           ))
         )}
       </div>
-
-      {/* Paginação */}
       <div className="flex items-center justify-between px-6 py-4 border-t border-border">
         <p className="text-xs text-[#7a8394]">
           Página {paginaVag} de {totalPaginasVag}

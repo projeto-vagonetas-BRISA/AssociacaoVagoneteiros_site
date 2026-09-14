@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import type { PeriodoPreset } from './types';
 
 interface Props {
@@ -43,7 +43,7 @@ export const FiltrosPeriodo: React.FC<Props> = ({ onChange }) => {
     onChange(i, f, p);
   }
 
-  // Inicializa com o mês atual
+  // inicializa com o mês atual
   React.useEffect(() => {
     aplicar('mes');
   }, []);

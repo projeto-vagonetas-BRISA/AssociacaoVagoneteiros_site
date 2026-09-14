@@ -1,4 +1,4 @@
-import prisma from '../lib/prisma';
+﻿import prisma from '../lib/prisma';
 import { messaging } from '../utils/firebaseAdmin';
 
 function maskToken(token?: string | null) {
@@ -17,7 +17,7 @@ function isNotRegisteredError(error: unknown) {
 
   const code = 'code' in error ? (error as { code?: string }).code : undefined;
   const message = 'message' in error ? (error as { message?: string }).message : undefined;
-  
+
   return (
     code === 'messaging/registration-token-not-registered' ||
     code === 'messaging/invalid-registration-token' ||
@@ -153,15 +153,14 @@ export async function processarNotificacoesAgendamento() {
 
     try {
       console.log(`[FCM] Attempting to send notification ID=${notificacao.id} of type=${notificacao.tipo} to client ID=${notificacao.agendamento.clienteId} with token=${maskToken(subscription.token)}`);
-      
+
       const response = await messaging.send({
         token: subscription.token,
         ...payload,
       });
-      
+
       console.log(`[FCM] Notification ID=${notificacao.id} sent successfully. Message ID from Firebase: ${response}`);
-      
-      // remove the notification row after successful delivery to simplify state
+
       await prisma.notificacaoAgendamento.delete({ where: { id: notificacao.id } });
       console.log(`[FCM] Deleted notification ID=${notificacao.id} from database after successful delivery.`);
     } catch (error) {
@@ -182,9 +181,7 @@ export async function processarNotificacoesAgendamento() {
 export function iniciarAgendamentoScheduler() {
   if (process.env.NODE_ENV === 'test') return;
 
-  // Align execution to the system clock minute boundary.
-  // This schedules the job to run exactly at the start of each minute,
-  // independent of when the process started.
+
   const runOnce = async () => {
     try {
       await processarNotificacoesAgendamento();
@@ -195,13 +192,12 @@ export function iniciarAgendamentoScheduler() {
 
   const scheduleNext = () => {
     const now = Date.now();
-    const delay = 60000 - (now % 60000); // ms until next minute boundary
+    const delay = 60000 - (now % 60000);
     setTimeout(async () => {
       await runOnce();
       scheduleNext();
     }, delay);
   };
 
-  // kick off aligned scheduling
   scheduleNext();
 }

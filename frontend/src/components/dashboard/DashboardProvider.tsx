@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import { api } from '../../services/api';
 import { FiltrosPeriodo } from './FiltrosPeriodo';
 import type { PeriodoPreset } from './types';
@@ -49,7 +49,6 @@ export const DashboardProvider: React.FC = () => {
               porDiaSemana={picos.porDiaSemana}
               porHorario={picos.porHorario}
             />
-            {/* Card extra de resumo pode ir aqui */}
             <div className="bg-white rounded-xl border border-border p-5 flex flex-col gap-3">
               <h3 className="font-semibold text-text-dark">Resumo do Período</h3>
               <div className="grid grid-cols-2 gap-3 text-sm">

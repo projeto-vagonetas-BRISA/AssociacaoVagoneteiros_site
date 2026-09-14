@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
@@ -15,7 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 
-// Tipos
+// tipos
 
 interface SlotInfo {
   id: number;
@@ -52,7 +52,7 @@ interface MinhasAtribuicoesResponse {
   totalPages: number;
 }
 
-// Funções Auxiliares
+// funções auxiliares
 
 const SectionIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
   <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
@@ -67,7 +67,7 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELADO: 'Cancelado',
 };
 
-// Componente Principal
+// componente principal
 
 export const MinhasAtribuicoes: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -81,7 +81,7 @@ export const MinhasAtribuicoes: React.FC = () => {
   const [acaoId, setAcaoId] = useState<number | null>(null);
   const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
 
-  // Carregar atribuições do backend
+  // carregar atribuições do backend
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -104,7 +104,7 @@ export const MinhasAtribuicoes: React.FC = () => {
     carregar();
   }, [carregar]);
 
-  // Ação: Cancelar atribuição
+  // ação: cancelar atribuição
 
   const cancelar = async (id: number) => {
     setAcaoId(id);
@@ -120,7 +120,7 @@ export const MinhasAtribuicoes: React.FC = () => {
     }
   };
 
-  // Ação: Marcar como realizado
+  // ação: marcar como realizado
 
   const realizar = async (id: number) => {
     setAcaoId(id);
@@ -136,7 +136,7 @@ export const MinhasAtribuicoes: React.FC = () => {
     }
   };
 
-  // Helpers locais de formatação
+  // helpers locais de formatação
 
   const formatarData = (dataStr: string): string => {
     if (!dataStr) return '';
@@ -181,7 +181,7 @@ export const MinhasAtribuicoes: React.FC = () => {
     }
   };
 
-  // Renderização
+  // renderização
 
   if (!isAuthenticated) {
     return (
@@ -209,7 +209,6 @@ export const MinhasAtribuicoes: React.FC = () => {
 
   return (
     <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
-      {/* Cabeçalho */}
       <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -244,7 +243,6 @@ export const MinhasAtribuicoes: React.FC = () => {
       </div>
 
       <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pb-16 flex flex-col gap-5">
-        {/* Mensagem */}
         {mensagem && (
           <div
             className={`px-4 py-3 rounded-xl text-sm font-medium border ${
@@ -256,8 +254,6 @@ export const MinhasAtribuicoes: React.FC = () => {
             {mensagem.texto}
           </div>
         )}
-
-        {/* Filtro de status */}
         <div className="bg-white rounded-xl shadow-sm border border-border p-4">
           <div className="flex flex-wrap gap-2">
             {['', 'ATRIBUIDO', 'REALIZADO', 'CANCELADO'].map((s) => (
@@ -275,16 +271,12 @@ export const MinhasAtribuicoes: React.FC = () => {
             ))}
           </div>
         </div>
-
-        {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-text-secondary">
             <Loader2 className="size-8 animate-spin text-blue-accent" />
             <p className="text-sm">Carregando atribuições...</p>
           </div>
         )}
-
-        {/* Lista vazia */}
         {!loading && atribuicoes.length === 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-border py-16 flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-blue-accent/10 flex items-center justify-center">
@@ -303,8 +295,6 @@ export const MinhasAtribuicoes: React.FC = () => {
             </button>
           </div>
         )}
-
-        {/* Lista de atribuições */}
         {!loading && atribuicoes.map((attr) => (
           <div
             key={attr.id}
@@ -341,8 +331,6 @@ export const MinhasAtribuicoes: React.FC = () => {
                   </p>
                 )}
               </div>
-
-              {/* Ações */}
               {attr.status === 'ATRIBUIDO' && (
                 <div className="shrink-0 flex flex-col gap-2">
                   <button
@@ -370,8 +358,6 @@ export const MinhasAtribuicoes: React.FC = () => {
             </div>
           </div>
         ))}
-
-        {/* Paginação */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 mt-2">
             <button
