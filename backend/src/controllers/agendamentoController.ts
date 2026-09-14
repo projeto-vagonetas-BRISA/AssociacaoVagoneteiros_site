@@ -7,13 +7,11 @@ import { calculateNotificationTimes } from '../utils/notificationUtils';
 import { calcularVagasDisponiveis } from '../services/vagas.service';
 
 async function upsertPushSubscription(clienteId: number, token: string, userAgent?: string) {
-  // Check (FCM token)
   const existingSubscription = await prisma.pushSubscription.findFirst({
     where: { clienteId },
   });
 
   if (existingSubscription) {
-    // Update da subscription se o token mudou
     if (existingSubscription.token !== token) {
       return prisma.pushSubscription.update({
         where: { id: existingSubscription.id },
@@ -26,7 +24,6 @@ async function upsertPushSubscription(clienteId: number, token: string, userAgen
     return existingSubscription;
   }
 
-  // Se o usuário não tem subscription, cria uma nova
   return prisma.pushSubscription.create({
     data: {
       token,
@@ -110,14 +107,12 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Verificar se cliente existe
     const cliente = await prisma.clientes.findUnique({ where: { id: parsedClienteId } });
     if (!cliente) {
       res.status(404).json({ message: 'Cliente não encontrado' });
       return;
     }
 
-    // Verificar se passeio existe
     const passeio = await prisma.passeio.findUnique({
       where: { id: parsedPasseioId },
     });
@@ -126,7 +121,6 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Validar que o passeio não é no passado
     const agora = new Date();
     const dataPasseio = new Date(passeio.data);
     const fimDoDia = new Date(dataPasseio);
@@ -136,7 +130,6 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Verificar capacidade
     const { disponiveis } = await calcularVagasDisponiveis(parsedPasseioId);
     const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
     if (vagasSolicitadas > disponiveis) {
@@ -144,7 +137,6 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Verificar se cliente já tem agendamento neste passeio
     const jaAgendado = await prisma.agendamento.findFirst({
       where: { clienteId: parsedClienteId, passeioId: parsedPasseioId, status: { not: 'CANCELADO' } },
     });
@@ -205,7 +197,6 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
   }
 }
 
-// Endpoint público para agendamento — busca ou cria cliente automaticamente
 export async function consultaPorDocumento(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const id = Number(req.params.id);
@@ -229,7 +220,6 @@ export async function consultaPorDocumento(req: AuthenticatedRequest, res: Respo
       },
     });
 
-    // Normaliza o CPF do cliente (pode estar mascarado no banco) antes de comparar
     const cpfCliente = (agendamento?.cliente.cpf ?? '').replace(/\D/g, '');
     if (!agendamento || cpfCliente !== documento) {
       res.status(404).json({ message: 'Nenhum agendamento encontrado para o ID e CPF informados.' });
@@ -281,10 +271,9 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
   if (!slot || slot.status !== 'DISPONIVEL') {
     throw new Error('Instância de slot indisponível para agendamento');
   }
+  // passeio pode ser criado sem vagoneteiro (slot livre): o vagoneteiro se
+  // atribui ao passeio depois pelo painel (modelo tipo uber).
   const vagoneteiroResponsavelId = instancia.atribuicoes[0]?.vagoneteiroId || slot.usuarioId;
-  // Passeio pode ser criado SEM vagoneteiro (slot livre): o vagoneteiro se
-  // atribui ao passeio depois pelo painel (modelo tipo Uber).
-
   let passeio = await prisma.passeio.findFirst({
     where: { slotInstanciaId: instancia.id },
   });
@@ -303,8 +292,8 @@ async function obterOuCriarPasseioParaInstancia(instanciaId: number) {
       },
     });
   } else if (passeio.status === 'CANCELADO' || !passeio.ativo) {
-    // Passeio foi cancelado (todos agendamentos anteriores cancelados).
-    // Reativa para que o novo agendamento seja contabilizado corretamente.
+    // passeio foi cancelado (todos agendamentos anteriores cancelados).
+    // reativa para que o novo agendamento seja contabilizado corretamente.
     passeio = await prisma.passeio.update({
       where: { id: passeio.id },
       data: { status: 'CONFIRMADO', ativo: true },
@@ -362,7 +351,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // Validar que o passeio não é no passado
     const agora = new Date();
     const dataPasseio = new Date(passeio.data);
     const fimDoDia = new Date(dataPasseio);
@@ -372,7 +360,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // Verificar capacidade
     const { disponiveis } = await calcularVagasDisponiveis(passeio.id);
     const vagasSolicitadas = 1 + (acompanhantes ? Number(acompanhantes) : 0);
     if (vagasSolicitadas > disponiveis) {
@@ -380,7 +367,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    // Buscar cliente existente por documento, telefone ou email
     const cleanedTel = telefone.replace(/\D/g, '');
     const cleanedEmail = email ? email.trim().toLowerCase() : '';
     const cleanedDoc = documento ? documento.replace(/\D/g, '') : '';
@@ -397,7 +383,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       where: { OR: whereOR },
     });
 
-    // Se não encontrou, cria novo cliente
     if (!cliente) {
       const cpDoc = cleanedDoc && (cleanedDoc.length === 11 || cleanedDoc.length === 14)
         ? cleanedDoc
@@ -411,7 +396,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
         },
       });
     } else {
-      // Atualizar nome se o cliente existente não tiver nome ou se foi fornecido
       if (nome && nome.trim() !== cliente.nome) {
         cliente = await prisma.clientes.update({
           where: { id: cliente.id },
@@ -420,7 +404,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       }
     }
 
-    // Verificar se já tem agendamento neste passeio
     const jaAgendado = await prisma.agendamento.findFirst({
       where: {
         clienteId: cliente.id,
@@ -479,7 +462,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
       },
     });
 
-    // Disparar email de confirmação se o cliente informou email
     if (cliente.email) {
       enviarEmailConfirmacaoAgendamento(
         cliente.email,
@@ -498,7 +480,6 @@ export async function agendarPublico(req: AuthenticatedRequest, res: Response): 
   }
 }
 
-// Endpoint público — retorna passeios com vagas disponíveis (capacidade - ocupadas)
 export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const hoje = new Date();
@@ -596,8 +577,6 @@ export async function vagasDisponiveis(req: AuthenticatedRequest, res: Response)
   }
 }
 
-// Cancelamento em massa (só ADMIN) — cancela agendamentos de passeios ainda
-// não realizados dentro de um período informado.
 export async function cancelarEmMassa(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { dataInicio, dataFim, motivo } = req.body;
@@ -612,8 +591,8 @@ export async function cancelarEmMassa(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Constrói as datas como LOCAIS para casar com o fuso em que os passeios
-    // foram gravados (ex: 2026-08-09 local = 03:00:00Z no banco UTC).
+    // constrói as datas como locais para casar com o fuso em que os passeios
+    // foram gravados (ex: 2026-08-09 local = 03:00:00z no banco utc).
     const inicio = parseDataLocal(dataInicio);
     const fim = parseDataLocal(dataFim);
     fim.setHours(23, 59, 59, 999);
@@ -628,7 +607,6 @@ export async function cancelarEmMassa(req: AuthenticatedRequest, res: Response):
         passeio: {
           data: { gte: inicio, lte: fim },
         },
-        // Cancela apenas os que ainda não foram realizados/cancelados
         NOT: { status: { in: ['CANCELADO', 'REALIZADO'] } },
       },
       data: {
@@ -679,7 +657,7 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Auditoria: ao cancelar, registra quem (CPF do admin) e quando
+    // auditoria: ao cancelar, registra quem (cpf do admin) e quando
     const dadosAtualizacao: any = { status };
     if (status === 'CANCELADO' && agendamentoExistente.status !== 'CANCELADO') {
       dadosAtualizacao.canceladoEm = new Date();
@@ -725,8 +703,8 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 }
 
 /**
- * Cancela um agendamento publicamente (sem autenticação), validando o CPF do cliente.
- * Ao cancelar, o status vira CANCELADO e a vaga (1 + acompanhantes) é liberada
+ * cancela um agendamento publicamente (sem autenticação), validando o cpf do cliente.
+ * ao cancelar, o status vira cancelado e a vaga (1 + acompanhantes) é liberada
  * automaticamente, pois cancelados são excluídos do cálculo de vagas ocupadas.
  */
 export async function cancelarPublico(req: Request, res: Response): Promise<void> {
@@ -747,14 +725,12 @@ export async function cancelarPublico(req: Request, res: Response): Promise<void
       },
     });
 
-    // Normaliza o CPF do cliente (pode estar mascarado no banco)
     const cpfCliente = (agendamento?.cliente.cpf ?? '').replace(/\D/g, '');
     if (!agendamento || cpfCliente !== documento) {
       res.status(404).json({ message: 'Nenhum agendamento encontrado para o ID e CPF informados.' });
       return;
     }
 
-    // Regras de negócio
     if (agendamento.status === 'CANCELADO') {
       res.status(400).json({ message: 'Este agendamento já foi cancelado.' });
       return;
@@ -764,7 +740,6 @@ export async function cancelarPublico(req: Request, res: Response): Promise<void
       return;
     }
 
-    // Impede cancelar passeio que já ocorreu
     if (agendamento.passeio && agendamento.passeio.data && agendamento.passeio.data < new Date()) {
       res.status(400).json({ message: 'Passeio já ocorreu. Não é possível cancelar.' });
       return;

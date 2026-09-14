@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { api } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Settings, RefreshCw, Layers, Calendar, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
@@ -44,7 +44,7 @@ export const AdminSlots: React.FC = () => {
   const [tipo, setTipo] = useState<TipoSlot>("FIXO");
   const [loading, setLoading] = useState(false);
 
-  // Campos comuns
+  // campos comuns
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [horaInicio, setHoraInicio] = useState("08:00");
@@ -52,14 +52,14 @@ export const AdminSlots: React.FC = () => {
   const [capacidade, setCapacidade] = useState("5");
   const [valor, setValor] = useState("30");
 
-  // Campos de Horário Fixo
+  // campos de horário fixo
   const [diaSemana, setDiaSemana] = useState("SEGUNDA");
   const [dataInicio, setDataInicio] = useState("");
 
-  // Campos de Horário Individual
+  // campos de horário individual
   const [data, setData] = useState("");
 
-  // Campos de Geração em Lote
+  // campos de geração em lote
   const [loteDataInicio, setLoteDataInicio] = useState("");
   const [loteDataFim, setLoteDataFim] = useState("");
   const [loteHoraInicio, setLoteHoraInicio] = useState("08:00");
@@ -121,7 +121,7 @@ export const AdminSlots: React.FC = () => {
         setSucesso(`Horário ${tipo} criado com sucesso!`);
       }
 
-      // Limpar form
+      // limpar form
       setTitulo("");
       setDescricao("");
       setHoraInicio("08:00");
@@ -144,7 +144,6 @@ export const AdminSlots: React.FC = () => {
 
   return (
     <div className="flex flex-col items-start w-full bg-bg-light-1 min-h-screen">
-      {/* Cabeçalho */}
       <div className="max-w-3xl w-full mx-auto px-4 md:px-8 pt-10 pb-6">
         <div className="flex items-center gap-3">
           <button
@@ -170,8 +169,6 @@ export const AdminSlots: React.FC = () => {
 
       <div className="max-w-3xl w-full mx-auto px-4 md:px-8 pb-16">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-
-          {/* Seleção de Tipo */}
           <div className="bg-white rounded-xl border border-border shadow-sm p-5">
             <p className={labelClass}>Tipo de Horário</p>
             <div className="flex flex-wrap gap-3">
@@ -198,14 +195,10 @@ export const AdminSlots: React.FC = () => {
               {TIPO_CONFIG[tipo].desc}
             </p>
           </div>
-
-          {/* Campos comuns */}
           <div className="bg-white rounded-xl border border-border shadow-sm p-5 flex flex-col gap-4">
             <p className="text-sm font-semibold text-text-dark border-b border-border pb-3">
               Configuração Geral
             </p>
-
-            {/* Descrição */}
             <div>
               <label className={labelClass}>Descrição</label>
               <input
@@ -215,8 +208,6 @@ export const AdminSlots: React.FC = () => {
                 className={inputClass}
               />
             </div>
-
-            {/* Título + Horas (oculto no Lote) */}
             {tipo !== "LOTE" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -271,8 +262,6 @@ export const AdminSlots: React.FC = () => {
                 </div>
               </div>
             )}
-
-            {/* Capacidade e Valor */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>
@@ -308,8 +297,6 @@ export const AdminSlots: React.FC = () => {
               </p>
             )}
           </div>
-
-          {/* Campos específicos — FIXO */}
           {tipo === "FIXO" && (
             <div className="bg-white rounded-xl border border-blue-accent/30 shadow-sm p-5 flex flex-col gap-4">
               <p className="text-sm font-semibold text-blue-accent border-b border-border pb-3">
@@ -347,8 +334,6 @@ export const AdminSlots: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* Campos específicos — LOTE */}
           {tipo === "LOTE" && (
             <div className="bg-white rounded-xl border border-blue-accent/30 shadow-sm p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
@@ -444,8 +429,6 @@ export const AdminSlots: React.FC = () => {
               )}
             </div>
           )}
-
-          {/* Ações */}
           <div className="flex gap-3 pt-2">
             <button
               type="submit"

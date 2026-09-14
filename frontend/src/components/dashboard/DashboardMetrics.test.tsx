@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { DashboardMetrics } from './DashboardMetrics';
 
@@ -53,7 +53,7 @@ describe('DashboardMetrics', () => {
 
   it('altera cor da receita conforme valor (receita sempre verde)', () => {
     render(<DashboardMetrics metricas={metricasMock} />);
-    // getByText lida com espaços unicode (NBSP) no formato BRL
+    // getbytext lida com espaços unicode (nbsp) no formato brl
     const el = screen.getByText((content) => content.includes('7.018,50'));
     expect(el).toBeDefined();
   });

@@ -1,4 +1,4 @@
-import svgPaths from "../assets/svg-u6pushe3qa";
+﻿import svgPaths from "../assets/svg-u6pushe3qa";
 
 interface ReviewCardProps {
   name: string;
@@ -13,8 +13,6 @@ export function ReviewCard({ name, location, comment, rating, avatarLetter, avat
   return (
     <div className="bg-white p-8 shadow-sm border border-gray-50">
       <div className="flex flex-col gap-4">
-        
-        {/* estrelas */}
         <div className="flex gap-1">
           {[...Array(5)].map((_, i) => (
             <svg 
@@ -30,13 +28,9 @@ export function ReviewCard({ name, location, comment, rating, avatarLetter, avat
             </svg>
           ))}
         </div>
-
-        {/* comentário */}
         <p className="italic text-base text-text-primary leading-relaxed text-justify md:text-left">
           {comment}
         </p>
-
-        {/* perfil do Usuário */}
         <div className="flex gap-4 items-center pt-2">
           
           <div className={`${avatarColor} flex items-center justify-center rounded-full size-10 shrink-0`}>

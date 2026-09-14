@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, CheckCircle, UserCheck, MapPinPen, ArrowLeft } from "lucide-react";
 import { api } from "../services/api";
@@ -71,8 +71,6 @@ export const CadastroPasseio: React.FC = () => {
   return (
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 py-10 flex flex-col gap-0">
-
-        {/* Título */}
         <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => navigate("/painel-admin")}
@@ -86,8 +84,6 @@ export const CadastroPasseio: React.FC = () => {
             Cadastrar Passeio
           </h1>
         </div>
-
-        {/* Card: Informações do Passeio */}
         <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden mb-6">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="w-9 h-9 rounded-lg bg-blue-accent/10 flex items-center justify-center text-blue-accent">
@@ -101,7 +97,6 @@ export const CadastroPasseio: React.FC = () => {
 
           <div className="px-6 py-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-              {/* Capacidade */}
               <div>
                 <label className="block text-xs font-semibold text-text-dark tracking-normal case-sensitive mb-1.5">
                   Capacidade
@@ -116,8 +111,6 @@ export const CadastroPasseio: React.FC = () => {
                   className="w-full h-10.5 px-3.5 border border-border rounded-lg text-sm text-text-dark outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/10 transition-colors placeholder:text-text-secondary/60"
                 />
               </div>
-
-              {/* Preço */}
               <div>
                 <label className="block text-xs font-semibold text-text-dark tracking-normal case-sensitive mb-1.5">
                   Preço
@@ -140,7 +133,6 @@ export const CadastroPasseio: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* Data */}
               <div>
                 <label className="block text-xs font-semibold text-text-dark tracking-normal case-sensitive mb-1.5">
                   Data do Passeio
@@ -152,8 +144,6 @@ export const CadastroPasseio: React.FC = () => {
                   className="w-full h-10.5 px-3.5 border border-border rounded-lg text-sm text-text-dark outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/10 transition-colors"
                 />
               </div>
-
-              {/* Horário */}
               <div>
                 <label className="block text-xs font-semibold text-text-dark tracking-normal case-sensitive mb-1.5">
                   Horário
@@ -168,8 +158,6 @@ export const CadastroPasseio: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Card: Vagoneteiro Responsável */}
         <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="w-9 h-9 rounded-lg bg-green-timeline/10 flex items-center justify-center text-green-timeline">
@@ -191,8 +179,6 @@ export const CadastroPasseio: React.FC = () => {
               onChange={setVagSelecionado}
             />
           </div>
-
-          {/* Ações */}
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-bg-light-2">
             {apiError && (
               <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg p-2 mr-auto">{apiError}</p>

@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+﻿import { Router, Request, Response } from 'express';
 import authRoutes from './authRoutes';
 import passeioRoutes from './passeioRoutes';
 import clienteRoutes from './clienteRoutes';
@@ -26,7 +26,7 @@ router.use('/usuarios', usuarioRoutes);
 router.use('/slots', slotRoutes);
 router.use('/atribuicoes', atribuicaoRoutes);
 
-// Dashboard
+// dashboard
 router.get('/dashboard/metricas', metricas);
 router.get('/dashboard/picos', picosDemanda);
 router.get('/dashboard/faturamento', faturamento);
@@ -36,7 +36,7 @@ router.get('/galeria/imagem/:fileId', servirImagemGaleria);
 
 import { parseFiltroData } from '../utils/filtroData';
 
-// Painel admin — resumo unificado (com filtro de período opcional)
+// painel admin — resumo unificado (com filtro de período opcional)
 router.get('/painel/resumo', async (req: Request, res: Response) => {
   try {
     const { inicio, fim } = req.query;
@@ -92,7 +92,7 @@ router.get('/painel/resumo', async (req: Request, res: Response) => {
   }
 });
 
-// Painel — avaliação em cache
+// painel — avaliação em cache
 router.get('/painel/avaliacao', async (req: Request, res: Response) => {
   try {
     const cache = await prisma.avaliacaoCache.findFirst({
@@ -109,7 +109,7 @@ router.get('/painel/avaliacao', async (req: Request, res: Response) => {
   }
 });
 
-// Painel — atualizar avaliação manualmente (admin)
+// painel — atualizar avaliação manualmente (admin)
 router.post('/painel/avaliacao/atualizar', async (req: Request, res: Response) => {
   try {
     const { avaliacaoMedia, totalAvaliacoes } = req.body;

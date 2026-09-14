@@ -67,8 +67,8 @@ export const authService = {
   },
 
   /**
-   * Cadastra um usuário SEM alterar a sessão atual.
-   * Útil para admin cadastrar vagoneteiros sem perder o próprio login.
+   * cadastra um usuário sem alterar a sessão atual.
+   * útil para admin cadastrar vagoneteiros sem perder o próprio login.
    */
   async createOnly(data: {
     name: string;
@@ -151,7 +151,6 @@ export const authService = {
 
     try {
       const user = await this.me();
-      // Atualiza dados do usuário no storage
       this.salvarSessao(token, user);
       return user;
     } catch {

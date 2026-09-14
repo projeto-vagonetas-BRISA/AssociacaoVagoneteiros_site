@@ -31,7 +31,6 @@ export const Header: React.FC = () => {
                     Vagoneteiros dos Molhes da Barra
                 </Link>
 
-                {/* Links de navegação: ocultos quando vagoneteiro está logado */}
                 {!isVagoneteiro && (
                     <ul className="hidden lg:flex items-center gap-8">
                         {navLinks.map(({ label, path }) => {
@@ -55,7 +54,6 @@ export const Header: React.FC = () => {
                 )}
 
                 <div className="flex items-center gap-3 shrink-0">
-                    {/* Botão Agendar: oculto quando vagoneteiro está logado */}
                     {!isVagoneteiro && (
                         <Link to="/agendamento" className="hidden lg:inline-flex items-center justify-center px-5 h-9 rounded bg-blue-accent hover:bg-blue-accent/80 text-white text-sm font-semibold tracking-wide transition-colors cursor-pointer">
                             Agendar
@@ -64,7 +62,6 @@ export const Header: React.FC = () => {
 
                     {isAuthenticated ? (
                         <>
-                            {/* Avatar: oculto para vagoneteiro */}
                             {!isVagoneteiro && (
                                 <div className="hidden lg:flex items-center gap-2 text-sm text-white/70">
                                     <span className="w-7 h-7 rounded-full bg-blue-accent flex items-center justify-center text-xs font-bold text-white">
@@ -120,7 +117,6 @@ export const Header: React.FC = () => {
 
             {menuOpen && (
                 <div className="lg:hidden bg-blue-dark border-t border-white/10 px-4 py-4 flex flex-col gap-4">
-                    {/* Menu mobile/tablet: simplificado para vagoneteiro */}
                     {isVagoneteiro ? (
                         <div className="flex gap-3">
                             <button

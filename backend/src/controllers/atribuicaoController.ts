@@ -1,4 +1,4 @@
-import { Response } from 'express';
+﻿import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { conflitoService } from '../services/agendamento.service';
@@ -16,8 +16,8 @@ import {
 } from '../utils/atribuicaoValidation';
 
 /**
- * POST /atribuicoes/auto-atribuir
- * Vagoneteiro se auto-atribui a uma instância de slot (modelo Uber).
+ * post /atribuicoes/auto-atribuir
+ * vagoneteiro se auto-atribui a uma instância de slot (modelo uber).
  */
 export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -66,7 +66,7 @@ export async function autoAtribuir(req: AuthenticatedRequest, res: Response): Pr
   }
 }
 
-// ─── helpers de autoAtribuir ─────────────────────────────────────
+// ─── helpers de autoatribuir ─────────────────────────────────────
 
 /** Busca a instância e valida que existe e está em status atribuível. */
 async function buscarInstanciaElegivel(instanciaId: unknown, res: Response) {
@@ -93,7 +93,7 @@ async function buscarInstanciaElegivel(instanciaId: unknown, res: Response) {
 }
 
 /**
- * Valida as regras de elegibilidade para auto-atribuição:
+ * valida as regras de elegibilidade para auto-atribuição:
  * data não passada, sem vagoneteiro dono, vagoneteiro não re-atribuído,
  * e sem atribuição pendente em outro passeio.
  */
@@ -128,7 +128,7 @@ async function validarPodeAutoAtribuir(
     return { status: 400, body: { message: 'Você já está atribuído a esta instância' } };
   }
 
-  // Regra: enquanto estiver ATRIBUIDO a um passeio pendente, deve concluí-lo antes.
+  // regra: enquanto estiver atribuido a um passeio pendente, deve concluí-lo antes.
   const pendente = await prisma.slotAtribuicao.findFirst({
     where: {
       vagoneteiroId,
@@ -210,8 +210,8 @@ async function marcarInstanciaAgendada(instanciaId: number) {
 }
 
 /**
- * GET /atribuicoes/minhas
- * Lista atribuições do vagoneteiro logado, com vagas ocupadas por passeio.
+ * get /atribuicoes/minhas
+ * lista atribuições do vagoneteiro logado, com vagas ocupadas por passeio.
  */
 export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -274,8 +274,8 @@ export async function minhasAtribuicoes(req: AuthenticatedRequest, res: Response
 }
 
 /**
- * PATCH /atribuicoes/:id/cancelar
- * Vagoneteiro (ou admin) cancela sua atribuição.
+ * patch /atribuicoes/:id/cancelar
+ * vagoneteiro (ou admin) cancela sua atribuição.
  */
 export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -346,8 +346,8 @@ export async function cancelarAtribuicao(req: AuthenticatedRequest, res: Respons
 }
 
 /**
- * PATCH /atribuicoes/:id/realizar
- * Marca atribuição como realizada (admin/vagoneteiro) e propaga ao passeio público.
+ * patch /atribuicoes/:id/realizar
+ * marca atribuição como realizada (admin/vagoneteiro) e propaga ao passeio público.
  */
 export async function realizarAtribuicao(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -415,8 +415,8 @@ async function marcarInstanciaSeCompleta(instanciaId: number) {
 }
 
 /**
- * GET /atribuicoes/feed
- * Feed estilo Uber: instâncias ainda sem vagoneteiro, disponíveis para auto-atribuição.
+ * get /atribuicoes/feed
+ * feed estilo uber: instâncias ainda sem vagoneteiro, disponíveis para auto-atribuição.
  */
 export async function feedDisponiveis(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -464,7 +464,7 @@ export async function feedDisponiveis(req: AuthenticatedRequest, res: Response):
   }
 }
 
-// ─── helpers de feedDisponiveis ──────────────────────────────────
+// ─── helpers de feeddisponiveis ──────────────────────────────────
 
 /** Último dia do mês corrente (para o feed sem filtro de data). */
 function fimDoMesAtual(referencia: Date): Date {

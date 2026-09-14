@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { MapPin, Clock, Star } from "lucide-react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
@@ -20,8 +20,6 @@ export const Home: React.FC = () => {
   }, []);
   return (
     <div className="flex flex-col items-start w-full">
-
-      {/* Hero Section */}
       <section
         className="relative flex items-center justify-center min-h-screen md:min-h-175 w-full bg-slate-900 bg-cover bg-center"
         style={{
@@ -56,8 +54,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Nossa História Section */}
       <section className="bg-bg-light-1 py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
@@ -89,8 +85,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Linha do Tempo Section */}
       <section className="bg-bg-light-1 pb-16 md:pb-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-8">
@@ -119,8 +113,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Como Funciona o Passeio Section */}
       <section className="bg-bg-light-2 py-16 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
@@ -167,8 +159,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Galeria de Fotos Section */}
       <section className="bg-bg-light-2 py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
@@ -201,8 +191,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Avaliações Section */}
       <section className="bg-bg-light-3 py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-12 md:gap-16">
@@ -230,8 +218,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Curiosidade */}
       <section className="bg-[#f2f3fb] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-8">
@@ -278,8 +264,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Siga-nos Section */}
       <section className="bg-bg-light-1 py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex flex-col gap-8">
@@ -304,8 +288,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Localização Section */}
       <section className="bg-bg-light-2 py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="bg-blue rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row">

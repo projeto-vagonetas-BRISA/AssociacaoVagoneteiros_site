@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+﻿import React, { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Calendar,
@@ -77,7 +77,7 @@ function toLocalDate(isoString: string) {
   return new Date(y, m - 1, d, 12, 0, 0);
 }
 
-// Converte data ISO (data + horario separados) para Date
+// converte data iso (data + horario separados) para date
 function passeioToDate(passeio: { data: string; horario: string }): Date {
   const d = toLocalDate(passeio.data);
   const [hh, mm] = (passeio.horario || "08:00").split(":").map(Number);
@@ -97,7 +97,7 @@ function formatHoraPasseio(passeio: { data: string; horario: string }): string {
 }
 
 function formatDataResumo(data: string): string {
-  // Usa T12:00:00 (sem Z = local) para evitar off-by-one por timezone
+  // usa t12:00:00 (sem z = local) para evitar off-by-one por timezone
   const datePart = data.split('T')[0];
   const d = new Date(`${datePart}T12:00:00`);
   return d.toLocaleDateString('pt-BR', {
@@ -115,7 +115,7 @@ export const Agendamento: React.FC = () => {
   const today = new Date();
   const { user, isAuthenticated } = useAuth();
 
-  // Formulário: preenche com dados do usuário logado
+  // formulário: preenche com dados do usuário logado
   const [isAgencia, setIsAgencia] = useState(false);
   const [nome, setNome] = useState(isAuthenticated && user ? user.name : "");
   const [telefone, setTelefone] = useState(isAuthenticated && user ? user.telefone : "");
@@ -129,7 +129,7 @@ export const Agendamento: React.FC = () => {
   const [submitError, setSubmitError] = useState('');
   const [agendamentoConfirmado, setAgendamentoConfirmado] = useState<{ id: number; cliente: { nome: string }; passeio: { data: string; horario: string; preco: number } } | null>(null);
 
-  // Carregar passeios da API
+  // carregar passeios da api
   useEffect(() => {
     setLoadingPasseios(true);
     api.request<{ data: Passeio[] }>('/agendamentos/vagas-disponiveis')
@@ -138,12 +138,12 @@ export const Agendamento: React.FC = () => {
       .finally(() => setLoadingPasseios(false));
   }, []);
 
-  // Calendário
+  // calendário
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
-  // Passeio Selecionado
+  // passeio selecionado
   const [selectedPasseio, setSelectedPasseio] = useState<Passeio | null>(null);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
@@ -154,7 +154,7 @@ export const Agendamento: React.FC = () => {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [ciente, setCiente] = useState(false);
 
-  // Dias do mês que possuem passeios disponíveis (para marcar no calendário)
+  // dias do mês que possuem passeios disponíveis (para marcar no calendário)
   const daysWithPasseios = useMemo(() => {
     const set = new Set<number>();
     passeios.forEach((p) => {
@@ -166,7 +166,7 @@ export const Agendamento: React.FC = () => {
     return set;
   }, [currentMonth, currentYear, passeios]);
 
-  // Passeios do dia selecionado
+  // passeios do dia selecionado
   const passeiosDoDia = useMemo(() => {
     return passeios.filter((p) => {
       const d = toLocalDate(p.data);
@@ -180,7 +180,7 @@ export const Agendamento: React.FC = () => {
     );
   }, [currentYear, currentMonth, selectedDay, passeios]);
 
-  // Reset da seleção de passeio ao mudar de dia
+  // reset da seleção de passeio ao mudar de dia
   const handleSelectDay = (day: number) => {
     setSelectedDay(day);
     setSelectedPasseio(null);
@@ -204,16 +204,16 @@ export const Agendamento: React.FC = () => {
     setSelectedPasseio(null);
   };
 
-  // Capacidade máxima do passeio selecionado
+  // capacidade máxima do passeio selecionado
   const maxPassageiros = isAgencia ? 999 : (selectedPasseio?.vagasDisponiveis ?? 5);
   const precoUnitario = selectedPasseio ? Number(selectedPasseio.preco) : 0;
   const subtotal = precoUnitario * passageiros;
 
-  // Data formatada para o resumo
+  // data formatada para o resumo
   const selectedDate = new Date(currentYear, currentMonth, selectedDay);
   const dataFormatada = `${DIAS_SEMANA[selectedDate.getDay()]}, ${String(selectedDay).padStart(2, "0")} de ${MESES[currentMonth]} de ${currentYear}`;
 
-  // Validação básica para habilitar o botão Finalizar
+  // validação básica para habilitar o botão finalizar
   const podeFinalizarReserva =
     validateNameValue(nome) === "" &&
     validateTelValue(telefone) === "" &&
@@ -241,8 +241,8 @@ export const Agendamento: React.FC = () => {
       } catch (error) {
         console.error('Erro ao obter token FCM:', error);
         setSubmitError('Devido a um problema interno, o agendamento será feito sem notificações web');
-        // Não bloqueia o agendamento se o token falhar
-        // (Service Workers precisam de HTTPS)
+        // não bloqueia o agendamento se o token falhar
+        // (service workers precisam de https)
       }
     }
 
@@ -304,7 +304,6 @@ export const Agendamento: React.FC = () => {
 
       <div className="max-w-7xl w-full mx-auto px-4 md:px-8 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
-          {/* coluna esquerda: formulário de agendamento */}
           <div className="flex flex-col gap-5">
             <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
               <div className="flex items-center gap-3">
@@ -322,12 +321,6 @@ export const Agendamento: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {/* <Link
-                  to="/cadastro?tipo=empresa"
-                  className="hidden sm:inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-xs font-semibold text-text-dark bg-bg-light-2 hover:bg-bg-light-1 transition-colors cursor-pointer"
-                >
-                  Cadastrar empresa
-                </Link> */}
                 <button
                   onClick={() => {
                     setDocumento("");
@@ -344,8 +337,6 @@ export const Agendamento: React.FC = () => {
                 </button>
               </div>
             </div>
-
-            {/* informações pessoais */}
             <InformacoesPessoais
               nome={nome}
               telefone={telefone}
@@ -361,8 +352,6 @@ export const Agendamento: React.FC = () => {
               consentimentoNotificacao={consentimentoNotificacao}
               setConsentimentoNotificacao={setConsentimentoNotificacao}
             />
-
-            {/* calendário + horários */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-border">
               <div className="flex items-center gap-2 mb-4">
                 <SectionIcon
@@ -374,7 +363,6 @@ export const Agendamento: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* calendário */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <button
@@ -454,8 +442,6 @@ export const Agendamento: React.FC = () => {
                     </span>
                   </div>
                 </div>
-
-                {/* horários do dia */}
                 <HorariosDia
                   passeiosDoDia={passeiosDoDia}
                   selectedPasseio={selectedPasseio}
@@ -465,10 +451,7 @@ export const Agendamento: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* forma de pagamento + passageiros */}
             <div className="flex flex-col gap-5">
-              {/* forma de pagamento */}
               <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
                 <div className="flex items-center gap-3">
                   <SectionIcon
@@ -494,8 +477,6 @@ export const Agendamento: React.FC = () => {
                   <option value="dinheiro">Dinheiro</option>
                 </select>
               </div>
-
-              {/* passageiros */}
               <div className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-border">
                 <div className="flex items-center gap-3">
                   <SectionIcon
@@ -535,8 +516,6 @@ export const Agendamento: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* coluna direita: resumo da reserva */}
           <div className="bg-white rounded-xl overflow-hidden shadow-lg sticky top-6">
             <div className="px-6 py-5 border-b border-border bg-blue-accent">
               <h2 className="font-bold text-lg text-white tracking-tight">
@@ -545,7 +524,6 @@ export const Agendamento: React.FC = () => {
             </div>
 
             <div className="px-6 py-5 flex flex-col gap-5">
-              {/* data */}
               <div className="flex gap-3 items-start">
                 <Calendar
                   className="size-4 shrink-0 text-blue-accent mt-0.5"
@@ -560,8 +538,6 @@ export const Agendamento: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* endereço */}
               <div className="flex gap-3 items-start">
                 <MapPin
                   className="size-4 shrink-0 text-blue-accent mt-0.5"
@@ -576,8 +552,6 @@ export const Agendamento: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* horário */}
               <div className="flex gap-3 items-start">
                 <Clock
                   className="size-4 shrink-0 text-blue-accent mt-0.5"
@@ -594,8 +568,6 @@ export const Agendamento: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* passageiros */}
               <div className="flex gap-3 items-start">
                 <Users
                   className="size-4 shrink-0 text-blue-accent mt-0.5"
@@ -610,8 +582,6 @@ export const Agendamento: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* forma de pagamento */}
               <div className="flex gap-3 items-start">
                 <CreditCard
                   className="size-4 shrink-0 text-blue-accent mt-0.5"
@@ -626,8 +596,6 @@ export const Agendamento: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* estou Ciente checkbox obrigatório */}
               <label
                 className={`flex gap-3 items-start rounded-lg p-3 cursor-pointer transition-colors select-none
                   ${ciente ? "bg-blue-accent/8 border border-blue-accent/30" : "bg-bg-light-1 border border-transparent hover:border-border"}`}
@@ -674,8 +642,6 @@ export const Agendamento: React.FC = () => {
               </label>
 
               <div className="border-t border-border" />
-
-              {/* preço */}
               <div className="flex flex-col gap-2">
                 {selectedPasseio && (
                   <div className="flex justify-between items-center">

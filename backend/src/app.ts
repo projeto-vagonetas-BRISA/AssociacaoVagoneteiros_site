@@ -21,7 +21,6 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// CORS
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || process.env.NODE_ENV !== 'production') {
@@ -38,7 +37,7 @@ app.use(cors({
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
 }));
 
-// ─── Rotas da API ──────────────────────────────────────────────
+// rotas da api
 app.get('/health', (req: Request, res: Response) => {
     res.json({ message: 'API Vagoneteiros rodando!' });
 });
@@ -54,16 +53,13 @@ app.use('/atribuicoes', atribuicaoRoutes);
 app.use('/suspensoes', suspensaoRoutes);
 app.use('/anonimizacao', anonimizacaoRoutes);
 
-// Dashboard
 app.get('/dashboard/metricas', metricas);
 app.get('/dashboard/picos', picosDemanda);
 app.get('/dashboard/faturamento', faturamento);
 
-// Galeria
 app.get('/galeria/fotos', listarFotosGaleria);
 app.get('/galeria/imagem/:fileId', servirImagemGaleria);
 
-// Painel admin
 app.get('/painel/resumo', async (req: Request, res: Response) => {
   try {
     const { inicio, fim } = req.query;
@@ -152,17 +148,17 @@ app.post('/painel/avaliacao/atualizar', async (req: Request, res: Response) => {
   }
 });
 
-// ─── Frontend ──────────────────────────────────────────────
+// frontend estático
 const frontendDist = path.resolve(process.cwd(), '..', 'frontend', 'dist');
 app.use(express.static(frontendDist));
 
-// Fallback SPA
+// fallback spa
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (path.extname(req.path)) return next();
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
-// Middleware global de erros
+// middleware global de erros
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Erro não tratado:', err);
   res.status(err.status || 500).json({

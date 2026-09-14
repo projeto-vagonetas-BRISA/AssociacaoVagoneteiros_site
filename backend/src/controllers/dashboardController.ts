@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 
 interface FiltroPeriodo {
@@ -12,7 +12,7 @@ function extrairPeriodo(req: Request): FiltroPeriodo {
 
   if (inicio && fim) {
     const dataFim = new Date(fim as string);
-    // Ajusta para o final do dia (23:59:59.999) no fuso local
+    // ajusta para o final do dia (23:59:59.999) no fuso local
     dataFim.setDate(dataFim.getDate() + 1);
     dataFim.setHours(0, 0, 0, 0);
     return {
@@ -21,32 +21,32 @@ function extrairPeriodo(req: Request): FiltroPeriodo {
     };
   }
 
-  // Padrão: mês atual
+  // padrão: mês atual
   return {
     inicio: new Date(agora.getFullYear(), agora.getMonth(), 1),
     fim: new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59, 999),
   };
 }
 
-// ─── Métricas Agregadas ─────────────────────────────────────────────
+// ─── métricas agregadas ─────────────────────────────────────────────
 
 export async function metricas(req: Request, res: Response): Promise<void> {
   try {
     const { inicio, fim } = extrairPeriodo(req);
 
-    // Total de passeios no período
+    // total de passeios no período
     const totalPasseios = await prisma.passeio.count({
       where: { data: { gte: inicio, lte: fim }, ativo: true },
     });
 
-    // Capacidade total disponibilizada no período
+    // capacidade total disponibilizada no período
     const passeiosCapacidade = await prisma.passeio.findMany({
       where: { data: { gte: inicio, lte: fim }, ativo: true },
       select: { capacidade: true, id: true },
     });
     const vagasDisponibilizadas = passeiosCapacidade.reduce((s, p) => s + p.capacidade, 0);
 
-    // Agendamentos no período (por passeio)
+    // agendamentos no período (por passeio)
     const idsPasseios = passeiosCapacidade.map(p => p.id);
     const agendamentos = await prisma.agendamento.findMany({
       where: {
@@ -56,15 +56,15 @@ export async function metricas(req: Request, res: Response): Promise<void> {
       select: { acompanhantes: true, status: true, passeioId: true, passeio: { select: { preco: true, status: true } } },
     });
 
-    // Vagas preenchidas
+    // vagas preenchidas
     const vagasPreenchidas = agendamentos.reduce((s, a) => s + 1 + a.acompanhantes, 0);
 
-    // Taxa de ocupação
+    // taxa de ocupação
     const taxaOcupacao = vagasDisponibilizadas > 0
       ? Math.round((vagasPreenchidas / vagasDisponibilizadas) * 100)
       : 0;
 
-    // Cancelamentos
+    // cancelamentos
     const totalAgendamentos = await prisma.agendamento.count({
       where: { passeioId: { in: idsPasseios } },
     });
@@ -75,7 +75,7 @@ export async function metricas(req: Request, res: Response): Promise<void> {
       ? Math.round((cancelados / totalAgendamentos) * 100)
       : 0;
 
-    // Realizados (atribuições realizadas no período)
+    // realizados (atribuições realizadas no período)
     const realizados = await prisma.slotAtribuicao.count({
       where: {
         status: 'REALIZADO',
@@ -89,13 +89,13 @@ export async function metricas(req: Request, res: Response): Promise<void> {
       },
     });
 
-    // Índice de conversão (realizados / (realizados + cancelados))
+    // índice de conversão (realizados / (realizados + cancelados))
     const totalFinal = realizados + cancelados;
     const indiceConversao = totalFinal > 0
       ? Math.round((realizados / totalFinal) * 100)
       : 0;
 
-    // Receita gerada (soma dos preços dos passeios realizados multiplicada pelas vagas de agendamentos não-cancelados)
+    // receita gerada (soma dos preços dos passeios realizados multiplicada pelas vagas de agendamentos não-cancelados)
     const receita = agendamentos
       .filter(a => a.status !== 'CANCELADO' && a.passeio.status === 'REALIZADO')
       .reduce((s, a) => s + (Number(a.passeio.preco) * (1 + (a.acompanhantes || 0))), 0);
@@ -121,7 +121,7 @@ export async function metricas(req: Request, res: Response): Promise<void> {
   }
 }
 
-// ─── Picos de Demanda ────────────────────────────────────────────────
+// ─── picos de demanda ────────────────────────────────────────────────
 
 export async function picosDemanda(req: Request, res: Response): Promise<void> {
   try {
@@ -138,7 +138,7 @@ export async function picosDemanda(req: Request, res: Response): Promise<void> {
       },
     });
 
-    // Agrupar por dia da semana
+    // agrupar por dia da semana
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const porDia: Record<string, number> = {};
     const porDiaSemana: Record<string, number> = {};
@@ -170,7 +170,7 @@ export async function picosDemanda(req: Request, res: Response): Promise<void> {
   }
 }
 
-// ─── Relatório de Faturamento ────────────────────────────────────────
+// ─── relatório de faturamento ────────────────────────────────────────
 
 export async function faturamento(req: Request, res: Response): Promise<void> {
   try {
@@ -193,7 +193,7 @@ export async function faturamento(req: Request, res: Response): Promise<void> {
       orderBy: { data: 'desc' },
     });
 
-    // Agrupar por vagoneteiro
+    // agrupar por vagoneteiro
     const porVagoneteiro: Record<number, {
       id: number;
       nome: string;
@@ -226,7 +226,7 @@ export async function faturamento(req: Request, res: Response): Promise<void> {
 
     let lista = Object.values(porVagoneteiro);
 
-    // Ordenação
+    // ordenação
     if (ordenar === 'total') {
       lista.sort((a, b) => b.total - a.total);
     } else if (ordenar === 'nome') {

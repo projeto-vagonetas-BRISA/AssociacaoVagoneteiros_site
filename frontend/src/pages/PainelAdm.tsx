@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Users, CheckCircle, DollarSign, Star, BarChart3,
@@ -25,7 +25,6 @@ function renderPaginacao(
 
   const botoes: React.ReactNode[] = [];
 
-  // Botão anterior
   botoes.push(
     <button key="prev" onClick={() => onChange(Math.max(1, atual - 1))}
       disabled={atual === 1}
@@ -35,12 +34,10 @@ function renderPaginacao(
   );
 
   if (total <= MAX_PAG_VISIVEIS) {
-    // Até 20 páginas: mostra todas
     for (let n = 1; n <= total; n++) {
       botoes.push(botaoPagina(n, atual, onChange));
     }
   } else {
-    // Mais de 20: mostra primeiro bloco + seta, ou bloco atual + navegação
     const blocoAtual = Math.ceil(atual / MAX_PAG_VISIVEIS);
     const totalBlocos = Math.ceil(total / MAX_PAG_VISIVEIS);
     const inicio = (blocoAtual - 1) * MAX_PAG_VISIVEIS + 1;
@@ -50,7 +47,6 @@ function renderPaginacao(
       botoes.push(botaoPagina(n, atual, onChange));
     }
 
-    // Seta para próximo bloco (se houver)
     if (blocoAtual < totalBlocos) {
       botoes.push(
         <button key="next-block" onClick={() => onChange(fim + 1)}
@@ -61,7 +57,6 @@ function renderPaginacao(
     }
   }
 
-  // Botão próximo
   botoes.push(
     <button key="next" onClick={() => onChange(Math.min(total, atual + 1))}
       disabled={atual === total}
@@ -154,7 +149,7 @@ interface Avaliacao {
 }
 
 const formatData = (iso: string) => {
-  // Usa T12:00:00 (sem Z = local) para evitar off-by-one por timezone
+  // usa t12:00:00 (sem z = local) para evitar off-by-one por timezone
   const datePart = iso.split('T')[0];
   const d = new Date(`${datePart}T12:00:00`);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -209,7 +204,7 @@ export const PainelAdmin: React.FC = () => {
   const [passeiosData, setPasseiosData] = useState<PasseiosResponse | null>(null);
   const [paginaPasseio, setPaginaPasseio] = useState(1);
 
-  // Todos os passeios para o Histórico — carregado separadamente para não conflitar com a paginação da tabela
+  // todos os passeios para o histórico — carregado separadamente para não conflitar com a paginação da tabela
   const [todosPasseios, setTodosPasseios] = useState<Passeio[]>([]);
 
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
@@ -228,7 +223,7 @@ export const PainelAdmin: React.FC = () => {
     carregando: boolean; resultado: string | null; erro: string | null;
   }>({ open: false, inicio: '', fim: '', motivo: '', carregando: false, resultado: null, erro: null });
 
-  // Data mínima selecionável no modal (hoje, fuso local) — inibe dias passados
+  // data mínima selecionável no modal (hoje, fuso local) — inibe dias passados
   const hoje = new Date();
   const dataMinimaHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 
@@ -256,7 +251,7 @@ export const PainelAdmin: React.FC = () => {
     }
   };
 
-  // ---- Suspensão de atividades ----
+  // ---- suspensão de atividades ----
   type Suspensao = {
     id: number;
     dataInicio: string;
@@ -321,7 +316,7 @@ export const PainelAdmin: React.FC = () => {
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   };
 
-  // ---- Anonimização de dados (LGPD) ----
+  // ---- anonimização de dados (lgpd) ----
   const [lgpdIdentificador, setLgpdIdentificador] = useState('');
   const [lgpdBusca, setLgpdBusca] = useState<{ encontrado: boolean; tipo?: string; registro?: any } | null>(null);
   const [lgpdBuscando, setLgpdBuscando] = useState(false);
@@ -384,7 +379,7 @@ export const PainelAdmin: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // A tabela usa passeiosData paginado; o histórico usa todosPasseios (carregado com limit=100)
+  // a tabela usa passeiosdata paginado; o histórico usa todospasseios (carregado com limit=100)
   const passeios = passeiosData?.data || [];
   const totalPaginasPasseio = passeiosData?.totalPages || 1;
 
@@ -412,12 +407,10 @@ export const PainelAdmin: React.FC = () => {
       setAvaliacoes(av);
       setClientes(c);
 
-      // Resumo do painel é opcional — não trava o carregamento principal
       api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>("/painel/resumo")
         .then(r => setResumoPainel(r))
         .catch(() => { });
 
-      // Avaliação em cache
       api.request<{ avaliacaoMedia: number; totalAvaliacoes: number; atualizadaEm: string | null }>("/painel/avaliacao")
         .then(r => setAvaliacaoCache(r))
         .catch(() => { });
@@ -447,7 +440,7 @@ export const PainelAdmin: React.FC = () => {
     setTogglingId(null);
   }
 
-  // Estatísticas — usa resumo unificado do backend (sistema de slots)
+  // estatísticas — usa resumo unificado do backend (sistema de slots)
   const totalTuristas = resumoPainel?.totalTuristas ?? 0;
   const passeiosRealizados = resumoPainel?.passeiosRealizados ?? 0;
   const receitaEstimada = resumoPainel?.receitaEstimada ?? 0;
@@ -464,7 +457,7 @@ export const PainelAdmin: React.FC = () => {
     { label: "Avaliação Média", value: avaliacaoMedia, icon: Star, color: "text-amber-500" },
   ];
 
-  // Histórico de Agenda: exibe TODOS os passeios (incluindo REALIZADOS)
+  // histórico de agenda: exibe todos os passeios (incluindo realizados)
   const grupos = todosPasseios
     .map(p => {
       const registros = filtroStatus === 'TODOS'
@@ -494,7 +487,6 @@ export const PainelAdmin: React.FC = () => {
   async function gerarRelatorioGeral(inicio?: string, fim?: string) {
     const { default: jsPDF } = await import('jspdf');
 
-    // Buscar dados frescos do backend para o período
     const [resumo, passeiosList, vagoneteirosList, agendamentosList, avaliacaoResult] = await Promise.all([
       api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>(
         inicio && fim ? `/painel/resumo?inicio=${inicio}&fim=${fim}` : '/painel/resumo'
@@ -534,7 +526,7 @@ export const PainelAdmin: React.FC = () => {
       ? `${new Date(inicio + 'T12:00:00').toLocaleDateString('pt-BR')} — ${new Date(fim + 'T12:00:00').toLocaleDateString('pt-BR')}`
       : 'Geral (todo período)';
 
-    // Cabeçalho do PDF
+    // cabeçalho do pdf
     doc.setFillColor(15, 23, 43);
     doc.rect(0, 0, pw, 22, 'F');
     doc.setFontSize(14);
@@ -550,7 +542,7 @@ export const PainelAdmin: React.FC = () => {
     doc.text(periodoLabel, margin, y);
     y = 32;
 
-    // Estatísticas
+    // estatísticas
     doc.setTextColor(24, 28, 33);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -580,7 +572,7 @@ export const PainelAdmin: React.FC = () => {
     });
     y += 18;
 
-    // Tabela de Passeios
+    // tabela de passeios
     addPageIfNeeded(20);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -622,7 +614,7 @@ export const PainelAdmin: React.FC = () => {
     });
     y += 6;
 
-    // Tabela de Vagoneteiros
+    // tabela de vagoneteiros
     addPageIfNeeded(20);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -660,7 +652,7 @@ export const PainelAdmin: React.FC = () => {
     });
     y += 6;
 
-    // Tabela de Agendamentos
+    // tabela de agendamentos
     addPageIfNeeded(20);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -715,7 +707,7 @@ export const PainelAdmin: React.FC = () => {
     doc.save(`relatorio_${suffix}.pdf`);
   }
 
-  // Exporta o relatório geral em CSV (mesmos dados/seções do PDF)
+  // exporta o relatório geral em csv (mesmos dados/seções do pdf)
   async function gerarRelatorioCSV(inicio?: string, fim?: string) {
     const [resumo, passeiosList, vagoneteirosList, agendamentosList, avaliacaoResult] = await Promise.all([
       api.request<{ totalTuristas: number; passeiosRealizados: number; receitaEstimada: number }>(
@@ -739,7 +731,7 @@ export const PainelAdmin: React.FC = () => {
 
     const linhas: unknown[][] = [];
 
-    // Estatísticas Gerais
+    // estatísticas gerais
     linhas.push(['RELATÓRIO — VAGONETEIROS DOS MOLHES DA BARRA']);
     linhas.push(['Período', inicio && fim ? `${inicio} a ${fim}` : 'Geral (todo período)']);
     linhas.push(['Gerado em', new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })]);
@@ -751,7 +743,7 @@ export const PainelAdmin: React.FC = () => {
     linhas.push(['Avaliação Média', `${avaliacaoMediaRel} / 5`]);
     linhas.push([]);
 
-    // Passeios Cadastrados
+    // passeios cadastrados
     linhas.push(['PASSEIOS CADASTRADOS', '', '', '', '']);
     linhas.push(['Data', 'Horário', 'Valor (R$)', 'Capacidade', 'Vagoneteiro']);
     todosPasseiosRel.forEach((p: any) => {
@@ -765,7 +757,7 @@ export const PainelAdmin: React.FC = () => {
     });
     linhas.push([]);
 
-    // Vagoneteiros
+    // vagoneteiros
     linhas.push(['VAGONETEIROS', '', '', '']);
     linhas.push(['Nome', 'CPF', 'Telefone', 'Status']);
     allVagRel.forEach((v: any) => {
@@ -773,7 +765,7 @@ export const PainelAdmin: React.FC = () => {
     });
     linhas.push([]);
 
-    // Histórico de Agendamentos
+    // histórico de agendamentos
     linhas.push(['HISTÓRICO DE AGENDAMENTOS', '', '', '', '', '']);
     linhas.push(['Passeio', 'Data', 'Horário', 'Cliente', 'Acomp.', 'Status']);
     agendamentosRel.forEach((a: any) => {
@@ -795,7 +787,6 @@ export const PainelAdmin: React.FC = () => {
     <div className="min-h-screen bg-bg-light-1 flex flex-col">
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-8 py-10 flex flex-col gap-8">
 
-        {/* Título */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-md bg-blue-accent/10 flex items-center justify-center text-blue-accent shrink-0">
             <Users className="size-4" strokeWidth={2} />
@@ -807,7 +798,6 @@ export const PainelAdmin: React.FC = () => {
 
         <AdminQuickActions />
 
-        {/* Dashboard / Métricas */}
         <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <BarChart3 className="text-blue-accent" size={22} strokeWidth={1.8} />
@@ -816,7 +806,6 @@ export const PainelAdmin: React.FC = () => {
           <DashboardProvider />
         </div>
 
-        {/* Gestão de Passeios e Agendamentos */}
         <div className="flex items-center gap-3 flex-wrap">
           <Ticket className="text-text-dark" size={22} strokeWidth={1.8} />
           <h2 className="font-bold text-lg text-text-dark">Gestão de Passeios e Agendamentos</h2>
@@ -829,7 +818,6 @@ export const PainelAdmin: React.FC = () => {
           </button>
         </div>
 
-        {/* Stat Cards */}
         {loadingData ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
@@ -873,7 +861,6 @@ export const PainelAdmin: React.FC = () => {
           </div>
         )}
 
-        {/* Gestão de Passeios */}
         <PasseiosTable
           passeiosData={passeiosData}
           loadingData={loadingData}
@@ -890,7 +877,6 @@ export const PainelAdmin: React.FC = () => {
           }}
         />
 
-        {/* Suspensão de Atividades */}
         <section className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-border flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -959,7 +945,6 @@ export const PainelAdmin: React.FC = () => {
           </div>
         </section>
 
-        {/* Anonimização de dados (LGPD) */}
         <section className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-border flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -1021,7 +1006,6 @@ export const PainelAdmin: React.FC = () => {
           </div>
         </section>
 
-        {/* Vagoneteiros + Histórico */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
 
           <AdminVagoneteiros
@@ -1034,10 +1018,7 @@ export const PainelAdmin: React.FC = () => {
             tipoUsuario={tipoUsuario}
             setTipoUsuario={setTipoUsuario}
           />
-          {/* Histórico de Agenda */}
           <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden flex flex-col">
-
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-border shrink-0">
               <div>
                 <h2 className="font-bold text-base text-text-dark">Histórico de Agenda</h2>
@@ -1056,8 +1037,6 @@ export const PainelAdmin: React.FC = () => {
                 </select>
               </div>
             </div>
-
-            {/* Cards */}
             <div className="flex flex-col gap-0 divide-y divide-border flex-1 overflow-y-auto">
               {loadingData ? (
                 <div className="flex items-center justify-center py-16 text-sm text-[#7a8394]">Carregando...</div>
@@ -1075,7 +1054,6 @@ export const PainelAdmin: React.FC = () => {
 
                 return (
                   <div key={id_passeio} className="px-6 py-4">
-                    {/* Cabeçalho do passeio */}
                     <div className="flex items-center gap-3 mb-3 pb-3 border-b border-border/50">
                       <Ticket size={16} className="text-blue-accent shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -1102,8 +1080,6 @@ export const PainelAdmin: React.FC = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* Lista de reservas/clientes */}
                     <div className="flex flex-col gap-1">
                       <span className="text-xs font-bold text-text-dark mb-1">Clientes:</span>
                       {registros.length === 0 && (
@@ -1138,8 +1114,6 @@ export const PainelAdmin: React.FC = () => {
                 );
               })}
             </div>
-
-            {/* Paginação */}
             {totalPaginas > 1 && (
               <div className="flex items-center justify-between px-6 py-4 border-t border-border shrink-0">
                 <p className="text-xs text-[#7a8394]">
@@ -1154,8 +1128,6 @@ export const PainelAdmin: React.FC = () => {
 
         </div>
       </main>
-
-      {/* Modal de filtro do relatório */}
       {modalRelatorio.open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalRelatorio({ ...modalRelatorio, open: false })}>
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
@@ -1265,8 +1237,6 @@ export const PainelAdmin: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Modal de atualizar avaliação */}
       {modalAvaliacao && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalAvaliacao(false)}>
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
@@ -1329,8 +1299,6 @@ export const PainelAdmin: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Modal de Cancelamento em Massa */}
       {modalCancelamentoMassa.open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => !modalCancelamentoMassa.carregando && setModalCancelamentoMassa(m => ({ ...m, open: false }))}>
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
@@ -1416,8 +1384,6 @@ export const PainelAdmin: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Modal de Suspensão de Atividades */}
       {modalSuspensao.open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => !modalSuspensao.carregando && setModalSuspensao(m => ({ ...m, open: false }))}>
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>

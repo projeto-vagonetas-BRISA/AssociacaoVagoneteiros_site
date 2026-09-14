@@ -1,4 +1,4 @@
-import { ArrowRight, Star, Image, PlaneTakeoff, MapPin, Upload, Camera } from "lucide-react";
+﻿import { ArrowRight, Star, Image, PlaneTakeoff, MapPin, Upload, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ButtonProps {
@@ -20,7 +20,7 @@ export function Button({ text, variant = "primary", icon, onClick, to }: ButtonP
     }
   };
 
-  // dicionário de estilos para cada variante (Base, Hover e Cor do Texto)
+  // dicionário de estilos para cada variante (base, hover e cor do texto)
 
   const getVariantStyles = () => {
     switch (variant) {

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+﻿import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { cleanCPF } from '../utils/documento';
@@ -60,7 +60,7 @@ export async function buscarPorDocumento(req: AuthenticatedRequest, res: Respons
       return;
     }
 
-    // Busca por CPF ou CNPJ — o campo cpf no banco pode conter ambos
+    // busca por cpf ou cnpj — o campo cpf no banco pode conter ambos
     const cliente = await prisma.clientes.findFirst({
       where: { cpf: cleaned },
     });
@@ -142,7 +142,7 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
     if (nome !== undefined) dataAtualizada.nome = nome;
     if (telefone !== undefined) dataAtualizada.telefone = telefone;
     if (email !== undefined) {
-      // Verificar se o email já pertence a outro cliente
+      // verificar se o email já pertence a outro cliente
       if (email) {
         const emailExistente = await prisma.clientes.findFirst({
           where: { email, id: { not: id } },

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+﻿import React, { useEffect, useCallback } from "react";
 import { Users, Building2 } from "lucide-react";
 import { formatCpf, formatCnpj } from "@brazilian-utils/brazilian-utils";
 import { useNameField, useCpfField, useCnpjField, useTelField, useEmailField } from "../utils/formValidations";
@@ -290,7 +290,6 @@ export const InformacoesPessoais: React.FC<Props> = ({
           </>
         )}
       </div>
-      {/* consentimento LGPD */}
       <div className="flex items-start gap-3 mt-4 pt-4 border-t border-border">
         <input
           type="checkbox"
@@ -305,7 +304,6 @@ export const InformacoesPessoais: React.FC<Props> = ({
           <span className="font-semibold text-text-dark">E-mail</span>.
         </label>
       </div>
-      {/* consentimento notificações */}
       <div className="flex items-start gap-3 mt-4 pt-4 border-t border-border">
         <input
           type="checkbox"

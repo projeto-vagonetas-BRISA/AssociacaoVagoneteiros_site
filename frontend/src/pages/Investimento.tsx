@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { SectionHeader } from "../components/SectionHeader";
@@ -10,8 +10,6 @@ export const Investimento: React.FC = () => {
 
   return (
     <div className="flex flex-col items-start w-full">
-
-      {/* Header */}
       <section
         className="relative flex items-end justify-center min-h-[480px] w-full bg-slate-900 bg-cover bg-center"
         style={{
@@ -35,8 +33,6 @@ export const Investimento: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* O Problema */}
       <section className="bg-[#f2f3fb] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
@@ -55,8 +51,6 @@ export const Investimento: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Impactos da Falta de Investimento */}
       <section className="bg-bg-light-1 py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
@@ -76,8 +70,6 @@ export const Investimento: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Como Ajudar */}
       <section className="bg-[#005f9d] py-16 md:py-24 w-full">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
           <div className="flex flex-col items-center gap-5 max-w-2xl mx-auto">

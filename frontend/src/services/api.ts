@@ -18,7 +18,6 @@ export const api = {
     });
 
     if (!response.ok) {
-      // token expirado ou inválido
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');

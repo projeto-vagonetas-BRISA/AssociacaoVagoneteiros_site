@@ -13,7 +13,7 @@ const server = app.listen(PORT, () => {
   iniciarAgendamentoScheduler();
 });
 
-// Tratamento de encerramento gracioso
+// tratamento de encerramento gracioso
 const gracefulShutdown = async () => {
   console.log('Encerrando servidor...');
   server.close(async () => {

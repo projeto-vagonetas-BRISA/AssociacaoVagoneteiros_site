@@ -12,9 +12,6 @@ const DIAS_SEMANA_MAP: Record<number, DiaSemana> = {
   6: 'SABADO',
 };
 
-// ─── TIPOS ─────────────────────────────────────────────────────────
-
-/** Slot com instâncias incluídas para expansão */
 export type SlotComInstancias = SlotPasseio & { instancias: SlotInstancia[] };
 
 export interface LoteConfig {
@@ -26,9 +23,7 @@ export interface LoteConfig {
   capacidade: number;
   valor: number;
   usuarioId?: number;
-  /** Lista de datas específicas para o lote (modo tradicional) */
   datas?: Date[];
-  /** Intervalo + grid (novo modo) */
   dataInicio?: Date;
   dataFim?: Date;
 }
@@ -38,8 +33,6 @@ export interface ExpandirResultado {
   ignoradas: number;
   instancias: SlotInstancia[];
 }
-
-// ─── HELPER ─────────────────────────────────────────────────────────
 
 function getDiaSemana(date: Date): DiaSemana {
   return DIAS_SEMANA_MAP[date.getDay()];
@@ -77,10 +70,6 @@ function criarDataComHora(data: Date, hora: string): Date {
   return d;
 }
 
-/**
- * Ajusta dia para o último dia do mês se o dia original ultrapassar
- * Ex: 31 de janeiro → 28/29 de fevereiro
- */
 function ajustarFimDeMes(data: Date, diaOriginal: number): Date {
   const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate();
   if (diaOriginal > ultimoDia) {
@@ -89,13 +78,8 @@ function ajustarFimDeMes(data: Date, diaOriginal: number): Date {
   return data;
 }
 
-// ─── SERVIÇO ────────────────────────────────────────────────────────
-
 export class RecorrenciaService {
   
-  /**
-   * Expande um SlotPasseio FIXO em instâncias para um período
-   */
   async expandirSlot(
     slot: SlotComInstancias,
     periodo: { inicio: Date; fim: Date }
@@ -121,22 +105,18 @@ export class RecorrenciaService {
 
     const dataAtual = new Date(inicioDoDia(dataInicio));
     const diaOriginal = dataAtual.getDate();
-    dataAtual.setDate(1); // começa do dia 1 para iterar corretamente
+    dataAtual.setDate(1);
 
     while (dataAtual <= dataFim) {
-      // Ajustar dia do mês
       ajustarFimDeMes(dataAtual, diaOriginal);
 
-      // Pular se passou do fim
       if (dataAtual > dataFim) break;
 
-      // Verificar dia da semana
       if (getDiaSemana(dataAtual) !== slot.diaSemana) {
         dataAtual.setDate(dataAtual.getDate() + 1);
         continue;
       }
 
-      // Verificar intervalo de dias
       if (slot.intervaloDias && slot.intervaloDias > 1) {
         const diffDias = Math.floor(
           (dataAtual.getTime() - inicioDoDia(dataInicio).getTime()) / (1000 * 60 * 60 * 24)
@@ -170,25 +150,11 @@ export class RecorrenciaService {
     return { criadas, ignoradas, instancias: novasInstancias };
   }
 
-  /**
-   * Gera um lote de slots INDIVIDUAL a partir de uma configuração
-   */
-  /**
-   * Gera um lote de slots.
-   *
-   * Modo datas: percorre array de datas e cria 1 slot individual para cada.
-   * Modo intervalo + grid: para cada dia em [dataInicio, dataFim], gera slots
-   * a cada duracaoMinutos entre horaInicio e horaFim.
-   */
   async gerarLote(config: LoteConfig): Promise<SlotPasseio[]> {
-    // usuarioId é opcional (se null, os slots são criados "abertos")
-
-    // Modo datas específicas (tradicional)
     if (config.datas && config.datas.length > 0) {
       return this.gerarLotePorDatas(config);
     }
 
-    // Modo intervalo + grid (novo)
     if (config.dataInicio && config.dataFim) {
       return this.gerarLotePorIntervalo(config);
     }
@@ -209,8 +175,8 @@ export class RecorrenciaService {
 
   private async gerarLotePorIntervalo(config: LoteConfig): Promise<SlotPasseio[]> {
     const slotsCriados: SlotPasseio[] = [];
-    // dataInicio/fim já chegam normalizados como MEIA-NOITE LOCAL pelo chamador
-    // (slotController.gerarLote) — evita bug de fuso (slots em 00:00Z UTC ficavam
+    // datainicio/fim já chegam normalizados como meia-noite local pelo chamador
+    // (slotcontroller.gerarlote) — evita bug de fuso (slots em 00:00z utc ficavam
     // 3h defasados e não batiam com filtros que usam meia-noite local).
     const inicio = new Date(config.dataInicio!);
     const fim = new Date(config.dataFim!);
@@ -219,12 +185,10 @@ export class RecorrenciaService {
     const duracao = config.duracaoMinutos;
     const loteId = crypto.randomUUID();
 
-    // Para cada dia no intervalo
     const dataAtual = new Date(inicio);
     while (dataAtual <= fim) {
       const dataStr = new Date(dataAtual);
 
-      // Gera slots a cada duracao minutos dentro do horário
       for (let min = horaInicioMin; min + duracao <= horaFimMin; min += duracao) {
         const hInicio = minutosParaHora(min);
         const hFim = minutosParaHora(min + duracao);
@@ -294,7 +258,7 @@ export class RecorrenciaService {
   }
 
   /**
-   * Expande todos os slots FIXO ativos para um período
+   * expande todos os slots fixo ativos para um período
    */
   async expandirTodos(periodo: { inicio: Date; fim: Date }): Promise<{
     totalSlots: number;
@@ -327,9 +291,9 @@ export class RecorrenciaService {
   }
 
   /**
-   * Retorna as instâncias de um slot para um período
-   * - Para INDIVIDUAL/LOTE: consulta instâncias existentes
-   * - Para FIXO: primeiro expande (cria as que faltam), depois retorna TODAS do período
+   * retorna as instâncias de um slot para um período
+   * - para individual/lote: consulta instâncias existentes
+   * - para fixo: primeiro expande (cria as que faltam), depois retorna todas do período
    */
   async obterInstancias(
     slotId: number,
@@ -342,12 +306,10 @@ export class RecorrenciaService {
 
     if (!slot) return [];
 
-    // Se for FIXO, primeiro expande para criar instâncias faltantes
     if (slot.tipo === 'FIXO') {
       await this.expandirSlot(slot as SlotComInstancias, periodo);
     }
 
-    // Retorna TODAS as instâncias do banco no período
     return prisma.slotInstancia.findMany({
       where: {
         slotPasseioId: slotId,

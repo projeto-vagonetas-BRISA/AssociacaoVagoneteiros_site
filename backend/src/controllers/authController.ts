@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
@@ -10,7 +10,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
   try {
     const { name, cpf, senha, email, telefone, historico, experiencia, data_associacao, foto, perfil } = req.body;
 
-    // Validar campos obrigatórios
+    // validar campos obrigatórios
     if (!name || !cpf || !senha || !telefone) {
       res.status(400).json({ message: 'Nome, CPF, Senha e Telefone são obrigatórios' });
       return;
@@ -32,7 +32,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Verificar se CPF já está cadastrado
+    // verificar se cpf já está cadastrado
     const existingUserCpf = await prisma.usuario.findUnique({
       where: { cpf: cleanedCpf },
     });
@@ -42,7 +42,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Verificar se E-mail já está cadastrado (se fornecido)
+    // verificar se e-mail já está cadastrado (se fornecido)
     if (email) {
       const existingUserEmail = await prisma.usuario.findUnique({
         where: { email },
@@ -54,11 +54,11 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       }
     }
 
-    // Hash da senha
+    // hash da senha
     const saltRounds = 10;
     const hashedSenha = await bcrypt.hash(senha, saltRounds);
 
-    // Validar data_associacao se fornecida
+    // validar data_associacao se fornecida
     let parsedDataAssociacao = undefined;
     if (data_associacao) {
       parsedDataAssociacao = new Date(data_associacao);
@@ -68,7 +68,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       }
     }
 
-    // Processar foto (base64 → Buffer)
+    // processar foto (base64 → buffer)
     let fotoBuffer: Buffer | undefined = undefined;
     if (foto) {
       try {
@@ -80,7 +80,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       }
     }
 
-    // Criar o usuário
+    // criar o usuário
     const novoUsuario = await prisma.usuario.create({
       data: {
         name,
@@ -96,7 +96,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       },
     });
 
-    // Gerar token
+    // gerar token
     const token = generateToken({
       id: novoUsuario.id,
       cpf: novoUsuario.cpf,
@@ -105,7 +105,7 @@ export async function cadastro(req: Request, res: Response): Promise<void> {
       tokenVersion: novoUsuario.tokenVersion,
     });
 
-    // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
+    // retornar usuário sem a senha e sem a foto (binário grande demais para localstorage)
     const { senha: _, foto: _foto, ...usuarioSemSenha } = novoUsuario;
 
     res.status(201).json({
@@ -123,7 +123,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   try {
     const { identifier, senha } = req.body;
 
-    // identifier pode ser CPF ou E-mail
+    // identifier pode ser cpf ou e-mail
     if (!identifier || !senha) {
       res.status(400).json({ message: 'CPF/E-mail e senha são obrigatórios' });
       return;
@@ -132,7 +132,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     const cleanedIdentifier = cleanCPF(identifier);
     let usuario = null;
 
-    // Tenta buscar por CPF se tiver 11 dígitos, caso contrário tenta por e-mail
+    // tenta buscar por cpf se tiver 11 dígitos, caso contrário tenta por e-mail
     if (cleanedIdentifier.length === 11) {
       usuario = await prisma.usuario.findUnique({
         where: { cpf: cleanedIdentifier },
@@ -150,20 +150,20 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Comparar senhas
+    // comparar senhas
     const matches = await bcrypt.compare(senha, usuario.senha);
     if (!matches) {
       res.status(401).json({ message: 'CPF/E-mail ou senha incorretos' });
       return;
     }
 
-    // Verificar se a conta está ativa
+    // verificar se a conta está ativa
     if (!usuario.ativo) {
       res.status(403).json({ message: 'Conta desativada. Entre em contato com um administrador.' });
       return;
     }
 
-    // Gerar token
+    // gerar token
     const token = generateToken({
       id: usuario.id,
       cpf: usuario.cpf,
@@ -172,7 +172,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       tokenVersion: usuario.tokenVersion,
     });
 
-    // Retornar usuário sem a senha e sem a foto (binário grande demais para localStorage)
+    // retornar usuário sem a senha e sem a foto (binário grande demais para localstorage)
     const { senha: _, foto: _foto, ...usuarioSemSenha } = usuario;
 
     res.status(200).json({
@@ -264,7 +264,7 @@ export async function cadastroAdmin(req: AuthenticatedRequest, res: Response): P
 
 export async function me(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    // req.user já vem injetado pelo authMiddleware
+    // req.user já vem injetado pelo authmiddleware
     if (!req.user) {
       res.status(401).json({ message: 'Não autenticado' });
       return;

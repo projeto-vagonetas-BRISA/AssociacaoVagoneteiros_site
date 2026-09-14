@@ -1,5 +1,5 @@
-/**
- * Helpers para limpeza e validação de CPF/documento
+﻿/**
+ * helpers para limpeza e validação de cpf/documento
  */
 
 /** Remove tudo que não é dígito */

@@ -8,9 +8,9 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
- * Cria um objeto user parcial a partir do payload do JWT.
- * Não busca no banco — usa apenas os dados contidos no token.
- * Rotas que precisam de dados atualizados do banco devem buscá-los explicitamente.
+ * cria um objeto user parcial a partir do payload do jwt.
+ * não busca no banco — usa apenas os dados contidos no token.
+ * rotas que precisam de dados atualizados do banco devem buscá-los explicitamente.
  */
 function payloadToUser(payload: TokenPayload): Omit<Usuario, 'senha'> {
   return {

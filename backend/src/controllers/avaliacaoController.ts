@@ -1,4 +1,4 @@
-import { Response } from 'express';
+﻿import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 
@@ -69,21 +69,21 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Verificar se cliente existe
+    // verificar se cliente existe
     const cliente = await prisma.clientes.findUnique({ where: { id: parsedClienteId } });
     if (!cliente) {
       res.status(404).json({ message: 'Cliente não encontrado' });
       return;
     }
 
-    // Verificar se passeio existe
+    // verificar se passeio existe
     const passeio = await prisma.passeio.findUnique({ where: { id: parsedPasseioId } });
     if (!passeio) {
       res.status(404).json({ message: 'Passeio não encontrado' });
       return;
     }
 
-    // Verificar se cliente tem agendamento confirmado neste passeio
+    // verificar se cliente tem agendamento confirmado neste passeio
     const agendamentoConfirmado = await prisma.agendamento.findFirst({
       where: {
         clienteId: parsedClienteId,
@@ -96,7 +96,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // Verificar se cliente já avaliou este passeio
+    // verificar se cliente já avaliou este passeio
     const jaAvaliou = await prisma.avaliacao.findFirst({
       where: { clienteId: parsedClienteId, passeioId: parsedPasseioId },
     });

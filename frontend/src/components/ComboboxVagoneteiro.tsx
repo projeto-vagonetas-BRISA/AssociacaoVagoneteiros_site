@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 
 interface VagoneteiroOption {
@@ -50,7 +50,6 @@ export function ComboboxVagoneteiro({ options, value, onChange, placeholder = "S
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -64,11 +63,8 @@ export function ComboboxVagoneteiro({ options, value, onChange, placeholder = "S
           className={`text-text-secondary shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-
-      {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-border rounded-lg shadow-lg overflow-hidden">
-          {/* Search input */}
           <div className="flex items-center gap-2 px-3 border-b border-border">
             <Search size={15} className="text-text-secondary shrink-0" />
             <input
@@ -90,8 +86,6 @@ export function ComboboxVagoneteiro({ options, value, onChange, placeholder = "S
               </button>
             )}
           </div>
-
-          {/* Options list */}
           <div className="max-h-56 overflow-y-auto">
             {filtered.length === 0 ? (
               <p className="px-3 py-4 text-sm text-text-secondary text-center">Nenhum vagoneteiro encontrado</p>

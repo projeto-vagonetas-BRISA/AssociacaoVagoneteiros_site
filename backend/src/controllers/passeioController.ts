@@ -1,4 +1,4 @@
-import { Response } from 'express';
+﻿import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import prisma from '../lib/prisma';
 import { parseFiltroData } from '../utils/filtroData';
@@ -85,8 +85,8 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
 
     const parsedPreco = parseFloat(preco);
     const parsedCapacidade = parseInt(capacidade, 10);
-    // Força parse sem conversão de timezone: interpreta a data como UTC noon
-    // para evitar off-by-one quando o servidor está em fuso negativo (ex: UTC-3)
+    // força parse sem conversão de timezone: interpreta a data como utc noon
+    // para evitar off-by-one quando o servidor está em fuso negativo (ex: utc-3)
     const parsedData = new Date(`${String(data).split('T')[0]}T12:00:00.000Z`);
     const parsedHorario = horario || "08:00";
 
@@ -103,7 +103,7 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // 🛑 Validar que a data não é no passado
+    // validar que a data não é no passado
     const fimDoDia = new Date(parsedData);
     fimDoDia.setHours(23, 59, 59, 999);
     if (fimDoDia < new Date()) {
@@ -111,12 +111,12 @@ export async function criar(req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    // O vagoneteiro logado (USUARIO comum) pode criar passeio vinculado a ele;
-    // ADMIN/REDATOR podem criar para qualquer usuarioId ou para si mesmos.
+    // o vagoneteiro logado (usuario comum) pode criar passeio vinculado a ele;
+    // admin/redator podem criar para qualquer usuarioid ou para si mesmos.
     const usuarioId = req.body.usuarioId
       ? (req.user!.perfil === 'ADMIN' || req.user!.perfil === 'REDATOR'
-          ? Number(req.body.usuarioId)
-          : req.user!.id)
+        ? Number(req.body.usuarioId)
+        : req.user!.id)
       : req.user!.id;
 
     const passeio = await prisma.passeio.create({
@@ -153,7 +153,7 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
       return;
     }
 
-    // Apenas ADMIN/REDATOR ou o dono do passeio podem atualizar
+    // apenas admin/redator ou o dono do passeio podem atualizar
     if (req.user!.perfil === 'USUARIO' && passeioExistente.usuarioId !== req.user!.id) {
       res.status(403).json({ message: 'Você só pode editar seus próprios passeios' });
       return;
@@ -179,13 +179,13 @@ export async function atualizar(req: AuthenticatedRequest, res: Response): Promi
       dataAtualizada.capacidade = parsed;
     }
     if (data !== undefined) {
-      // Força parse sem conversão de timezone (UTC noon) para evitar off-by-one
+      // força parse sem conversão de timezone (utc noon) para evitar off-by-one
       const parsed = new Date(`${String(data).split('T')[0]}T12:00:00.000Z`);
       if (isNaN(parsed.getTime())) {
         res.status(400).json({ message: 'Data inválida' });
         return;
       }
-      // 🛑 Validar que a data não é no passado
+      // validar que a data não é no passado
       const fimDoDia = new Date(parsed);
       fimDoDia.setHours(23, 59, 59, 999);
       if (fimDoDia < new Date()) {
@@ -233,7 +233,7 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Só ADMIN/REDATOR ou o dono podem alterar status
+    // só admin/redator ou o dono podem alterar status
     if (req.user!.perfil === 'USUARIO' && passeio.usuarioId !== req.user!.id) {
       res.status(403).json({ message: 'Você só pode alterar status dos seus próprios passeios' });
       return;
@@ -254,15 +254,15 @@ export async function atualizarStatus(req: AuthenticatedRequest, res: Response):
           status,
           ...(status === StatusPasseio.CANCELADO
             ? {
-                canceladoEm: agora,
-                canceladoPor: req.user?.cpf ?? null,
-                ...(motivo ? { motivoCancelamento: motivo } : {}),
-              }
+              canceladoEm: agora,
+              canceladoPor: req.user?.cpf ?? null,
+              ...(motivo ? { motivoCancelamento: motivo } : {}),
+            }
             : {}),
         },
       });
 
-      // Se o passeio estiver vinculado a um slotInstancia, propaga o status
+      // se o passeio estiver vinculado a um slotinstancia, propaga o status
       if (passeio.slotInstanciaId) {
         await prisma.slotInstancia.update({
           where: { id: passeio.slotInstanciaId },
@@ -304,7 +304,7 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
 
     await prisma.passeio.update({ where: { id }, data: { status: 'CANCELADO' } });
 
-    // Auditoria: registra quem cancelou o passeio (CPF do admin) e o motivo (se informado, ex: condição climática)
+    // auditoria: registra quem cancelou o passeio (cpf do admin) e o motivo (se informado, ex: condição climática)
     const motivo = (req.body?.motivo as string)?.trim() || null;
     await prisma.agendamento.updateMany({
       where: { passeioId: id, status: { not: 'CANCELADO' } },
@@ -316,7 +316,7 @@ export async function deletar(req: AuthenticatedRequest, res: Response): Promise
       },
     });
 
-    // Cancela a instância de slot vinculada para que não apareça mais
+    // cancela a instância de slot vinculada para que não apareça mais
     // como disponível para novos agendamentos
     if (passeioExistente.slotInstanciaId) {
       await prisma.slotInstancia.update({

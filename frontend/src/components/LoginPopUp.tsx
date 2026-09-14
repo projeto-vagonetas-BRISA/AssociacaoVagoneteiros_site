@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -120,7 +120,6 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
 
     const content = (
         <>
-            {/* Fundo escuro — apenas no mobile */}
             {isMobile && (
                 <div
                     onClick={onClose}
@@ -142,8 +141,6 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                     }
                 `
                 }>
-
-                {/* Botão de Fechar (X) */}
                 <div className="absolute top-4 right-5
                 h-[25px] w-[25px] cursor-pointer
                 rounded-full
@@ -152,8 +149,6 @@ export function LoginPopUp({ onClose }: LoginPopUpProps) {
                     <div className="absolute top-[2px] left-[12px] h-[21px] w-[1px] rotate-45 bg-blue-veryDark"></div>
                     <div className="absolute top-[2px] left-[12px] h-[21px] w-[1px] -rotate-45 bg-blue-veryDark"></div>
                 </div>
-
-                {/* Conteúdo do Formulário */}
                 <div className="mx-auto w-full max-w-sm shrink-0">
                     <div className="mx-auto flex h-30 w-30 items-center justify-center rounded-full bg-white">
                         <img
